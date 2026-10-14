@@ -108,9 +108,3 @@ Một việc chỉ được tính là xong khi:
 3. README của thư mục được cập nhật nếu cách chạy thay đổi.
 4. Chạy được trên môi trường dev bằng Docker Compose, không chỉ trên máy người viết.
 
-## 9. Việc cần ban tổ chức quyết định trong ngày 1
-
-- [ ] Duyệt 8 điểm luật đề xuất: thế trận ban đầu, cấm tự sát, cấm vào ô mục tiêu đối phương, trần 300 lượt, tiêu chí phân định, 60 giây mỗi bên, nước sai xử thua.
-- [ ] "Chấm code" chỉ là kiểm tra tính hợp lệ, hay có điểm kỹ thuật cộng vào thứ hạng.
-- [ ] Danh sách hạt giống để bốc thăm.
-- [ ] Ngày giờ đóng băng nộp bài cho từng vòng.
