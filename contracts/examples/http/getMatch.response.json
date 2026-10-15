@@ -1,0 +1,43 @@
+{
+  "id": "00000010-0000-4000-8000-000000000001",
+  "tournament_id": null,
+  "round_id": null,
+  "stage": "scrimmage",
+  "team_a": {
+    "id": "00000002-0000-4000-8000-000000000001",
+    "name": "Đội A",
+    "slug": "doi-a"
+  },
+  "team_b": {
+    "id": "00000011-0000-4000-8000-000000000001",
+    "name": "Đội B",
+    "slug": "doi-b"
+  },
+  "best_of": "two_games",
+  "status": "running",
+  "winner_team_id": null,
+  "score_a": 0,
+  "score_b": 1,
+  "games": [
+    {
+      "id": "00000008-0000-4000-8000-000000000001",
+      "match_id": "00000010-0000-4000-8000-000000000001",
+      "game_index": 1,
+      "attempt": 1,
+      "is_current": true,
+      "blue_submission_id": "00000003-0000-4000-8000-000000000001",
+      "red_submission_id": "00000004-0000-4000-8000-000000000001",
+      "map_id": "standard",
+      "engine_version": "1.0.0",
+      "ruleset_id": "dev-v1",
+      "status": "finished",
+      "result": {
+        "winner": "RED",
+        "reason": "CRASH",
+        "plies": 0
+      },
+      "duration_ms": 20,
+      "replay_available": true
+    }
+  ]
+}

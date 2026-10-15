@@ -1,5 +1,25 @@
 # starter-kits — Bộ khởi động cho thí sinh
 
+## Hợp đồng tích hợp và hướng dẫn cho AI
+
+Đọc [AGENTS.md](../AGENTS.md), [hợp đồng tích hợp](../integration.md) mục 2, 5, 9 và README engine/runner. Phân công hiện hành: B sở hữu kit, A đối chiếu luật.
+
+- **Nhận:** giao thức OTTV2 1, FEN, engine_version và fixture luật do A cung cấp.
+- **Cung cấp:** ZIP chạy được nguyên trạng qua build worker, bot mẫu và local runner dùng public API engine.
+- Python dùng cùng package ottv2; C++/Java/Node phải kiểm tra chéo với engine, không dựa vào bản luật AI tự nhớ.
+- Dùng bảng tên file chính/lệnh build/run trong [behavior.md](../contracts/behavior.md), public engine API và fixture tại [contracts](../contracts/README.md); runner chọn image digest, kit không có quy ước đóng gói thứ hai.
+- Bot đọc OTTV2 trước READY, INIT trước OK, chỉ trả MOVE khi GO; flush mỗi dòng. Log dùng # hoặc stderr, không lẫn vào MOVE.
+- Dùng seed cố định cho bot random trong fixture; cùng thế trận trả cùng tập nước (so sánh sau sort, không phụ thuộc thứ tự container).
+- Local runner tạo và thu hồi tiến trình, cung cấp BotIO cho run_game như runner Docker. Không sao chép vòng lặp hoặc cách tính giờ của engine.
+- Version kit phải ghi engine_version và protocol version; cập nhật engine phải chạy lại kiểm thử chéo trước phát hành.
+
+### Chạy độc lập và bàn giao
+
+Khi tạo mỗi kit, README con phải có yêu cầu runtime/compiler, lệnh build/run chính xác, cấu trúc ZIP minh họa và một ví dụ giao thức hoàn chỉnh. Các lệnh local_runner trong kế hoạch hiện là giao diện dự kiến, chưa phải công cụ đã có.
+
+Trước merge: apply/undo trở lại đúng FEN; 1.000 fixture thế trận khớp engine; đấu bot Python/C++ với nhau cục bộ; upload chính ZIP mẫu vào pipeline và nhận replay. Không đánh dấu Java/Node hoàn thành nếu chỉ chạy local mà chưa có image tương ứng. B bàn giao link/version kit cho D để hiển thị ở P1.
+
+
 **Phụ trách:** B · **Dự phòng:** A
 
 Bộ khởi động giúp thí sinh tập trung vào thuật toán thay vì tự viết bộ đọc giao thức. Mỗi ngôn ngữ có cùng một bộ chức năng, để đội nào chọn ngôn ngữ nào cũng không bị thiệt.

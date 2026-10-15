@@ -1,0 +1,9 @@
+{
+  "id": "00000001-0000-4000-8000-000000000001",
+  "name": "example",
+  "status": "draft",
+  "engine_version": "1.0.0",
+  "ruleset_id": "dev-v1",
+  "draw_seed": null,
+  "draw_locked": false
+}

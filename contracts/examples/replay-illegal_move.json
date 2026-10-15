@@ -1,0 +1,25 @@
+{
+  "format": 1,
+  "engine_version": "1.0.0",
+  "ruleset_id": "dev-v1",
+  "map_id": "standard",
+  "initial_fen": "9/pbkpbkpbk/kpbkpbkpb/9/9/9/BPKBPKBPK/KBPKBPKBP/9",
+  "players": {
+    "BLUE": {
+      "team": "doi-a",
+      "submission_id": "00000003-0000-4000-8000-000000000001",
+      "bot_name": "ExampleBlue"
+    },
+    "RED": {
+      "team": "doi-b",
+      "submission_id": "00000004-0000-4000-8000-000000000001",
+      "bot_name": "ExampleRed"
+    }
+  },
+  "moves": [],
+  "result": {
+    "winner": "RED",
+    "reason": "ILLEGAL_MOVE",
+    "plies": 0
+  }
+}

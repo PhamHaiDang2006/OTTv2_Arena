@@ -1,0 +1,25 @@
+{
+  "id": "00000002-0000-4000-8000-000000000001",
+  "name": "Đội A",
+  "slug": "doi-a",
+  "status": "approved",
+  "is_locked": false,
+  "seed": 1,
+  "group_id": null,
+  "members": [
+    {
+      "id": "00000001-0000-4000-8000-000000000001",
+      "email": "captain@example.test",
+      "role": "captain",
+      "team_id": "00000002-0000-4000-8000-000000000001",
+      "is_active": true
+    }
+  ],
+  "active_bots": [
+    {
+      "team_id": "00000002-0000-4000-8000-000000000001",
+      "scope": "scrimmage",
+      "submission_id": "00000003-0000-4000-8000-000000000001"
+    }
+  ]
+}

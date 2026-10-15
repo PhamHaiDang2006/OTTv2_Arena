@@ -1,0 +1,42 @@
+{
+  "schema_version": 1,
+  "job_id": "00000007-0000-4000-8000-000000000001",
+  "game_id": "00000008-0000-4000-8000-000000000001",
+  "attempt": 1,
+  "blue_image": "registry.local/ottv2-bot@sha256:aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa",
+  "red_image": "registry.local/ottv2-bot@sha256:bbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbb",
+  "map_id": "standard",
+  "engine_version": "1.0.0",
+  "players": {
+    "BLUE": {
+      "team": "doi-a",
+      "submission_id": "00000003-0000-4000-8000-000000000001"
+    },
+    "RED": {
+      "team": "doi-b",
+      "submission_id": "00000004-0000-4000-8000-000000000001"
+    }
+  },
+  "config": {
+    "engine_version": "1.0.0",
+    "ruleset_id": "dev-v1",
+    "map_id": "standard",
+    "initial_fen": "9/pbkpbkpbk/kpbkpbkpb/9/9/9/BPKBPKBPK/KBPKBPKBP/9",
+    "players": {
+      "BLUE": {
+        "team": "doi-a",
+        "submission_id": "00000003-0000-4000-8000-000000000001"
+      },
+      "RED": {
+        "team": "doi-b",
+        "submission_id": "00000004-0000-4000-8000-000000000001"
+      }
+    },
+    "budget_ms": 60000,
+    "init_ms": 10000,
+    "grace_ms": 50,
+    "hard_timeout_extra_ms": 1000,
+    "max_turns": 300,
+    "seed": 42
+  }
+}

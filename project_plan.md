@@ -1,5 +1,7 @@
 # Kế hoạch dự án OTTv2 Arena
 
+Bổ sung tích hợp AI ngày 2026-10-15: đọc [AGENTS.md](AGENTS.md) và [integration.md](integration.md). Giữ phân công hiện hành, thêm hợp đồng và kiểm tra trước khi ghép code.
+
 > Phiên bản 1.0 · 4 người · 8 ngày làm việc · Tài liệu thiết kế gốc: "Hệ thống thi đấu lập trình OTTv2 — Tài liệu thiết kế"
 
 ## 1. Mục tiêu
@@ -107,4 +109,21 @@ Một việc chỉ được tính là xong khi:
 2. Có kiểm thử tự động cho phần logic (engine, tính điểm, phân quyền).
 3. README của thư mục được cập nhật nếu cách chạy thay đổi.
 4. Chạy được trên môi trường dev bằng Docker Compose, không chỉ trên máy người viết.
+5. Thay đổi giao diện giữa các phần có hợp đồng, fixture và kiểm tra cả producer/consumer; người khác review và CI đạt trước merge.
+6. Bàn giao AI ghi lệnh/kết quả thật và việc chưa làm; merge không conflict chưa có nghĩa là tích hợp thành công.
+
+## 9. Chốt hợp đồng trước khi bốn AI triển khai
+
+Tám câu hỏi luật RULE-01 đến RULE-08 có quy ước phát triển dev-v1 ở [contracts/rules.md](contracts/rules.md); xác nhận luật chính thức vẫn cần ban tổ chức. OpenAPI/schema/fixture/type/mock đã có tại [contracts/README.md](contracts/README.md), cả nhóm dùng chung để triển khai ngay. Không tạo bộ hợp đồng khác theo từng AI.
+
+- A: public engine API, kiểu BotIO/GameConfig/GameResult, fixture luật/replay; đối chiếu B/D.
+- B: schema job/callback cùng C, hợp đồng build kit, môi trường/CI và smoke test; đối chiếu A/C/D.
+- C: OpenAPI, trạng thái giải, WS, migration/snapshot, retry/idempotency; đối chiếu B/D.
+- D: client sinh từ OpenAPI, mock từ fixture, workspace web và props viewer cùng A.
+
+Cuối ngày 1 đối chiếu hợp đồng v1.0.0 đã có với yêu cầu nhóm, bổ sung fixture implementation khi cần. Các nhiệm vụ “tạo hợp đồng” trong lịch gốc nay là triển khai đúng hợp đồng và chạy kiểm tra. Ngày 2–3 ghép từng ranh giới; ngày 4 chạy luồng thật M2; chạy lại kiểm tra liên quan khi hợp đồng thay đổi.
+
+B điều phối môi trường tích hợp, không phải người duy nhất review/merge. A ↔ B và C ↔ D review chéo; replay cần A/D, callback cần B/C. Tác giả xử lý conflict phần mình và có thể merge sau review + CI theo quy định repo. Ghi quyết định vào repository để phiên AI sau đọc được.
+
+108 ván là trần 80 ván bảng + tối đa 28 ván loại trực tiếp; giải dừng sớm theo best-of có thể ít hơn. Kịch bản diễn tập muốn kiểm tra tải 108 ván phải tạo tình huống chạm số ván tối đa.
 

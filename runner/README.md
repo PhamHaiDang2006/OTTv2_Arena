@@ -1,5 +1,30 @@
 # runner — Sandbox, build worker, match worker
 
+## Hợp đồng tích hợp và hướng dẫn cho AI
+
+Đọc [AGENTS.md](../AGENTS.md), [hợp đồng tích hợp](../integration.md) mục 2, 4, 5, 7–9 và README của engine/backend/infra/starter-kits.
+
+- **Sở hữu:** build/match worker, Docker sandbox, adapter BotIO, upload artifact và callback. Không tự cập nhật DB, tính điểm hoặc tạo game attempt.
+- **Nhận:** job v1 đã được C validate; **gọi:** public API ottv2; **trả:** callback v1 theo mục 4. Không tự thêm field hoặc đổi `plies` thành `total_plies` trên wire.
+- Dùng schema/fixture trong [contracts](../contracts/README.md). Entry points cố định: `ottv2_runner.jobs.build_submission(payload)` và `ottv2_runner.jobs.run_match(payload)`; nhận một dict đúng schema. C enqueue cùng tên, không tự đặt hàm khác.
+- Runner ghi started_at_ns khi khởi động bot, thu stderr độc lập, luôn dọn container trong finally. Engine sở hữu stdout giao thức và quyết định lỗi bot.
+- Claim/lease và redelivery phải chống hai worker chạy cùng job. Backend sở hữu tạo attempt mới. HTTP callback timeout chỉ gửi lại payload đã lưu; không tự chạy lại ván.
+- Upload xong replay/log rồi callback finished. Artifact và image của submission/game bất biến; không ghi đè replay của attempt trước.
+- Callback dùng INTERNAL_API_BASE_URL có sẵn /api/v1 và token worker; không dùng token người chơi hoặc credential DB.
+
+### Build và starter kit phải khớp
+
+B dùng bảng ngôn ngữ/file chính/lệnh build/run trong [behavior.md](../contracts/behavior.md); chọn image digest khi triển khai Dockerfile. Python/C++ bắt buộc, Java/Node chỉ bật sau khi image và kit qua pipeline thật. Không tự đặt cách đóng gói khác kit.
+
+Kiểm tra ZIP trước/sau giải nén, traversal, symlink, số file/kích thước theo giới hạn đã chốt trong behavior. Dockerfile do hệ thống cung cấp; không chạy Dockerfile hoặc shell command tùy ý từ metadata của thí sinh.
+
+### Chạy độc lập và bàn giao
+
+Chưa có worker/Compose thực thi trong repo hiện tại. PR đầu tiên bổ sung lệnh cài, chạy từng worker, chạy test với fake backend/storage và test Docker thật; liệt kê biến môi trường theo mục 7, không commit secret.
+
+Trước merge: bot mẫu kit build thành công; timeout/crash/illegal move giữ đúng lý do; container sạch sau engine exception; callback gửi lặp chỉ tạo một kết quả; storage/API mất kết nối và worker chết có cách phục hồi. Ghi rõ test nào cần Linux/Docker và test nào đã thực sự chạy. A review engine adapter; C review job/callback.
+
+
 **Phụ trách:** B · **Dự phòng:** A · **Chạy ở:** VPS 2
 
 Thư mục này chứa mọi thứ chạm vào code của thí sinh. Đây là phần nhạy cảm nhất của hệ thống: một lỗ hổng ở đây có thể làm sai kết quả hoặc cho bot chiếm máy chủ.

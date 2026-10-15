@@ -1,0 +1,5 @@
+{
+  "rules_markdown": "dev-v1: xem contracts/rules.md; chưa phải luật thi đấu chính thức.",
+  "protocol_markdown": "OTTV2 1 → READY → INIT → OK → STATE / GO → MOVE → END",
+  "starter_kits": []
+}

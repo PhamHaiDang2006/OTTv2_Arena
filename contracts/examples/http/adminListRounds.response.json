@@ -1,0 +1,17 @@
+{
+  "items": [
+    {
+      "id": "00000001-0000-4000-8000-000000000001",
+      "tournament_id": "00000001-0000-4000-8000-000000000001",
+      "stage": "group",
+      "status": "draft",
+      "freeze_at": null,
+      "snapshot_id": null,
+      "matches_total": 0,
+      "matches_finished": 0
+    }
+  ],
+  "page": 1,
+  "page_size": 20,
+  "total": 1
+}

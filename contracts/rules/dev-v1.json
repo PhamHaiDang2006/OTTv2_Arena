@@ -1,0 +1,20 @@
+{
+  "id": "dev-v1",
+  "status": "development",
+  "organizer_approved": false,
+  "board_size": 9,
+  "first_side": "BLUE",
+  "goals": {"BLUE": "i9", "RED": "a1"},
+  "forbidden": {"BLUE": "a1", "RED": "i9"},
+  "step_limit": 1,
+  "max_plies": 300,
+  "capture": {"B": "K", "K": "P", "P": "B"},
+  "wipeout": "zero_total_pieces",
+  "end_order": ["GOAL", "WIPEOUT", "STALEMATE", "MOVE_LIMIT"],
+  "clock_charge": "max(0, think_ms - grace_ms)",
+  "tiebreak": ["max_min_piece_count", "max_total_piece_count", "min_nearest_chebyshev_goal_distance", "RED"],
+  "max_line_bytes": 4096,
+  "max_debug_bytes_per_bot": 65536,
+  "max_stderr_bytes_per_bot": 1048576,
+  "max_bot_name_characters": 64
+}

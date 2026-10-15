@@ -1,0 +1,102 @@
+{
+  "ruleset_id": "dev-v1",
+  "status": "development",
+  "cases": [
+    {
+      "id": "step",
+      "move": "c3d4",
+      "side": "BLUE",
+      "legal": true,
+      "initial_fen": "9/9/6k2/9/9/9/2B6/9/9",
+      "expected_fen": "9/9/6k2/9/9/3B5/9/9/9"
+    },
+    {
+      "id": "capture-rock-scissors",
+      "move": "c3d4",
+      "side": "BLUE",
+      "legal": true,
+      "initial_fen": "9/9/6p2/9/9/3k5/2B6/9/9",
+      "expected_fen": "9/9/6p2/9/9/3B5/9/9/9"
+    },
+    {
+      "id": "capture-paper-rock",
+      "move": "c3d4",
+      "side": "BLUE",
+      "legal": true,
+      "initial_fen": "9/9/9/9/9/3b5/2P6/9/9",
+      "expected_fen": "9/9/9/9/9/3P5/9/9/9"
+    },
+    {
+      "id": "capture-scissors-paper",
+      "move": "c3d4",
+      "side": "BLUE",
+      "legal": true,
+      "initial_fen": "9/9/9/9/9/3p5/2K6/9/9",
+      "expected_fen": "9/9/9/9/9/3K5/9/9/9"
+    },
+    {
+      "id": "friendly-block",
+      "move": "c3d4",
+      "side": "BLUE",
+      "legal": false,
+      "initial_fen": "9/9/6k2/9/9/3P5/2B6/9/9",
+      "expected_fen": "9/9/6k2/9/9/3P5/2B6/9/9"
+    },
+    {
+      "id": "same-kind-block",
+      "move": "c3d4",
+      "side": "BLUE",
+      "legal": false,
+      "initial_fen": "9/9/9/9/9/3b5/2B6/9/9",
+      "expected_fen": "9/9/9/9/9/3b5/2B6/9/9"
+    },
+    {
+      "id": "suicide-block",
+      "move": "c3d4",
+      "side": "BLUE",
+      "legal": false,
+      "initial_fen": "9/9/9/9/9/3p5/2B6/9/9",
+      "expected_fen": "9/9/9/9/9/3p5/2B6/9/9"
+    },
+    {
+      "id": "too-far",
+      "move": "c3e5",
+      "side": "BLUE",
+      "legal": false,
+      "initial_fen": "9/9/6k2/9/9/9/2B6/9/9",
+      "expected_fen": "9/9/6k2/9/9/9/2B6/9/9"
+    },
+    {
+      "id": "blue-forbidden-goal",
+      "move": "b2a1",
+      "side": "BLUE",
+      "legal": false,
+      "initial_fen": "9/9/6k2/9/9/9/9/1B7/9",
+      "expected_fen": "9/9/6k2/9/9/9/9/1B7/9"
+    },
+    {
+      "id": "blue-goal",
+      "move": "h8i9",
+      "side": "BLUE",
+      "legal": true,
+      "initial_fen": "9/k6B1/9/9/9/9/9/9/9",
+      "expected_fen": "8B/k8/9/9/9/9/9/9/9"
+    },
+    {
+      "id": "red-goal",
+      "move": "b2a1",
+      "side": "RED",
+      "legal": true,
+      "initial_fen": "9/9/6K2/9/9/9/9/1b7/9",
+      "expected_fen": "9/9/6K2/9/9/9/9/9/b8"
+    },
+    {
+      "id": "red-forbidden-goal",
+      "move": "h8i9",
+      "side": "RED",
+      "legal": false,
+      "initial_fen": "9/K6b1/9/9/9/9/9/9/9",
+      "expected_fen": "9/K6b1/9/9/9/9/9/9/9"
+    }
+  ]
+}

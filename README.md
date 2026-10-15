@@ -1,5 +1,22 @@
 # OTTv2 Arena
 
+## Làm việc với bốn người dùng AI
+
+Mỗi phiên AI đọc [AGENTS.md](AGENTS.md), [architecture.md](architecture.md), [integration.md](integration.md), [project_plan.md](project_plan.md) và README của folder phụ trách. Không giả định AI biết cuộc trao đổi của người khác.
+
+Phân công A/B/C/D hiện hành được giữ: A làm engine + viewer; B làm runner + starter kits + infra; C làm backend; D làm P1/P2 và workspace web. Nếu đổi phân công, cập nhật đồng thời các README và lịch trước khi giao việc.
+
+Nền tảng dùng ngay nằm ở [contracts/README.md](contracts/README.md): OpenAPI, JSON Schema, dữ liệu mẫu, type Python/TypeScript, mock HTTP và kiểm tra tự động. `integration.md` là bản đồ tích hợp. Backend/engine/worker/web và Compose bên dưới vẫn cần triển khai. Profile `dev-v1` thống nhất luật tạm để làm thử, chưa phải luật thi đấu chính thức.
+
+Mẫu giao việc:
+
+```text
+Đọc AGENTS.md, contracts/README.md và các tài liệu được yêu cầu. Tôi phụ trách <folder>.
+Thực hiện <nhiệm vụ> theo contract v1.0.0, profile dev-v1 và commit <commit>.
+Đối chiếu với <folder liên quan>; không tự đoán quyết định còn mở.
+Bàn giao thay đổi, lệnh kiểm tra đã chạy, kết quả và phụ thuộc còn thiếu.
+```
+
 Nền tảng thi đấu lập trình kiểu Battlecode cho trò chơi **OTTv2** (Búa – Bao – Kéo trên bàn 9x9). Các đội nộp bot, hệ thống chạy trận tự động trong sandbox, và ban tổ chức điều hành một giải 20 đội thể thức World Cup.
 
 - **P1 – Cổng thí sinh**: đăng nhập, nộp bot, đánh tập, xem replay, xem bảng đấu.

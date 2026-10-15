@@ -1,0 +1,12 @@
+{
+  "schema_version": 1,
+  "job_id": "00000005-0000-4000-8000-000000000001",
+  "submission_id": "00000003-0000-4000-8000-000000000001",
+  "status": "failed",
+  "image_tag": null,
+  "build_log_key": "builds/00000003-0000-4000-8000-000000000001/build.log",
+  "error": {
+    "code": "COMPILE_ERROR",
+    "message": "Compilation failed"
+  }
+}

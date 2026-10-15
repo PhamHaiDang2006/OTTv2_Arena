@@ -1,5 +1,9 @@
 # Kiến trúc OTTv2 Arena
 
+Chi tiết ranh giới triển khai nằm trong [integration.md](integration.md): engine API, job/callback v1, HTTP/WS, môi trường và fixture. Payload ngắn trong sơ đồ chỉ tóm tắt luồng, không thay schema đầy đủ. Đọc [AGENTS.md](AGENTS.md) trước khi giao việc cho AI; các điểm luật chưa chốt nằm ở integration mục 9.
+
+Bộ máy đọc được đã có tại [contracts/README.md](contracts/README.md). OpenAPI/schema và behavior là nguồn chuẩn cho trường bắt buộc, role, trạng thái; lược đồ DB bên dưới là phác thảo cần bổ sung rounds/snapshots/jobs/receipts/outbox theo behavior. Profile dev-v1 chỉ để phát triển, không khẳng định đã chốt luật chính thức.
+
 > Tài liệu này là **hợp đồng kỹ thuật** của cả nhóm. Muốn đổi giao thức, định dạng dữ liệu hay API thì sửa ở đây trước, báo cả nhóm, rồi mới sửa code.
 
 ## 1. Tổng quan
@@ -194,6 +198,7 @@ Tệp `replays/{game_id}.json.gz`:
 {
   "format": 1,
   "engine_version": "1.0.0",
+  "ruleset_id": "dev-v1",
   "map_id": "standard",
   "initial_fen": "9/pbkpbkpbk/kpbkpbkpb/9/9/9/BPKBPKBPK/KBPKBPKBP/9",
   "players": {
@@ -208,7 +213,7 @@ Tệp `replays/{game_id}.json.gz`:
 }
 ```
 
-Replay viewer dựng lại thế trận từng nước bằng cách áp dần `moves` lên `initial_fen`, nên tệp không cần lưu thế trận ở mỗi nước.
+Ví dụ trên là trích đoạn minh họa, không phải fixture ván hoàn chỉnh: moves bị rút gọn. Replay thật có result.plies bằng moves.length. Replay viewer dựng lại thế trận bằng cách áp moves lên initial_fen; fixture do engine xuất và kiểm tra theo integration mục 6.
 
 ### 5.3 Lưu trữ tệp (MinIO)
 
@@ -228,7 +233,7 @@ logs/{game_id}/red.stderr.log
 | `match:tournament` | `{game_id, blue_image, red_image, map_id, engine_version}` | Match worker, ưu tiên cao |
 | `match:scrimmage` | như trên | Match worker, chỉ khi `match:tournament` rỗng |
 
-Việc thất bại vì hạ tầng (`INFRA_ERROR`) được đẩy lại tối đa 3 lần rồi mới báo quản trị viên.
+Việc thất bại vì hạ tầng (`INFRA_ERROR`) được backend tạo attempt mới và đẩy lại tối đa 3 lần sau lần đầu rồi báo quản trị viên. Worker không tự tạo attempt. Gửi lại callback do mất kết nối giữ nguyên job_id/payload, không chạy lại bot. Quy tắc dedup và callback cũ nằm ở integration mục 4.
 
 ## 6. Sandbox
 
@@ -287,7 +292,7 @@ WebSocket `/ws`: sau khi kết nối, máy khách đăng ký kênh `team:{id}` (
 | ADR-004 | Build tách khỏi trận đấu | Báo lỗi sớm cho thí sinh; đồng hồ không tính thời gian biên dịch | Cần registry nội bộ và một worker riêng |
 | ADR-005 | Hai VPS, máy web không chạy code thí sinh | Bot thoát sandbox cũng không chạm dữ liệu | Thêm WireGuard và chi phí một máy |
 | ADR-006 | Engine viết bằng Python, dùng chung với starter kit Python | Một nguồn sự thật cho luật; thí sinh chạy đúng engine của giải trên máy mình | Engine chậm hơn C++, nhưng chỉ kiểm tra 1 nước mỗi lượt nên không đáng kể |
-| ADR-007 | Engine tất định, bản nộp bất biến | Mọi ván chạy lại được y hệt để xử lý khiếu nại | Không được dùng ngẫu nhiên không có seed; không sửa bản nộp |
+| ADR-007 | Logic luật tất định, bản nộp bất biến | Cùng thế trận và chuỗi nước cho cùng kết quả luật; replay phục vụ đối chiếu | Test dùng seed và clock giả; chạy lại tiến trình với đồng hồ tường có thể khác thời gian/kết quả; không sửa bản nộp |
 | ADR-008 | Replay chỉ lưu dãy nước đi, không lưu thế trận từng nước | Tệp nhỏ, dưới 20 KB mỗi ván | Replay viewer phải có logic áp nước đi (bản TypeScript của luật di chuyển) |
 | ADR-009 | Redis + RQ, không dùng Celery hay Kafka | Đủ cho 20 đội, cả nhóm đã quen Python | Không có lập lịch phức tạp; ưu tiên làm bằng hai hàng đợi tách biệt |
 | ADR-010 | Không có hòa ở cả ván và cặp đấu loại trực tiếp | Theo luật ban tổ chức; số ván lẻ ở vòng loại | Vòng bảng vẫn có hòa 1–1 ở cấp cặp đấu, tính 1 điểm |

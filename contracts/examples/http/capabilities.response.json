@@ -1,0 +1,12 @@
+{
+  "contract_version": "1.0.0",
+  "languages": [
+    "python",
+    "cpp"
+  ],
+  "max_upload_bytes": 1048576,
+  "max_files": 50,
+  "ruleset_id": "dev-v1",
+  "ruleset_status": "development",
+  "tournament_enabled": false
+}

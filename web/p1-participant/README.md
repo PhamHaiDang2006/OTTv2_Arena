@@ -1,5 +1,38 @@
 # web/p1-participant — Cổng thí sinh
 
+## Hợp đồng tích hợp và hướng dẫn cho AI
+
+Đọc [AGENTS.md](../../AGENTS.md), [hợp đồng tích hợp](../../integration.md) mục 2, 3, 6–9 và README backend/replay-viewer/P2.
+
+- D sở hữu workspace `web/`, shared UI/API client và lockfile chung. Không tạo lockfile riêng cho P1/P2/viewer.
+- Dùng [generated types](../../contracts/generated/types.ts), [client](../../contracts/client.ts) và [mock API](../../contracts/README.md). Lệnh sinh là node contracts/build.mjs; không tự viết lại wire DTO hoặc sửa output sinh tự động.
+- Mock lấy fixture hợp đồng. OpenAPI đã có opponents/quota/auth/me/docs; tra operationId trong contracts/operations.json, không tự chọn URL.
+- Auth, refresh một lần, error envelope, phân trang và reconnect theo integration mục 3. P1 chỉ chọn active bot ready của đội hiện tại.
+- Build log: build.updated báo trạng thái để refetch log; nếu cần stream từng dòng phải thêm hợp đồng riêng với C, không giả định event chứa toàn bộ log.
+- Trang replay tải/validate JSON rồi truyền object vào package viewer; không sao chép logic bàn cờ hay tải stderr admin.
+- Hiển thị đầy đủ loading/empty/error/403/409/429 và hết hạn URL replay; khi hết hạn lấy URL mới qua API có quyền, không sửa chữ ký.
+- POST upload/scrimmage không tự retry khi mất mạng; báo trạng thái chưa xác định và refetch. Chỉ dùng cơ chế idempotency nếu được OpenAPI quy định.
+
+### Ánh xạ dữ liệu màn hình
+
+| Màn hình | Nguồn chuẩn | Sự kiện để refetch |
+| --- | --- | --- |
+| Đội / active bot | /teams/me, /teams/me/active-bot | build.updated khi cần cập nhật lựa chọn |
+| Nộp / lịch sử | /submissions, /submissions/{id}/build-log | build.updated |
+| Đánh tập / trận | /scrimmages, /matches/{id} | game.finished, match.finished |
+| Replay | /games/{id}/replay | game.finished |
+| Bảng / nhánh | /standings, /bracket | standings.updated, match.finished |
+| Thông báo | /announcements | announcement.published |
+
+Đường dẫn trong bảng tương đối với /api/v1; method/response lấy từ OpenAPI. Không cộng điểm hoặc suy ra winner ở frontend.
+
+### Chạy độc lập và bàn giao
+
+Khi tạo workspace, D bổ sung lệnh npm ci, dev mock/dev API thật, typecheck/test/build từ web root; chưa có script thực thi ở baseline này. Dùng VITE_API_BASE_URL/VITE_WS_URL theo integration, không nhúng secret.
+
+Trước merge: mock và HTTP thật cùng schema, refresh đồng thời, WS mất kết nối, upload lỗi, submission failed, hết quota, replay 0 nước/hỏng; build và kiểm tra màn hình nhỏ. C review API usage, A đối chiếu viewer props. PR ghi fixture và commit OpenAPI được dùng.
+
+
 **Phụ trách:** D · **Dự phòng:** C · **Công nghệ:** React 18, Vite, TypeScript, TanStack Query, React Router
 
 Mục tiêu của P1 là rút ngắn vòng lặp *sửa code → biết bot mạnh hơn hay yếu đi*. Mọi màn hình khác là phụ.

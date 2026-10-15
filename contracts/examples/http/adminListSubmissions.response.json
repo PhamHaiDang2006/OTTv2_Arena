@@ -1,0 +1,16 @@
+{
+  "items": [
+    {
+      "id": "00000003-0000-4000-8000-000000000001",
+      "team_id": "00000002-0000-4000-8000-000000000001",
+      "language": "python",
+      "status": "ready",
+      "sha256": "aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa",
+      "submitted_at": "2026-10-15T00:00:00Z",
+      "build_error": null
+    }
+  ],
+  "page": 1,
+  "page_size": 20,
+  "total": 1
+}

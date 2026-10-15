@@ -1,5 +1,24 @@
 # engine — Trọng tài OTTv2
 
+## Hợp đồng tích hợp và hướng dẫn cho AI
+
+Đọc [AGENTS.md](../AGENTS.md), [hợp đồng tích hợp](../integration.md) mục 2, 5, 6, 9 và README của runner/starter-kits/replay-viewer trước khi triển khai.
+
+- **Sở hữu:** package `ottv2`, luật, protocol, clock, kiểu dữ liệu public và replay. Không nhúng Docker, HTTP, Redis hoặc storage vào engine.
+- **Nhận:** hai BotIO do runner/local runner tạo; GameConfig đã chốt. **Trả:** GameResult và replay JSON-compatible, không tự upload.
+- Export `run_game`, `GameConfig`, `GameResult`, `BotIO` theo mục 5. Công bố exception hạ tầng; lỗi bot phải có lý do kết thúc xác định.
+- Bàn cờ, tọa độ và thao tác áp nước phải có fixture dùng chung với starter kits và viewer; mô tả rõ mutation/undo và bên đi.
+- Triển khai độc lập theo [engine_api.py](../contracts/engine_api.py), [GameConfig schema](../contracts/schemas/game-config.schema.json) và [dev-v1](../contracts/rules.md). RULE-01..08 có giả định phát triển thống nhất; không tự sửa hoặc gọi đó là luật chính thức.
+- Schema replay và fixture cấu trúc đã có trong contracts. A bổ sung replay thật xuất từ engine: ăn quân, 0 nước, timeout, crash, illegal move, move limit; kèm expected_final_fen để B/D kiểm tra. Không tạo schema cạnh tranh.
+- Không dùng ví dụ replay rút gọn trong architecture làm golden test; số ply và moves phải khớp.
+
+### Chạy độc lập và bàn giao
+
+Hiện chưa có implementation/lệnh chạy đã xác nhận. PR đầu tiên phải thêm pyproject, entrypoint CLI và lệnh cài/chạy/test chính xác từ repo root. Khung dự kiến: cài editable package engine, chạy pytest trong engine, dùng CLI đấu hai bot mẫu; không ghi “đã chạy” trước khi thực sự có kết quả.
+
+Trước merge: round-trip FEN; ca đúng/sai cho luật đã chốt; đồng hồ giả tại biên deadline; EOF/timeout khác lỗi hạ tầng; run_game với BotIO giả; fixture đọc được ở kit/viewer. Khi tích hợp, chạy với adapter pipe của B. B review API Python/clock; D đối chiếu replay. PR ghi engine_version và commit fixture.
+
+
 **Phụ trách:** A · **Dự phòng:** B · **Ngôn ngữ:** Python 3.12, không phụ thuộc thư viện ngoài
 
 Engine là nguồn sự thật duy nhất về luật chơi. Nó giữ trạng thái thật của ván, gửi thế trận cho bot, đo đồng hồ, kiểm tra nước đi, quyết định thắng thua và ghi replay. Engine không bao giờ tin dữ liệu từ bot.

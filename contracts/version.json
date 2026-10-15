@@ -1,0 +1,8 @@
+{
+  "contract_version": "1.0.0",
+  "schema_version": 1,
+  "replay_format": 1,
+  "protocol_version": 1,
+  "ruleset_id": "dev-v1",
+  "ruleset_status": "development"
+}

@@ -1,0 +1,678 @@
+[
+  {
+    "file": "examples/build-job.json",
+    "schema": "schemas/build-job.schema.json",
+    "valid": true
+  },
+  {
+    "file": "examples/match-job.json",
+    "schema": "schemas/match-job.schema.json",
+    "valid": true
+  },
+  {
+    "file": "examples/build-result.json",
+    "schema": "schemas/build-result.schema.json",
+    "valid": true
+  },
+  {
+    "file": "examples/game-result.json",
+    "schema": "schemas/game-result.schema.json",
+    "valid": true
+  },
+  {
+    "file": "examples/game-config.json",
+    "schema": "schemas/game-config.schema.json",
+    "valid": true
+  },
+  {
+    "file": "examples/engine-result.json",
+    "schema": "schemas/engine-result.schema.json",
+    "valid": true
+  },
+  {
+    "file": "examples/replay.json",
+    "schema": "schemas/replay.schema.json",
+    "valid": true
+  },
+  {
+    "file": "examples/websocket-client.json",
+    "schema": "schemas/websocket-client.schema.json",
+    "valid": true
+  },
+  {
+    "file": "examples/websocket-event.json",
+    "schema": "schemas/websocket-event.schema.json",
+    "valid": true
+  },
+  {
+    "file": "examples/websocket-server.json",
+    "schema": "schemas/websocket-server.schema.json",
+    "valid": true
+  },
+  {
+    "file": "examples/worker-heartbeat.json",
+    "schema": "schemas/worker-heartbeat.schema.json",
+    "valid": true
+  },
+  {
+    "file": "examples/build-building.json",
+    "definition": "BuildResult",
+    "valid": true
+  },
+  {
+    "file": "examples/build-failed.json",
+    "definition": "BuildResult",
+    "valid": true
+  },
+  {
+    "file": "examples/game-running.json",
+    "definition": "GameResultCallback",
+    "valid": true
+  },
+  {
+    "file": "examples/game-infra-error.json",
+    "definition": "GameResultCallback",
+    "valid": true
+  },
+  {
+    "file": "examples/invalid-build-ready.json",
+    "definition": "BuildResult",
+    "valid": false
+  },
+  {
+    "file": "examples/invalid-game-infra-winner.json",
+    "definition": "GameResultCallback",
+    "valid": false
+  },
+  {
+    "file": "examples/invalid-language.json",
+    "definition": "BuildJob",
+    "valid": false
+  },
+  {
+    "file": "examples/invalid-unknown-field.json",
+    "definition": "BuildJob",
+    "valid": false
+  },
+  {
+    "file": "examples/invalid-attempt.json",
+    "definition": "GameResultCallback",
+    "valid": false
+  },
+  {
+    "file": "examples/invalid-source-path.json",
+    "definition": "BuildJob",
+    "valid": false
+  },
+  {
+    "file": "examples/ws-client-auth.json",
+    "definition": "WsClient",
+    "valid": true
+  },
+  {
+    "file": "examples/ws-client-subscribe.json",
+    "definition": "WsClient",
+    "valid": true
+  },
+  {
+    "file": "examples/ws-client-unsubscribe.json",
+    "definition": "WsClient",
+    "valid": true
+  },
+  {
+    "file": "examples/ws-client-ping.json",
+    "definition": "WsClient",
+    "valid": true
+  },
+  {
+    "file": "examples/event-build.updated.json",
+    "definition": "WsEvent",
+    "valid": true
+  },
+  {
+    "file": "examples/event-game.finished.json",
+    "definition": "WsEvent",
+    "valid": true
+  },
+  {
+    "file": "examples/event-match.finished.json",
+    "definition": "WsEvent",
+    "valid": true
+  },
+  {
+    "file": "examples/event-standings.updated.json",
+    "definition": "WsEvent",
+    "valid": true
+  },
+  {
+    "file": "examples/event-announcement.published.json",
+    "definition": "WsEvent",
+    "valid": true
+  },
+  {
+    "file": "examples/invalid-public-build-event.json",
+    "definition": "WsEvent",
+    "valid": false
+  },
+  {
+    "file": "examples/invalid-job-config-mismatch.json",
+    "definition": "MatchJob",
+    "valid": false,
+    "semantic": "job"
+  },
+  {
+    "file": "examples/invalid-id.json",
+    "definition": "BuildJob",
+    "valid": false
+  },
+  {
+    "file": "examples/invalid-missing-field.json",
+    "definition": "BuildJob",
+    "valid": false
+  },
+  {
+    "file": "examples/invalid-finished-game.json",
+    "definition": "Game",
+    "valid": false
+  },
+  {
+    "file": "examples/replay-timeout.json",
+    "definition": "Replay",
+    "valid": true,
+    "semantic": "shape-only"
+  },
+  {
+    "file": "examples/replay-illegal_move.json",
+    "definition": "Replay",
+    "valid": true,
+    "semantic": "shape-only"
+  },
+  {
+    "file": "examples/replay-crash.json",
+    "definition": "Replay",
+    "valid": true,
+    "semantic": "shape-only"
+  },
+  {
+    "file": "examples/replay-move_limit.json",
+    "definition": "Replay",
+    "valid": true,
+    "semantic": "shape-only"
+  },
+  {
+    "file": "examples/invalid-replay-count.json",
+    "definition": "Replay",
+    "valid": false,
+    "semantic": "replay"
+  },
+  {
+    "file": "examples/invalid-replay-fen.json",
+    "definition": "Replay",
+    "valid": false,
+    "semantic": "replay"
+  },
+  {
+    "file": "examples/replay-two-moves.json",
+    "definition": "Replay",
+    "valid": true,
+    "semantic": "replay"
+  },
+  {
+    "file": "examples/replay-capture.json",
+    "definition": "Replay",
+    "valid": true,
+    "semantic": "replay"
+  },
+  {
+    "file": "examples/replay-goal.json",
+    "definition": "Replay",
+    "valid": true,
+    "semantic": "replay"
+  },
+  {
+    "file": "examples/invalid-replay-capture.json",
+    "definition": "Replay",
+    "valid": false,
+    "semantic": "replay"
+  },
+  {
+    "file": "examples/http/health.response.json",
+    "definition": "Health",
+    "valid": true
+  },
+  {
+    "file": "examples/http/capabilities.response.json",
+    "definition": "Capabilities",
+    "valid": true
+  },
+  {
+    "file": "examples/http/login.request.json",
+    "definition": "Login",
+    "valid": true
+  },
+  {
+    "file": "examples/http/login.response.json",
+    "definition": "Auth",
+    "valid": true
+  },
+  {
+    "file": "examples/http/refresh.response.json",
+    "definition": "Auth",
+    "valid": true
+  },
+  {
+    "file": "examples/http/currentUser.response.json",
+    "definition": "User",
+    "valid": true
+  },
+  {
+    "file": "examples/http/myTeam.response.json",
+    "definition": "Team",
+    "valid": true
+  },
+  {
+    "file": "examples/http/updateMyTeam.request.json",
+    "definition": "TeamPatch",
+    "valid": true
+  },
+  {
+    "file": "examples/http/updateMyTeam.response.json",
+    "definition": "Team",
+    "valid": true
+  },
+  {
+    "file": "examples/http/setActiveBot.request.json",
+    "definition": "SetActiveBot",
+    "valid": true
+  },
+  {
+    "file": "examples/http/setActiveBot.response.json",
+    "definition": "ActiveBot",
+    "valid": true
+  },
+  {
+    "file": "examples/http/listOpponents.response.json",
+    "definition": "TeamPublicPage",
+    "valid": true
+  },
+  {
+    "file": "examples/http/createSubmission.request.json",
+    "definition": "Upload",
+    "valid": true
+  },
+  {
+    "file": "examples/http/createSubmission.response.json",
+    "definition": "SubmissionAccepted",
+    "valid": true
+  },
+  {
+    "file": "examples/http/listSubmissions.response.json",
+    "definition": "SubmissionPage",
+    "valid": true
+  },
+  {
+    "file": "examples/http/getSubmission.response.json",
+    "definition": "Submission",
+    "valid": true
+  },
+  {
+    "file": "examples/http/getBuildLog.response.json",
+    "definition": "BuildLog",
+    "valid": true
+  },
+  {
+    "file": "examples/http/getOwnSource.response.json",
+    "definition": "SourceTree",
+    "valid": true
+  },
+  {
+    "file": "examples/http/getOwnSourceFile.response.json",
+    "definition": "SourceFile",
+    "valid": true
+  },
+  {
+    "file": "examples/http/createScrimmage.request.json",
+    "definition": "ScrimmageCreate",
+    "valid": true
+  },
+  {
+    "file": "examples/http/createScrimmage.response.json",
+    "definition": "MatchAccepted",
+    "valid": true
+  },
+  {
+    "file": "examples/http/listScrimmages.response.json",
+    "definition": "MatchPage",
+    "valid": true
+  },
+  {
+    "file": "examples/http/scrimmageQuota.response.json",
+    "definition": "Quota",
+    "valid": true
+  },
+  {
+    "file": "examples/http/listMatches.response.json",
+    "definition": "MatchPage",
+    "valid": true
+  },
+  {
+    "file": "examples/http/getMatch.response.json",
+    "definition": "Match",
+    "valid": true
+  },
+  {
+    "file": "examples/http/getGame.response.json",
+    "definition": "Game",
+    "valid": true
+  },
+  {
+    "file": "examples/http/getReplayUrl.response.json",
+    "definition": "SignedUrl",
+    "valid": true
+  },
+  {
+    "file": "examples/http/getStandings.response.json",
+    "definition": "StandingPage",
+    "valid": true
+  },
+  {
+    "file": "examples/http/getBracket.response.json",
+    "definition": "BracketSlotPage",
+    "valid": true
+  },
+  {
+    "file": "examples/http/listTournaments.response.json",
+    "definition": "TournamentPage",
+    "valid": true
+  },
+  {
+    "file": "examples/http/getTournament.response.json",
+    "definition": "Tournament",
+    "valid": true
+  },
+  {
+    "file": "examples/http/listRounds.response.json",
+    "definition": "RoundPage",
+    "valid": true
+  },
+  {
+    "file": "examples/http/listAnnouncements.response.json",
+    "definition": "AnnouncementPage",
+    "valid": true
+  },
+  {
+    "file": "examples/http/getDocs.response.json",
+    "definition": "Docs",
+    "valid": true
+  },
+  {
+    "file": "examples/http/adminListTeams.response.json",
+    "definition": "TeamPage",
+    "valid": true
+  },
+  {
+    "file": "examples/http/adminCreateTeam.request.json",
+    "definition": "TeamCreate",
+    "valid": true
+  },
+  {
+    "file": "examples/http/adminCreateTeam.response.json",
+    "definition": "Team",
+    "valid": true
+  },
+  {
+    "file": "examples/http/adminUpdateTeam.request.json",
+    "definition": "AdminTeamPatch",
+    "valid": true
+  },
+  {
+    "file": "examples/http/adminUpdateTeam.response.json",
+    "definition": "Team",
+    "valid": true
+  },
+  {
+    "file": "examples/http/adminImportTeams.request.json",
+    "definition": "ImportRequest",
+    "valid": true
+  },
+  {
+    "file": "examples/http/adminImportTeams.response.json",
+    "definition": "ImportResult",
+    "valid": true
+  },
+  {
+    "file": "examples/http/adminListSubmissions.response.json",
+    "definition": "SubmissionPage",
+    "valid": true
+  },
+  {
+    "file": "examples/http/adminGetSubmission.response.json",
+    "definition": "Submission",
+    "valid": true
+  },
+  {
+    "file": "examples/http/adminGetSource.response.json",
+    "definition": "SourceTree",
+    "valid": true
+  },
+  {
+    "file": "examples/http/adminGetSourceFile.response.json",
+    "definition": "SourceFile",
+    "valid": true
+  },
+  {
+    "file": "examples/http/adminBuildLog.response.json",
+    "definition": "BuildLog",
+    "valid": true
+  },
+  {
+    "file": "examples/http/adminListTournaments.response.json",
+    "definition": "TournamentPage",
+    "valid": true
+  },
+  {
+    "file": "examples/http/adminCreateTournament.request.json",
+    "definition": "TournamentCreate",
+    "valid": true
+  },
+  {
+    "file": "examples/http/adminCreateTournament.response.json",
+    "definition": "Tournament",
+    "valid": true
+  },
+  {
+    "file": "examples/http/adminGetDraw.response.json",
+    "definition": "Draw",
+    "valid": true
+  },
+  {
+    "file": "examples/http/adminDraw.request.json",
+    "definition": "DrawRequest",
+    "valid": true
+  },
+  {
+    "file": "examples/http/adminDraw.response.json",
+    "definition": "Draw",
+    "valid": true
+  },
+  {
+    "file": "examples/http/adminLockDraw.request.json",
+    "definition": "ReasonBody",
+    "valid": true
+  },
+  {
+    "file": "examples/http/adminLockDraw.response.json",
+    "definition": "Draw",
+    "valid": true
+  },
+  {
+    "file": "examples/http/adminCreateRound.request.json",
+    "definition": "RoundCreate",
+    "valid": true
+  },
+  {
+    "file": "examples/http/adminCreateRound.response.json",
+    "definition": "Round",
+    "valid": true
+  },
+  {
+    "file": "examples/http/adminListRounds.response.json",
+    "definition": "RoundPage",
+    "valid": true
+  },
+  {
+    "file": "examples/http/adminUpdateRound.request.json",
+    "definition": "RoundPatch",
+    "valid": true
+  },
+  {
+    "file": "examples/http/adminUpdateRound.response.json",
+    "definition": "Round",
+    "valid": true
+  },
+  {
+    "file": "examples/http/adminFreezeRound.request.json",
+    "definition": "ReasonBody",
+    "valid": true
+  },
+  {
+    "file": "examples/http/adminFreezeRound.response.json",
+    "definition": "Snapshot",
+    "valid": true
+  },
+  {
+    "file": "examples/http/adminGetSnapshot.response.json",
+    "definition": "Snapshot",
+    "valid": true
+  },
+  {
+    "file": "examples/http/adminRunRound.request.json",
+    "definition": "ReasonBody",
+    "valid": true
+  },
+  {
+    "file": "examples/http/adminRunRound.response.json",
+    "definition": "RunAccepted",
+    "valid": true
+  },
+  {
+    "file": "examples/http/adminListMatches.response.json",
+    "definition": "MatchPage",
+    "valid": true
+  },
+  {
+    "file": "examples/http/adminGameLogs.response.json",
+    "definition": "GameLogs",
+    "valid": true
+  },
+  {
+    "file": "examples/http/adminRerunGame.request.json",
+    "definition": "ReasonBody",
+    "valid": true
+  },
+  {
+    "file": "examples/http/adminRerunGame.response.json",
+    "definition": "RerunAccepted",
+    "valid": true
+  },
+  {
+    "file": "examples/http/adminOverrideMatch.request.json",
+    "definition": "Override",
+    "valid": true
+  },
+  {
+    "file": "examples/http/adminOverrideMatch.response.json",
+    "definition": "Match",
+    "valid": true
+  },
+  {
+    "file": "examples/http/adminQueue.response.json",
+    "definition": "Queue",
+    "valid": true
+  },
+  {
+    "file": "examples/http/adminControlQueue.request.json",
+    "definition": "QueueControl",
+    "valid": true
+  },
+  {
+    "file": "examples/http/adminControlQueue.response.json",
+    "definition": "Queue",
+    "valid": true
+  },
+  {
+    "file": "examples/http/adminSimilarity.response.json",
+    "definition": "SimilarityPage",
+    "valid": true
+  },
+  {
+    "file": "examples/http/adminAuditLog.response.json",
+    "definition": "AuditPage",
+    "valid": true
+  },
+  {
+    "file": "examples/http/adminAnnouncements.response.json",
+    "definition": "AnnouncementPage",
+    "valid": true
+  },
+  {
+    "file": "examples/http/adminCreateAnnouncement.request.json",
+    "definition": "AnnouncementWrite",
+    "valid": true
+  },
+  {
+    "file": "examples/http/adminCreateAnnouncement.response.json",
+    "definition": "Announcement",
+    "valid": true
+  },
+  {
+    "file": "examples/http/adminUpdateAnnouncement.request.json",
+    "definition": "AnnouncementWrite",
+    "valid": true
+  },
+  {
+    "file": "examples/http/adminUpdateAnnouncement.response.json",
+    "definition": "Announcement",
+    "valid": true
+  },
+  {
+    "file": "examples/http/adminPublishAnnouncement.request.json",
+    "definition": "ReasonBody",
+    "valid": true
+  },
+  {
+    "file": "examples/http/adminPublishAnnouncement.response.json",
+    "definition": "Announcement",
+    "valid": true
+  },
+  {
+    "file": "examples/http/buildCallback.request.json",
+    "definition": "BuildResult",
+    "valid": true
+  },
+  {
+    "file": "examples/http/buildCallback.response.json",
+    "definition": "Ack",
+    "valid": true
+  },
+  {
+    "file": "examples/http/gameCallback.request.json",
+    "definition": "GameResultCallback",
+    "valid": true
+  },
+  {
+    "file": "examples/http/gameCallback.response.json",
+    "definition": "Ack",
+    "valid": true
+  },
+  {
+    "file": "examples/http/workerHeartbeat.request.json",
+    "definition": "WorkerHeartbeat",
+    "valid": true
+  },
+  {
+    "file": "examples/http/workerHeartbeat.response.json",
+    "definition": "Ack",
+    "valid": true
+  }
+]

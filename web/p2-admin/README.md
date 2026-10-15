@@ -1,5 +1,30 @@
 # web/p2-admin — Cổng quản trị
 
+## Hợp đồng tích hợp và hướng dẫn cho AI
+
+Đọc [AGENTS.md](../../AGENTS.md), [hợp đồng tích hợp](../../integration.md) mục 2–4, 6–9 và README backend/P1/replay-viewer.
+
+- D sở hữu P2, dùng shared API client/auth/UI và lockfile của web; không tạo implementation auth thứ hai.
+- UI ở /admin; Vite base và Router basename phải khớp Caddy cùng deep link /admin/games/:id. API vẫn dùng /api/v1/admin/..., không suy ra API từ URL trang.
+- Guard admin chỉ phục vụ UX; backend kiểm tra quyền ở mọi request, kể cả signed URL source/stderr.
+- Dùng schema enum/trạng thái và khả năng thao tác do C đặc tả. Không tự cho phép freeze/run/rerun chỉ vì nút đang hiển thị.
+- API-01 và quy tắc vận hành TOUR-02 đã có trong [OpenAPI](../../contracts/openapi.yaml) và [behavior](../../contracts/behavior.md): freeze, queue pause, source tree, stderr, publish và khóa rerun downstream. Dùng [mock API](../../contracts/README.md) khi backend chưa có.
+- Mutation phải hiển thị xác nhận; thay đổi kết quả có reason bắt buộc. Disable khi đang gửi; không tự retry POST. Backend trả 409 thì refetch và giải thích trạng thái mới.
+- Rerun tạo game attempt mới; UI giữ lịch sử và đánh dấu attempt hiện hành, không sửa kết quả cũ trong cache như thể cùng bản ghi.
+- Dữ liệu mã nguồn/stderr chỉ tải sau quyền admin; truyền stderr cho viewer mode admin theo props chung.
+- Sự kiện WS dùng invalidate/refetch; queue polling mỗi 5 giây theo kế hoạch và dừng khi trang không hoạt động. Không suy ra server đã hoàn thành từ việc request được nhận.
+
+### Phụ thuộc theo nhóm màn hình
+
+Đội/source dùng API admin và phân quyền của C; bốc thăm/vòng đấu dùng trạng thái tournament/round và snapshot đã chốt; trận dùng attempt/result hiện hành; queue dùng heartbeat/job schema B+C; audit là dữ liệu chỉ đọc. Với mỗi màn hình, D ghi operationId + fixture + trạng thái lỗi trong test khi tạo implementation.
+
+### Chạy độc lập và bàn giao
+
+D bổ sung lệnh dev mock/dev thật, typecheck/test/build qua workspace web chung khi tạo code. Mock phải có admin, member bị từ chối, vòng đã khóa, game đang chạy, rerun và callback đến muộn.
+
+Trước merge: member không truy cập nguồn/log; thao tác nguy hiểm có reason và backend audit; double click không tạo hai vòng; 409 không làm UI báo thành công; xem attempt cũ/mới rõ ràng; chạy giải giả lập qua API thật. C review nghiệp vụ, A đối chiếu replay, B đối chiếu routing.
+
+
 **Phụ trách:** D · **Dự phòng:** C · **Công nghệ:** dùng chung khung với P1, bảng dữ liệu bằng TanStack Table
 
 P2 phục vụ hai việc: **điều hành giải** trong lúc thi và **kiểm tra code**. Giao diện chia hai khu rõ ràng. Ưu tiên đúng và nhanh hơn đẹp: dùng component bảng có sẵn, không tự thiết kế.

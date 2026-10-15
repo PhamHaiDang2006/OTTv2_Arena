@@ -1,0 +1,13 @@
+{
+  "items": [
+    {
+      "id": "00000001-0000-4000-8000-000000000001",
+      "title": "example",
+      "body": "example",
+      "published_at": null
+    }
+  ],
+  "page": 1,
+  "page_size": 20,
+  "total": 1
+}

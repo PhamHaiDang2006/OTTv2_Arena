@@ -1,0 +1,3504 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$defs": {
+    "Side": {
+      "type": "string",
+      "enum": [
+        "BLUE",
+        "RED"
+      ]
+    },
+    "Language": {
+      "type": "string",
+      "enum": [
+        "python",
+        "cpp",
+        "java",
+        "node"
+      ]
+    },
+    "Reason": {
+      "type": "string",
+      "enum": [
+        "GOAL",
+        "WIPEOUT",
+        "STALEMATE",
+        "TIMEOUT",
+        "ILLEGAL_MOVE",
+        "CRASH",
+        "MOVE_LIMIT"
+      ]
+    },
+    "SubmissionStatus": {
+      "type": "string",
+      "enum": [
+        "queued",
+        "building",
+        "ready",
+        "failed"
+      ]
+    },
+    "GameStatus": {
+      "type": "string",
+      "enum": [
+        "queued",
+        "running",
+        "finished",
+        "infra_error"
+      ]
+    },
+    "MatchStatus": {
+      "type": "string",
+      "enum": [
+        "queued",
+        "running",
+        "finished",
+        "blocked"
+      ]
+    },
+    "RoundStatus": {
+      "type": "string",
+      "enum": [
+        "draft",
+        "frozen",
+        "running",
+        "finished"
+      ]
+    },
+    "TournamentStatus": {
+      "type": "string",
+      "enum": [
+        "draft",
+        "drawn",
+        "running",
+        "finished"
+      ]
+    },
+    "Error": {
+      "type": "object",
+      "properties": {
+        "error": {
+          "type": "object",
+          "properties": {
+            "code": {
+              "type": "string",
+              "minLength": 1
+            },
+            "message": {
+              "type": "string",
+              "minLength": 1
+            },
+            "details": {
+              "type": "object",
+              "additionalProperties": true
+            }
+          },
+          "required": [
+            "code",
+            "message",
+            "details"
+          ],
+          "additionalProperties": false
+        },
+        "request_id": {
+          "type": "string",
+          "format": "uuid"
+        }
+      },
+      "required": [
+        "error",
+        "request_id"
+      ],
+      "additionalProperties": false
+    },
+    "WorkerError": {
+      "type": "object",
+      "properties": {
+        "code": {
+          "type": "string",
+          "minLength": 1
+        },
+        "message": {
+          "type": "string",
+          "minLength": 1
+        }
+      },
+      "required": [
+        "code",
+        "message"
+      ],
+      "additionalProperties": false
+    },
+    "User": {
+      "type": "object",
+      "properties": {
+        "id": {
+          "type": "string",
+          "format": "uuid"
+        },
+        "email": {
+          "type": "string",
+          "format": "email"
+        },
+        "role": {
+          "type": "string",
+          "enum": [
+            "member",
+            "captain",
+            "admin"
+          ]
+        },
+        "team_id": {
+          "anyOf": [
+            {
+              "type": "string",
+              "format": "uuid"
+            },
+            {
+              "type": "null"
+            }
+          ]
+        },
+        "is_active": {
+          "type": "boolean"
+        }
+      },
+      "required": [
+        "id",
+        "email",
+        "role",
+        "team_id",
+        "is_active"
+      ],
+      "additionalProperties": false
+    },
+    "Auth": {
+      "type": "object",
+      "properties": {
+        "access_token": {
+          "type": "string",
+          "minLength": 1
+        },
+        "token_type": {
+          "const": "bearer"
+        },
+        "expires_in": {
+          "const": 900
+        },
+        "user": {
+          "$ref": "#/$defs/User"
+        }
+      },
+      "required": [
+        "access_token",
+        "token_type",
+        "expires_in",
+        "user"
+      ],
+      "additionalProperties": false
+    },
+    "Login": {
+      "type": "object",
+      "properties": {
+        "email": {
+          "type": "string",
+          "format": "email"
+        },
+        "password": {
+          "type": "string",
+          "minLength": 1,
+          "maxLength": 256
+        }
+      },
+      "required": [
+        "email",
+        "password"
+      ],
+      "additionalProperties": false
+    },
+    "ActiveBot": {
+      "type": "object",
+      "properties": {
+        "team_id": {
+          "type": "string",
+          "format": "uuid"
+        },
+        "scope": {
+          "type": "string",
+          "enum": [
+            "scrimmage",
+            "tournament"
+          ]
+        },
+        "submission_id": {
+          "type": "string",
+          "format": "uuid"
+        }
+      },
+      "required": [
+        "team_id",
+        "scope",
+        "submission_id"
+      ],
+      "additionalProperties": false
+    },
+    "SetActiveBot": {
+      "type": "object",
+      "properties": {
+        "scope": {
+          "type": "string",
+          "enum": [
+            "scrimmage",
+            "tournament"
+          ]
+        },
+        "submission_id": {
+          "type": "string",
+          "format": "uuid"
+        }
+      },
+      "required": [
+        "scope",
+        "submission_id"
+      ],
+      "additionalProperties": false
+    },
+    "Team": {
+      "type": "object",
+      "properties": {
+        "id": {
+          "type": "string",
+          "format": "uuid"
+        },
+        "name": {
+          "type": "string",
+          "minLength": 1,
+          "maxLength": 100
+        },
+        "slug": {
+          "type": "string",
+          "pattern": "^[a-z0-9]+(?:-[a-z0-9]+)*$"
+        },
+        "status": {
+          "type": "string",
+          "enum": [
+            "pending",
+            "approved",
+            "disqualified"
+          ]
+        },
+        "is_locked": {
+          "type": "boolean"
+        },
+        "seed": {
+          "anyOf": [
+            {
+              "type": "integer",
+              "minimum": 1
+            },
+            {
+              "type": "null"
+            }
+          ]
+        },
+        "group_id": {
+          "anyOf": [
+            {
+              "type": "string",
+              "format": "uuid"
+            },
+            {
+              "type": "null"
+            }
+          ]
+        },
+        "members": {
+          "type": "array",
+          "items": {
+            "$ref": "#/$defs/User"
+          }
+        },
+        "active_bots": {
+          "type": "array",
+          "items": {
+            "$ref": "#/$defs/ActiveBot"
+          }
+        }
+      },
+      "required": [
+        "id",
+        "name",
+        "slug",
+        "status",
+        "is_locked",
+        "seed",
+        "group_id",
+        "members",
+        "active_bots"
+      ],
+      "additionalProperties": false
+    },
+    "TeamPatch": {
+      "type": "object",
+      "properties": {
+        "name": {
+          "type": "string",
+          "minLength": 1,
+          "maxLength": 100
+        }
+      },
+      "required": [
+        "name"
+      ],
+      "additionalProperties": false
+    },
+    "AdminTeamPatch": {
+      "type": "object",
+      "properties": {
+        "name": {
+          "type": "string",
+          "minLength": 1,
+          "maxLength": 100
+        },
+        "status": {
+          "type": "string",
+          "enum": [
+            "pending",
+            "approved",
+            "disqualified"
+          ]
+        },
+        "is_locked": {
+          "type": "boolean"
+        },
+        "seed": {
+          "anyOf": [
+            {
+              "type": "integer",
+              "minimum": 1
+            },
+            {
+              "type": "null"
+            }
+          ]
+        },
+        "reason": {
+          "type": "string",
+          "minLength": 1
+        }
+      },
+      "required": [
+        "reason"
+      ],
+      "additionalProperties": false,
+      "minProperties": 2
+    },
+    "TeamCreate": {
+      "type": "object",
+      "properties": {
+        "name": {
+          "type": "string",
+          "minLength": 1
+        },
+        "slug": {
+          "type": "string",
+          "pattern": "^[a-z0-9]+(?:-[a-z0-9]+)*$"
+        },
+        "captain_email": {
+          "type": "string",
+          "format": "email"
+        },
+        "seed": {
+          "anyOf": [
+            {
+              "type": "integer",
+              "minimum": 1
+            },
+            {
+              "type": "null"
+            }
+          ]
+        }
+      },
+      "required": [
+        "name",
+        "slug",
+        "captain_email",
+        "seed"
+      ],
+      "additionalProperties": false
+    },
+    "TeamPublic": {
+      "type": "object",
+      "properties": {
+        "id": {
+          "type": "string",
+          "format": "uuid"
+        },
+        "name": {
+          "type": "string",
+          "minLength": 1
+        },
+        "slug": {
+          "type": "string",
+          "minLength": 1
+        }
+      },
+      "required": [
+        "id",
+        "name",
+        "slug"
+      ],
+      "additionalProperties": false
+    },
+    "Submission": {
+      "type": "object",
+      "properties": {
+        "id": {
+          "type": "string",
+          "format": "uuid"
+        },
+        "team_id": {
+          "type": "string",
+          "format": "uuid"
+        },
+        "language": {
+          "$ref": "#/$defs/Language"
+        },
+        "status": {
+          "$ref": "#/$defs/SubmissionStatus"
+        },
+        "sha256": {
+          "type": "string",
+          "pattern": "^[a-f0-9]{64}$"
+        },
+        "submitted_at": {
+          "type": "string",
+          "format": "date-time",
+          "pattern": "Z$"
+        },
+        "build_error": {
+          "anyOf": [
+            {
+              "$ref": "#/$defs/WorkerError"
+            },
+            {
+              "type": "null"
+            }
+          ]
+        }
+      },
+      "required": [
+        "id",
+        "team_id",
+        "language",
+        "status",
+        "sha256",
+        "submitted_at",
+        "build_error"
+      ],
+      "additionalProperties": false
+    },
+    "SubmissionAccepted": {
+      "type": "object",
+      "properties": {
+        "id": {
+          "type": "string",
+          "format": "uuid"
+        },
+        "status": {
+          "const": "queued"
+        }
+      },
+      "required": [
+        "id",
+        "status"
+      ],
+      "additionalProperties": false
+    },
+    "BuildLog": {
+      "type": "object",
+      "properties": {
+        "submission_id": {
+          "type": "string",
+          "format": "uuid"
+        },
+        "status": {
+          "$ref": "#/$defs/SubmissionStatus"
+        },
+        "text": {
+          "type": "string"
+        },
+        "truncated": {
+          "type": "boolean"
+        },
+        "updated_at": {
+          "type": "string",
+          "format": "date-time",
+          "pattern": "Z$"
+        }
+      },
+      "required": [
+        "submission_id",
+        "status",
+        "text",
+        "truncated",
+        "updated_at"
+      ],
+      "additionalProperties": false
+    },
+    "ScrimmageCreate": {
+      "type": "object",
+      "properties": {
+        "opponent_team_id": {
+          "type": "string",
+          "format": "uuid"
+        }
+      },
+      "required": [
+        "opponent_team_id"
+      ],
+      "additionalProperties": false
+    },
+    "MatchAccepted": {
+      "type": "object",
+      "properties": {
+        "match_id": {
+          "type": "string",
+          "format": "uuid"
+        },
+        "status": {
+          "const": "queued"
+        }
+      },
+      "required": [
+        "match_id",
+        "status"
+      ],
+      "additionalProperties": false
+    },
+    "Quota": {
+      "type": "object",
+      "properties": {
+        "limit": {
+          "const": 60
+        },
+        "used": {
+          "type": "integer",
+          "minimum": 0
+        },
+        "remaining": {
+          "type": "integer",
+          "minimum": 0
+        },
+        "resets_at": {
+          "type": "string",
+          "format": "date-time",
+          "pattern": "Z$"
+        }
+      },
+      "required": [
+        "limit",
+        "used",
+        "remaining",
+        "resets_at"
+      ],
+      "additionalProperties": false
+    },
+    "SignedUrl": {
+      "type": "object",
+      "properties": {
+        "url": {
+          "type": "string",
+          "format": "uri"
+        },
+        "expires_at": {
+          "type": "string",
+          "format": "date-time",
+          "pattern": "Z$"
+        }
+      },
+      "required": [
+        "url",
+        "expires_at"
+      ],
+      "additionalProperties": false
+    },
+    "Result": {
+      "type": "object",
+      "properties": {
+        "winner": {
+          "$ref": "#/$defs/Side"
+        },
+        "reason": {
+          "$ref": "#/$defs/Reason"
+        },
+        "plies": {
+          "type": "integer",
+          "minimum": 0
+        }
+      },
+      "required": [
+        "winner",
+        "reason",
+        "plies"
+      ],
+      "additionalProperties": false
+    },
+    "Game": {
+      "type": "object",
+      "properties": {
+        "id": {
+          "type": "string",
+          "format": "uuid"
+        },
+        "match_id": {
+          "type": "string",
+          "format": "uuid"
+        },
+        "game_index": {
+          "type": "integer",
+          "minimum": 1
+        },
+        "attempt": {
+          "type": "integer",
+          "minimum": 1
+        },
+        "is_current": {
+          "type": "boolean"
+        },
+        "blue_submission_id": {
+          "type": "string",
+          "format": "uuid"
+        },
+        "red_submission_id": {
+          "type": "string",
+          "format": "uuid"
+        },
+        "map_id": {
+          "const": "standard"
+        },
+        "engine_version": {
+          "type": "string",
+          "pattern": "^[0-9]+\\.[0-9]+\\.[0-9]+(?:-[a-z0-9.-]+)?$"
+        },
+        "ruleset_id": {
+          "const": "dev-v1"
+        },
+        "status": {
+          "$ref": "#/$defs/GameStatus"
+        },
+        "result": {
+          "anyOf": [
+            {
+              "$ref": "#/$defs/Result"
+            },
+            {
+              "type": "null"
+            }
+          ]
+        },
+        "duration_ms": {
+          "anyOf": [
+            {
+              "type": "integer",
+              "minimum": 0
+            },
+            {
+              "type": "null"
+            }
+          ]
+        },
+        "replay_available": {
+          "type": "boolean"
+        }
+      },
+      "required": [
+        "id",
+        "match_id",
+        "game_index",
+        "attempt",
+        "is_current",
+        "blue_submission_id",
+        "red_submission_id",
+        "map_id",
+        "engine_version",
+        "ruleset_id",
+        "status",
+        "result",
+        "duration_ms",
+        "replay_available"
+      ],
+      "additionalProperties": false,
+      "allOf": [
+        {
+          "if": {
+            "properties": {
+              "status": {
+                "const": "finished"
+              }
+            }
+          },
+          "then": {
+            "properties": {
+              "result": {
+                "$ref": "#/$defs/Result"
+              },
+              "duration_ms": {
+                "type": "integer",
+                "minimum": 0
+              },
+              "replay_available": {
+                "const": true
+              }
+            }
+          },
+          "else": {
+            "properties": {
+              "result": {
+                "type": "null"
+              },
+              "replay_available": {
+                "const": false
+              }
+            }
+          }
+        }
+      ]
+    },
+    "Match": {
+      "type": "object",
+      "properties": {
+        "id": {
+          "type": "string",
+          "format": "uuid"
+        },
+        "tournament_id": {
+          "anyOf": [
+            {
+              "type": "string",
+              "format": "uuid"
+            },
+            {
+              "type": "null"
+            }
+          ]
+        },
+        "round_id": {
+          "anyOf": [
+            {
+              "type": "string",
+              "format": "uuid"
+            },
+            {
+              "type": "null"
+            }
+          ]
+        },
+        "stage": {
+          "type": "string",
+          "enum": [
+            "scrimmage",
+            "group",
+            "quarterfinal",
+            "semifinal",
+            "third_place",
+            "final"
+          ]
+        },
+        "team_a": {
+          "$ref": "#/$defs/TeamPublic"
+        },
+        "team_b": {
+          "$ref": "#/$defs/TeamPublic"
+        },
+        "best_of": {
+          "type": "string",
+          "enum": [
+            "two_games",
+            "first_to_2",
+            "first_to_3"
+          ]
+        },
+        "status": {
+          "$ref": "#/$defs/MatchStatus"
+        },
+        "winner_team_id": {
+          "anyOf": [
+            {
+              "type": "string",
+              "format": "uuid"
+            },
+            {
+              "type": "null"
+            }
+          ]
+        },
+        "score_a": {
+          "type": "integer",
+          "minimum": 0
+        },
+        "score_b": {
+          "type": "integer",
+          "minimum": 0
+        },
+        "games": {
+          "type": "array",
+          "items": {
+            "$ref": "#/$defs/Game"
+          }
+        }
+      },
+      "required": [
+        "id",
+        "tournament_id",
+        "round_id",
+        "stage",
+        "team_a",
+        "team_b",
+        "best_of",
+        "status",
+        "winner_team_id",
+        "score_a",
+        "score_b",
+        "games"
+      ],
+      "additionalProperties": false
+    },
+    "Announcement": {
+      "type": "object",
+      "properties": {
+        "id": {
+          "type": "string",
+          "format": "uuid"
+        },
+        "title": {
+          "type": "string",
+          "minLength": 1
+        },
+        "body": {
+          "type": "string"
+        },
+        "published_at": {
+          "anyOf": [
+            {
+              "type": "string",
+              "format": "date-time",
+              "pattern": "Z$"
+            },
+            {
+              "type": "null"
+            }
+          ]
+        }
+      },
+      "required": [
+        "id",
+        "title",
+        "body",
+        "published_at"
+      ],
+      "additionalProperties": false
+    },
+    "AnnouncementWrite": {
+      "type": "object",
+      "properties": {
+        "title": {
+          "type": "string",
+          "minLength": 1,
+          "maxLength": 200
+        },
+        "body": {
+          "type": "string",
+          "maxLength": 50000
+        }
+      },
+      "required": [
+        "title",
+        "body"
+      ],
+      "additionalProperties": false
+    },
+    "ReasonBody": {
+      "type": "object",
+      "properties": {
+        "reason": {
+          "type": "string",
+          "minLength": 1,
+          "maxLength": 2000
+        }
+      },
+      "required": [
+        "reason"
+      ],
+      "additionalProperties": false
+    },
+    "Tournament": {
+      "type": "object",
+      "properties": {
+        "id": {
+          "type": "string",
+          "format": "uuid"
+        },
+        "name": {
+          "type": "string",
+          "minLength": 1
+        },
+        "status": {
+          "$ref": "#/$defs/TournamentStatus"
+        },
+        "engine_version": {
+          "type": "string",
+          "pattern": "^[0-9]+\\.[0-9]+\\.[0-9]+(?:-[a-z0-9.-]+)?$"
+        },
+        "ruleset_id": {
+          "const": "dev-v1"
+        },
+        "draw_seed": {
+          "anyOf": [
+            {
+              "type": "integer",
+              "minimum": 0
+            },
+            {
+              "type": "null"
+            }
+          ]
+        },
+        "draw_locked": {
+          "type": "boolean"
+        }
+      },
+      "required": [
+        "id",
+        "name",
+        "status",
+        "engine_version",
+        "ruleset_id",
+        "draw_seed",
+        "draw_locked"
+      ],
+      "additionalProperties": false
+    },
+    "TournamentCreate": {
+      "type": "object",
+      "properties": {
+        "name": {
+          "type": "string",
+          "minLength": 1
+        },
+        "engine_version": {
+          "type": "string",
+          "pattern": "^[0-9]+\\.[0-9]+\\.[0-9]+(?:-[a-z0-9.-]+)?$"
+        },
+        "ruleset_id": {
+          "const": "dev-v1"
+        }
+      },
+      "required": [
+        "name",
+        "engine_version",
+        "ruleset_id"
+      ],
+      "additionalProperties": false
+    },
+    "DrawRequest": {
+      "type": "object",
+      "properties": {
+        "reason": {
+          "type": "string",
+          "minLength": 1
+        }
+      },
+      "required": [
+        "reason"
+      ],
+      "additionalProperties": false
+    },
+    "Draw": {
+      "type": "object",
+      "properties": {
+        "tournament_id": {
+          "type": "string",
+          "format": "uuid"
+        },
+        "draw_seed": {
+          "type": "integer",
+          "minimum": 0
+        },
+        "locked": {
+          "type": "boolean"
+        },
+        "groups": {
+          "type": "array",
+          "items": {
+            "type": "object",
+            "properties": {
+              "id": {
+                "type": "string",
+                "format": "uuid"
+              },
+              "label": {
+                "type": "string",
+                "enum": [
+                  "A",
+                  "B",
+                  "C",
+                  "D"
+                ]
+              },
+              "team_ids": {
+                "type": "array",
+                "items": {
+                  "type": "string",
+                  "format": "uuid"
+                }
+              }
+            },
+            "required": [
+              "id",
+              "label",
+              "team_ids"
+            ],
+            "additionalProperties": false
+          }
+        }
+      },
+      "required": [
+        "tournament_id",
+        "draw_seed",
+        "locked",
+        "groups"
+      ],
+      "additionalProperties": false
+    },
+    "Round": {
+      "type": "object",
+      "properties": {
+        "id": {
+          "type": "string",
+          "format": "uuid"
+        },
+        "tournament_id": {
+          "type": "string",
+          "format": "uuid"
+        },
+        "stage": {
+          "type": "string",
+          "enum": [
+            "group",
+            "quarterfinal",
+            "semifinal",
+            "third_place",
+            "final"
+          ]
+        },
+        "status": {
+          "$ref": "#/$defs/RoundStatus"
+        },
+        "freeze_at": {
+          "anyOf": [
+            {
+              "type": "string",
+              "format": "date-time",
+              "pattern": "Z$"
+            },
+            {
+              "type": "null"
+            }
+          ]
+        },
+        "snapshot_id": {
+          "anyOf": [
+            {
+              "type": "string",
+              "format": "uuid"
+            },
+            {
+              "type": "null"
+            }
+          ]
+        },
+        "matches_total": {
+          "type": "integer",
+          "minimum": 0
+        },
+        "matches_finished": {
+          "type": "integer",
+          "minimum": 0
+        }
+      },
+      "required": [
+        "id",
+        "tournament_id",
+        "stage",
+        "status",
+        "freeze_at",
+        "snapshot_id",
+        "matches_total",
+        "matches_finished"
+      ],
+      "additionalProperties": false
+    },
+    "RoundCreate": {
+      "type": "object",
+      "properties": {
+        "stage": {
+          "type": "string",
+          "enum": [
+            "group",
+            "quarterfinal",
+            "semifinal",
+            "third_place",
+            "final"
+          ]
+        },
+        "freeze_at": {
+          "anyOf": [
+            {
+              "type": "string",
+              "format": "date-time",
+              "pattern": "Z$"
+            },
+            {
+              "type": "null"
+            }
+          ]
+        }
+      },
+      "required": [
+        "stage",
+        "freeze_at"
+      ],
+      "additionalProperties": false
+    },
+    "RoundPatch": {
+      "type": "object",
+      "properties": {
+        "freeze_at": {
+          "anyOf": [
+            {
+              "type": "string",
+              "format": "date-time",
+              "pattern": "Z$"
+            },
+            {
+              "type": "null"
+            }
+          ]
+        },
+        "reason": {
+          "type": "string",
+          "minLength": 1
+        }
+      },
+      "required": [
+        "freeze_at",
+        "reason"
+      ],
+      "additionalProperties": false
+    },
+    "FrozenBot": {
+      "type": "object",
+      "properties": {
+        "team_id": {
+          "type": "string",
+          "format": "uuid"
+        },
+        "submission_id": {
+          "type": "string",
+          "format": "uuid"
+        }
+      },
+      "required": [
+        "team_id",
+        "submission_id"
+      ],
+      "additionalProperties": false
+    },
+    "Snapshot": {
+      "type": "object",
+      "properties": {
+        "id": {
+          "type": "string",
+          "format": "uuid"
+        },
+        "round_id": {
+          "type": "string",
+          "format": "uuid"
+        },
+        "frozen_at": {
+          "type": "string",
+          "format": "date-time",
+          "pattern": "Z$"
+        },
+        "bots": {
+          "type": "array",
+          "items": {
+            "$ref": "#/$defs/FrozenBot"
+          }
+        }
+      },
+      "required": [
+        "id",
+        "round_id",
+        "frozen_at",
+        "bots"
+      ],
+      "additionalProperties": false
+    },
+    "RunAccepted": {
+      "type": "object",
+      "properties": {
+        "round_id": {
+          "type": "string",
+          "format": "uuid"
+        },
+        "status": {
+          "const": "running"
+        },
+        "match_ids": {
+          "type": "array",
+          "items": {
+            "type": "string",
+            "format": "uuid"
+          }
+        }
+      },
+      "required": [
+        "round_id",
+        "status",
+        "match_ids"
+      ],
+      "additionalProperties": false
+    },
+    "RerunAccepted": {
+      "type": "object",
+      "properties": {
+        "game_id": {
+          "type": "string",
+          "format": "uuid"
+        },
+        "previous_game_id": {
+          "type": "string",
+          "format": "uuid"
+        },
+        "attempt": {
+          "type": "integer",
+          "minimum": 2
+        },
+        "status": {
+          "const": "queued"
+        }
+      },
+      "required": [
+        "game_id",
+        "previous_game_id",
+        "attempt",
+        "status"
+      ],
+      "additionalProperties": false
+    },
+    "Override": {
+      "type": "object",
+      "properties": {
+        "winner_team_id": {
+          "anyOf": [
+            {
+              "type": "string",
+              "format": "uuid"
+            },
+            {
+              "type": "null"
+            }
+          ]
+        },
+        "score_a": {
+          "type": "integer",
+          "minimum": 0
+        },
+        "score_b": {
+          "type": "integer",
+          "minimum": 0
+        },
+        "reason": {
+          "type": "string",
+          "minLength": 1
+        }
+      },
+      "required": [
+        "winner_team_id",
+        "score_a",
+        "score_b",
+        "reason"
+      ],
+      "additionalProperties": false
+    },
+    "Standing": {
+      "type": "object",
+      "properties": {
+        "group_id": {
+          "type": "string",
+          "format": "uuid"
+        },
+        "team": {
+          "$ref": "#/$defs/TeamPublic"
+        },
+        "rank": {
+          "type": "integer",
+          "minimum": 1
+        },
+        "played": {
+          "type": "integer",
+          "minimum": 0
+        },
+        "won": {
+          "type": "integer",
+          "minimum": 0
+        },
+        "drawn": {
+          "type": "integer",
+          "minimum": 0
+        },
+        "lost": {
+          "type": "integer",
+          "minimum": 0
+        },
+        "points": {
+          "type": "integer",
+          "minimum": 0
+        },
+        "game_diff": {
+          "type": "integer"
+        },
+        "games_won": {
+          "type": "integer",
+          "minimum": 0
+        },
+        "winning_plies": {
+          "type": "integer",
+          "minimum": 0
+        }
+      },
+      "required": [
+        "group_id",
+        "team",
+        "rank",
+        "played",
+        "won",
+        "drawn",
+        "lost",
+        "points",
+        "game_diff",
+        "games_won",
+        "winning_plies"
+      ],
+      "additionalProperties": false
+    },
+    "BracketSlot": {
+      "type": "object",
+      "properties": {
+        "round": {
+          "type": "string",
+          "enum": [
+            "quarterfinal",
+            "semifinal",
+            "third_place",
+            "final"
+          ]
+        },
+        "slot_index": {
+          "type": "integer",
+          "minimum": 1
+        },
+        "source_rule": {
+          "type": "string",
+          "minLength": 1
+        },
+        "team": {
+          "anyOf": [
+            {
+              "$ref": "#/$defs/TeamPublic"
+            },
+            {
+              "type": "null"
+            }
+          ]
+        },
+        "match_id": {
+          "anyOf": [
+            {
+              "type": "string",
+              "format": "uuid"
+            },
+            {
+              "type": "null"
+            }
+          ]
+        }
+      },
+      "required": [
+        "round",
+        "slot_index",
+        "source_rule",
+        "team",
+        "match_id"
+      ],
+      "additionalProperties": false
+    },
+    "Worker": {
+      "type": "object",
+      "properties": {
+        "id": {
+          "type": "string",
+          "minLength": 1
+        },
+        "kind": {
+          "type": "string",
+          "enum": [
+            "build",
+            "match"
+          ]
+        },
+        "last_seen_at": {
+          "type": "string",
+          "format": "date-time",
+          "pattern": "Z$"
+        },
+        "status": {
+          "type": "string",
+          "enum": [
+            "idle",
+            "busy",
+            "offline"
+          ]
+        },
+        "job_id": {
+          "anyOf": [
+            {
+              "type": "string",
+              "format": "uuid"
+            },
+            {
+              "type": "null"
+            }
+          ]
+        }
+      },
+      "required": [
+        "id",
+        "kind",
+        "last_seen_at",
+        "status",
+        "job_id"
+      ],
+      "additionalProperties": false
+    },
+    "Queue": {
+      "type": "object",
+      "properties": {
+        "queues": {
+          "type": "array",
+          "items": {
+            "type": "object",
+            "properties": {
+              "name": {
+                "type": "string",
+                "enum": [
+                  "build",
+                  "match:tournament",
+                  "match:scrimmage"
+                ]
+              },
+              "paused": {
+                "type": "boolean"
+              },
+              "queued": {
+                "type": "integer",
+                "minimum": 0
+              },
+              "running": {
+                "type": "integer",
+                "minimum": 0
+              },
+              "failed": {
+                "type": "integer",
+                "minimum": 0
+              }
+            },
+            "required": [
+              "name",
+              "paused",
+              "queued",
+              "running",
+              "failed"
+            ],
+            "additionalProperties": false
+          }
+        },
+        "workers": {
+          "type": "array",
+          "items": {
+            "$ref": "#/$defs/Worker"
+          }
+        }
+      },
+      "required": [
+        "queues",
+        "workers"
+      ],
+      "additionalProperties": false
+    },
+    "QueueControl": {
+      "type": "object",
+      "properties": {
+        "name": {
+          "type": "string",
+          "enum": [
+            "build",
+            "match:tournament",
+            "match:scrimmage"
+          ]
+        },
+        "paused": {
+          "type": "boolean"
+        },
+        "reason": {
+          "type": "string",
+          "minLength": 1
+        }
+      },
+      "required": [
+        "name",
+        "paused",
+        "reason"
+      ],
+      "additionalProperties": false
+    },
+    "SourceTree": {
+      "type": "object",
+      "properties": {
+        "submission_id": {
+          "type": "string",
+          "format": "uuid"
+        },
+        "files": {
+          "type": "array",
+          "items": {
+            "type": "object",
+            "properties": {
+              "path": {
+                "type": "string",
+                "pattern": "^(?!/)(?!.*\\.\\.)(?!.*\\\\)[a-zA-Z0-9_./-]+$"
+              },
+              "size_bytes": {
+                "type": "integer",
+                "minimum": 0
+              },
+              "language": {
+                "type": "string"
+              }
+            },
+            "required": [
+              "path",
+              "size_bytes",
+              "language"
+            ],
+            "additionalProperties": false
+          }
+        }
+      },
+      "required": [
+        "submission_id",
+        "files"
+      ],
+      "additionalProperties": false
+    },
+    "SourceFile": {
+      "type": "object",
+      "properties": {
+        "submission_id": {
+          "type": "string",
+          "format": "uuid"
+        },
+        "path": {
+          "type": "string",
+          "pattern": "^(?!/)(?!.*\\.\\.)(?!.*\\\\)[a-zA-Z0-9_./-]+$"
+        },
+        "content": {
+          "type": "string"
+        },
+        "truncated": {
+          "type": "boolean"
+        }
+      },
+      "required": [
+        "submission_id",
+        "path",
+        "content",
+        "truncated"
+      ],
+      "additionalProperties": false
+    },
+    "GameLogs": {
+      "type": "object",
+      "properties": {
+        "game_id": {
+          "type": "string",
+          "format": "uuid"
+        },
+        "BLUE": {
+          "type": "string"
+        },
+        "RED": {
+          "type": "string"
+        },
+        "blue_truncated": {
+          "type": "boolean"
+        },
+        "red_truncated": {
+          "type": "boolean"
+        }
+      },
+      "required": [
+        "game_id",
+        "BLUE",
+        "RED",
+        "blue_truncated",
+        "red_truncated"
+      ],
+      "additionalProperties": false
+    },
+    "Similarity": {
+      "type": "object",
+      "properties": {
+        "submission_a": {
+          "type": "string",
+          "format": "uuid"
+        },
+        "submission_b": {
+          "type": "string",
+          "format": "uuid"
+        },
+        "score": {
+          "type": "number",
+          "minimum": 0,
+          "maximum": 1
+        },
+        "checked_at": {
+          "type": "string",
+          "format": "date-time",
+          "pattern": "Z$"
+        }
+      },
+      "required": [
+        "submission_a",
+        "submission_b",
+        "score",
+        "checked_at"
+      ],
+      "additionalProperties": false
+    },
+    "Audit": {
+      "type": "object",
+      "properties": {
+        "id": {
+          "type": "string",
+          "format": "uuid"
+        },
+        "actor_user_id": {
+          "anyOf": [
+            {
+              "type": "string",
+              "format": "uuid"
+            },
+            {
+              "type": "null"
+            }
+          ]
+        },
+        "action": {
+          "type": "string",
+          "minLength": 1
+        },
+        "target_type": {
+          "type": "string",
+          "minLength": 1
+        },
+        "target_id": {
+          "anyOf": [
+            {
+              "type": "string",
+              "format": "uuid"
+            },
+            {
+              "type": "null"
+            }
+          ]
+        },
+        "payload": {
+          "type": "object",
+          "additionalProperties": true
+        },
+        "created_at": {
+          "type": "string",
+          "format": "date-time",
+          "pattern": "Z$"
+        }
+      },
+      "required": [
+        "id",
+        "actor_user_id",
+        "action",
+        "target_type",
+        "target_id",
+        "payload",
+        "created_at"
+      ],
+      "additionalProperties": false
+    },
+    "ImportRequest": {
+      "type": "object",
+      "properties": {
+        "csv": {
+          "type": "string",
+          "minLength": 1,
+          "maxLength": 1048576
+        }
+      },
+      "required": [
+        "csv"
+      ],
+      "additionalProperties": false
+    },
+    "ImportResult": {
+      "type": "object",
+      "properties": {
+        "created": {
+          "type": "array",
+          "items": {
+            "$ref": "#/$defs/TeamPublic"
+          }
+        },
+        "errors": {
+          "type": "array",
+          "items": {
+            "type": "object",
+            "properties": {
+              "row": {
+                "type": "integer",
+                "minimum": 1
+              },
+              "code": {
+                "type": "string",
+                "minLength": 1
+              },
+              "message": {
+                "type": "string",
+                "minLength": 1
+              }
+            },
+            "required": [
+              "row",
+              "code",
+              "message"
+            ],
+            "additionalProperties": false
+          }
+        }
+      },
+      "required": [
+        "created",
+        "errors"
+      ],
+      "additionalProperties": false
+    },
+    "Capabilities": {
+      "type": "object",
+      "properties": {
+        "contract_version": {
+          "const": "1.0.0"
+        },
+        "languages": {
+          "type": "array",
+          "items": {
+            "$ref": "#/$defs/Language"
+          }
+        },
+        "max_upload_bytes": {
+          "const": 1048576
+        },
+        "max_files": {
+          "const": 50
+        },
+        "ruleset_id": {
+          "const": "dev-v1"
+        },
+        "ruleset_status": {
+          "const": "development"
+        },
+        "tournament_enabled": {
+          "type": "boolean"
+        }
+      },
+      "required": [
+        "contract_version",
+        "languages",
+        "max_upload_bytes",
+        "max_files",
+        "ruleset_id",
+        "ruleset_status",
+        "tournament_enabled"
+      ],
+      "additionalProperties": false
+    },
+    "Docs": {
+      "type": "object",
+      "properties": {
+        "rules_markdown": {
+          "type": "string"
+        },
+        "protocol_markdown": {
+          "type": "string"
+        },
+        "starter_kits": {
+          "type": "array",
+          "items": {
+            "type": "object",
+            "properties": {
+              "language": {
+                "$ref": "#/$defs/Language"
+              },
+              "engine_version": {
+                "type": "string",
+                "pattern": "^[0-9]+\\.[0-9]+\\.[0-9]+(?:-[a-z0-9.-]+)?$"
+              },
+              "url": {
+                "type": "string",
+                "format": "uri"
+              },
+              "sha256": {
+                "type": "string",
+                "pattern": "^[a-f0-9]{64}$"
+              }
+            },
+            "required": [
+              "language",
+              "engine_version",
+              "url",
+              "sha256"
+            ],
+            "additionalProperties": false
+          }
+        }
+      },
+      "required": [
+        "rules_markdown",
+        "protocol_markdown",
+        "starter_kits"
+      ],
+      "additionalProperties": false
+    },
+    "Health": {
+      "type": "object",
+      "properties": {
+        "status": {
+          "type": "string",
+          "enum": [
+            "ok",
+            "degraded"
+          ]
+        },
+        "contract_version": {
+          "const": "1.0.0"
+        }
+      },
+      "required": [
+        "status",
+        "contract_version"
+      ],
+      "additionalProperties": false
+    },
+    "Ack": {
+      "type": "object",
+      "properties": {
+        "accepted": {
+          "const": true
+        }
+      },
+      "required": [
+        "accepted"
+      ],
+      "additionalProperties": false
+    },
+    "Players": {
+      "type": "object",
+      "properties": {
+        "BLUE": {
+          "type": "object",
+          "properties": {
+            "team": {
+              "type": "string",
+              "pattern": "^[a-z0-9]+(?:-[a-z0-9]+)*$"
+            },
+            "submission_id": {
+              "type": "string",
+              "format": "uuid"
+            }
+          },
+          "required": [
+            "team",
+            "submission_id"
+          ],
+          "additionalProperties": false
+        },
+        "RED": {
+          "type": "object",
+          "properties": {
+            "team": {
+              "type": "string",
+              "pattern": "^[a-z0-9]+(?:-[a-z0-9]+)*$"
+            },
+            "submission_id": {
+              "type": "string",
+              "format": "uuid"
+            }
+          },
+          "required": [
+            "team",
+            "submission_id"
+          ],
+          "additionalProperties": false
+        }
+      },
+      "required": [
+        "BLUE",
+        "RED"
+      ],
+      "additionalProperties": false
+    },
+    "GameConfig": {
+      "type": "object",
+      "properties": {
+        "engine_version": {
+          "type": "string",
+          "pattern": "^[0-9]+\\.[0-9]+\\.[0-9]+(?:-[a-z0-9.-]+)?$"
+        },
+        "ruleset_id": {
+          "const": "dev-v1"
+        },
+        "map_id": {
+          "const": "standard"
+        },
+        "initial_fen": {
+          "type": "string",
+          "pattern": "^[BPKbpk1-9]+(?:/[BPKbpk1-9]+){8}$"
+        },
+        "players": {
+          "$ref": "#/$defs/Players"
+        },
+        "budget_ms": {
+          "const": 60000
+        },
+        "init_ms": {
+          "const": 10000
+        },
+        "grace_ms": {
+          "const": 50
+        },
+        "hard_timeout_extra_ms": {
+          "const": 1000
+        },
+        "max_turns": {
+          "const": 300
+        },
+        "seed": {
+          "type": "integer",
+          "minimum": 0
+        }
+      },
+      "required": [
+        "engine_version",
+        "ruleset_id",
+        "map_id",
+        "initial_fen",
+        "players",
+        "budget_ms",
+        "init_ms",
+        "grace_ms",
+        "hard_timeout_extra_ms",
+        "max_turns",
+        "seed"
+      ],
+      "additionalProperties": false
+    },
+    "BuildJob": {
+      "type": "object",
+      "properties": {
+        "schema_version": {
+          "const": 1
+        },
+        "job_id": {
+          "type": "string",
+          "format": "uuid"
+        },
+        "submission_id": {
+          "type": "string",
+          "format": "uuid"
+        },
+        "language": {
+          "$ref": "#/$defs/Language"
+        },
+        "source_key": {
+          "type": "string",
+          "pattern": "^(?!/)(?!.*\\.\\.)(?!.*\\\\)[a-zA-Z0-9_./-]+$"
+        },
+        "source_sha256": {
+          "type": "string",
+          "pattern": "^[a-f0-9]{64}$"
+        },
+        "engine_version": {
+          "type": "string",
+          "pattern": "^[0-9]+\\.[0-9]+\\.[0-9]+(?:-[a-z0-9.-]+)?$"
+        }
+      },
+      "required": [
+        "schema_version",
+        "job_id",
+        "submission_id",
+        "language",
+        "source_key",
+        "source_sha256",
+        "engine_version"
+      ],
+      "additionalProperties": false
+    },
+    "MatchJob": {
+      "type": "object",
+      "properties": {
+        "schema_version": {
+          "const": 1
+        },
+        "job_id": {
+          "type": "string",
+          "format": "uuid"
+        },
+        "game_id": {
+          "type": "string",
+          "format": "uuid"
+        },
+        "attempt": {
+          "type": "integer",
+          "minimum": 1
+        },
+        "blue_image": {
+          "type": "string",
+          "minLength": 1
+        },
+        "red_image": {
+          "type": "string",
+          "minLength": 1
+        },
+        "map_id": {
+          "const": "standard"
+        },
+        "engine_version": {
+          "type": "string",
+          "pattern": "^[0-9]+\\.[0-9]+\\.[0-9]+(?:-[a-z0-9.-]+)?$"
+        },
+        "players": {
+          "$ref": "#/$defs/Players"
+        },
+        "config": {
+          "$ref": "#/$defs/GameConfig"
+        }
+      },
+      "required": [
+        "schema_version",
+        "job_id",
+        "game_id",
+        "attempt",
+        "blue_image",
+        "red_image",
+        "map_id",
+        "engine_version",
+        "players",
+        "config"
+      ],
+      "additionalProperties": false
+    },
+    "BuildResult": {
+      "oneOf": [
+        {
+          "type": "object",
+          "properties": {
+            "schema_version": {
+              "const": 1
+            },
+            "job_id": {
+              "type": "string",
+              "format": "uuid"
+            },
+            "submission_id": {
+              "type": "string",
+              "format": "uuid"
+            },
+            "status": {
+              "const": "building"
+            },
+            "image_tag": {
+              "type": "null"
+            },
+            "build_log_key": {
+              "anyOf": [
+                {
+                  "type": "string",
+                  "pattern": "^(?!/)(?!.*\\.\\.)(?!.*\\\\)[a-zA-Z0-9_./-]+$"
+                },
+                {
+                  "type": "null"
+                }
+              ]
+            },
+            "error": {
+              "type": "null"
+            }
+          },
+          "required": [
+            "schema_version",
+            "job_id",
+            "submission_id",
+            "status",
+            "image_tag",
+            "build_log_key",
+            "error"
+          ],
+          "additionalProperties": false
+        },
+        {
+          "type": "object",
+          "properties": {
+            "schema_version": {
+              "const": 1
+            },
+            "job_id": {
+              "type": "string",
+              "format": "uuid"
+            },
+            "submission_id": {
+              "type": "string",
+              "format": "uuid"
+            },
+            "status": {
+              "const": "ready"
+            },
+            "image_tag": {
+              "type": "string",
+              "minLength": 1
+            },
+            "build_log_key": {
+              "type": "string",
+              "pattern": "^(?!/)(?!.*\\.\\.)(?!.*\\\\)[a-zA-Z0-9_./-]+$"
+            },
+            "error": {
+              "type": "null"
+            }
+          },
+          "required": [
+            "schema_version",
+            "job_id",
+            "submission_id",
+            "status",
+            "image_tag",
+            "build_log_key",
+            "error"
+          ],
+          "additionalProperties": false
+        },
+        {
+          "type": "object",
+          "properties": {
+            "schema_version": {
+              "const": 1
+            },
+            "job_id": {
+              "type": "string",
+              "format": "uuid"
+            },
+            "submission_id": {
+              "type": "string",
+              "format": "uuid"
+            },
+            "status": {
+              "const": "failed"
+            },
+            "image_tag": {
+              "type": "null"
+            },
+            "build_log_key": {
+              "anyOf": [
+                {
+                  "type": "string",
+                  "pattern": "^(?!/)(?!.*\\.\\.)(?!.*\\\\)[a-zA-Z0-9_./-]+$"
+                },
+                {
+                  "type": "null"
+                }
+              ]
+            },
+            "error": {
+              "$ref": "#/$defs/WorkerError"
+            }
+          },
+          "required": [
+            "schema_version",
+            "job_id",
+            "submission_id",
+            "status",
+            "image_tag",
+            "build_log_key",
+            "error"
+          ],
+          "additionalProperties": false
+        }
+      ]
+    },
+    "GameResultCallback": {
+      "oneOf": [
+        {
+          "type": "object",
+          "properties": {
+            "schema_version": {
+              "const": 1
+            },
+            "job_id": {
+              "type": "string",
+              "format": "uuid"
+            },
+            "game_id": {
+              "type": "string",
+              "format": "uuid"
+            },
+            "attempt": {
+              "type": "integer",
+              "minimum": 1
+            },
+            "status": {
+              "const": "running"
+            },
+            "result": {
+              "type": "null"
+            },
+            "replay_key": {
+              "type": "null"
+            },
+            "log_key": {
+              "type": "null"
+            },
+            "duration_ms": {
+              "const": 0
+            },
+            "error": {
+              "type": "null"
+            }
+          },
+          "required": [
+            "schema_version",
+            "job_id",
+            "game_id",
+            "attempt",
+            "status",
+            "result",
+            "replay_key",
+            "log_key",
+            "duration_ms",
+            "error"
+          ],
+          "additionalProperties": false
+        },
+        {
+          "type": "object",
+          "properties": {
+            "schema_version": {
+              "const": 1
+            },
+            "job_id": {
+              "type": "string",
+              "format": "uuid"
+            },
+            "game_id": {
+              "type": "string",
+              "format": "uuid"
+            },
+            "attempt": {
+              "type": "integer",
+              "minimum": 1
+            },
+            "status": {
+              "const": "finished"
+            },
+            "result": {
+              "$ref": "#/$defs/Result"
+            },
+            "replay_key": {
+              "type": "string",
+              "pattern": "^(?!/)(?!.*\\.\\.)(?!.*\\\\)[a-zA-Z0-9_./-]+$"
+            },
+            "log_key": {
+              "type": "string",
+              "pattern": "^(?!/)(?!.*\\.\\.)(?!.*\\\\)[a-zA-Z0-9_./-]+$"
+            },
+            "duration_ms": {
+              "type": "integer",
+              "minimum": 0
+            },
+            "error": {
+              "type": "null"
+            }
+          },
+          "required": [
+            "schema_version",
+            "job_id",
+            "game_id",
+            "attempt",
+            "status",
+            "result",
+            "replay_key",
+            "log_key",
+            "duration_ms",
+            "error"
+          ],
+          "additionalProperties": false
+        },
+        {
+          "type": "object",
+          "properties": {
+            "schema_version": {
+              "const": 1
+            },
+            "job_id": {
+              "type": "string",
+              "format": "uuid"
+            },
+            "game_id": {
+              "type": "string",
+              "format": "uuid"
+            },
+            "attempt": {
+              "type": "integer",
+              "minimum": 1
+            },
+            "status": {
+              "const": "infra_error"
+            },
+            "result": {
+              "type": "null"
+            },
+            "replay_key": {
+              "anyOf": [
+                {
+                  "type": "string",
+                  "pattern": "^(?!/)(?!.*\\.\\.)(?!.*\\\\)[a-zA-Z0-9_./-]+$"
+                },
+                {
+                  "type": "null"
+                }
+              ]
+            },
+            "log_key": {
+              "anyOf": [
+                {
+                  "type": "string",
+                  "pattern": "^(?!/)(?!.*\\.\\.)(?!.*\\\\)[a-zA-Z0-9_./-]+$"
+                },
+                {
+                  "type": "null"
+                }
+              ]
+            },
+            "duration_ms": {
+              "type": "integer",
+              "minimum": 0
+            },
+            "error": {
+              "type": "object",
+              "properties": {
+                "code": {
+                  "const": "INFRA_ERROR"
+                },
+                "message": {
+                  "type": "string",
+                  "minLength": 1
+                }
+              },
+              "required": [
+                "code",
+                "message"
+              ],
+              "additionalProperties": false
+            }
+          },
+          "required": [
+            "schema_version",
+            "job_id",
+            "game_id",
+            "attempt",
+            "status",
+            "result",
+            "replay_key",
+            "log_key",
+            "duration_ms",
+            "error"
+          ],
+          "additionalProperties": false
+        }
+      ]
+    },
+    "Replay": {
+      "type": "object",
+      "properties": {
+        "format": {
+          "const": 1
+        },
+        "engine_version": {
+          "type": "string",
+          "pattern": "^[0-9]+\\.[0-9]+\\.[0-9]+(?:-[a-z0-9.-]+)?$"
+        },
+        "ruleset_id": {
+          "const": "dev-v1"
+        },
+        "map_id": {
+          "const": "standard"
+        },
+        "initial_fen": {
+          "type": "string",
+          "pattern": "^[BPKbpk1-9]+(?:/[BPKbpk1-9]+){8}$"
+        },
+        "players": {
+          "type": "object",
+          "properties": {
+            "BLUE": {
+              "type": "object",
+              "properties": {
+                "team": {
+                  "type": "string",
+                  "pattern": "^[a-z0-9]+(?:-[a-z0-9]+)*$"
+                },
+                "submission_id": {
+                  "type": "string",
+                  "format": "uuid"
+                },
+                "bot_name": {
+                  "type": "string",
+                  "maxLength": 64
+                }
+              },
+              "required": [
+                "team",
+                "submission_id",
+                "bot_name"
+              ],
+              "additionalProperties": false
+            },
+            "RED": {
+              "type": "object",
+              "properties": {
+                "team": {
+                  "type": "string",
+                  "pattern": "^[a-z0-9]+(?:-[a-z0-9]+)*$"
+                },
+                "submission_id": {
+                  "type": "string",
+                  "format": "uuid"
+                },
+                "bot_name": {
+                  "type": "string",
+                  "maxLength": 64
+                }
+              },
+              "required": [
+                "team",
+                "submission_id",
+                "bot_name"
+              ],
+              "additionalProperties": false
+            }
+          },
+          "required": [
+            "BLUE",
+            "RED"
+          ],
+          "additionalProperties": false
+        },
+        "moves": {
+          "type": "array",
+          "items": {
+            "type": "object",
+            "properties": {
+              "ply": {
+                "type": "integer",
+                "minimum": 1
+              },
+              "side": {
+                "$ref": "#/$defs/Side"
+              },
+              "move": {
+                "type": "string",
+                "pattern": "^[a-i][1-9][a-i][1-9]$"
+              },
+              "think_ms": {
+                "type": "integer",
+                "minimum": 0
+              },
+              "clock_ms": {
+                "type": "integer",
+                "minimum": 0
+              },
+              "capture": {
+                "anyOf": [
+                  {
+                    "type": "string",
+                    "enum": [
+                      "B",
+                      "P",
+                      "K",
+                      "b",
+                      "p",
+                      "k"
+                    ]
+                  },
+                  {
+                    "type": "null"
+                  }
+                ]
+              },
+              "debug": {
+                "type": "array",
+                "items": {
+                  "type": "string",
+                  "pattern": "^#",
+                  "maxLength": 4096
+                }
+              }
+            },
+            "required": [
+              "ply",
+              "side",
+              "move",
+              "think_ms",
+              "clock_ms",
+              "capture",
+              "debug"
+            ],
+            "additionalProperties": false
+          }
+        },
+        "result": {
+          "$ref": "#/$defs/Result"
+        }
+      },
+      "required": [
+        "format",
+        "engine_version",
+        "ruleset_id",
+        "map_id",
+        "initial_fen",
+        "players",
+        "moves",
+        "result"
+      ],
+      "additionalProperties": false
+    },
+    "EngineResult": {
+      "type": "object",
+      "properties": {
+        "winner": {
+          "$ref": "#/$defs/Side"
+        },
+        "reason": {
+          "$ref": "#/$defs/Reason"
+        },
+        "plies": {
+          "type": "integer",
+          "minimum": 0
+        },
+        "duration_ms": {
+          "type": "integer",
+          "minimum": 0
+        },
+        "replay": {
+          "$ref": "#/$defs/Replay"
+        }
+      },
+      "required": [
+        "winner",
+        "reason",
+        "plies",
+        "duration_ms",
+        "replay"
+      ],
+      "additionalProperties": false
+    },
+    "WsClient": {
+      "oneOf": [
+        {
+          "type": "object",
+          "properties": {
+            "type": {
+              "const": "auth"
+            },
+            "access_token": {
+              "type": "string",
+              "minLength": 1
+            }
+          },
+          "required": [
+            "type",
+            "access_token"
+          ],
+          "additionalProperties": false
+        },
+        {
+          "type": "object",
+          "properties": {
+            "type": {
+              "const": "subscribe"
+            },
+            "channel": {
+              "anyOf": [
+                {
+                  "const": "public"
+                },
+                {
+                  "type": "string",
+                  "pattern": "^team:[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$"
+                }
+              ]
+            }
+          },
+          "required": [
+            "type",
+            "channel"
+          ],
+          "additionalProperties": false
+        },
+        {
+          "type": "object",
+          "properties": {
+            "type": {
+              "const": "unsubscribe"
+            },
+            "channel": {
+              "anyOf": [
+                {
+                  "const": "public"
+                },
+                {
+                  "type": "string",
+                  "pattern": "^team:[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$"
+                }
+              ]
+            }
+          },
+          "required": [
+            "type",
+            "channel"
+          ],
+          "additionalProperties": false
+        },
+        {
+          "type": "object",
+          "properties": {
+            "type": {
+              "const": "ping"
+            }
+          },
+          "required": [
+            "type"
+          ],
+          "additionalProperties": false
+        }
+      ]
+    },
+    "WsEvent": {
+      "oneOf": [
+        {
+          "type": "object",
+          "properties": {
+            "schema_version": {
+              "const": 1
+            },
+            "event_id": {
+              "type": "string",
+              "format": "uuid"
+            },
+            "type": {
+              "const": "build.updated"
+            },
+            "channel": {
+              "type": "string",
+              "pattern": "^team:[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$"
+            },
+            "occurred_at": {
+              "type": "string",
+              "format": "date-time",
+              "pattern": "Z$"
+            },
+            "data": {
+              "type": "object",
+              "properties": {
+                "submission_id": {
+                  "type": "string",
+                  "format": "uuid"
+                },
+                "status": {
+                  "$ref": "#/$defs/SubmissionStatus"
+                }
+              },
+              "required": [
+                "submission_id",
+                "status"
+              ],
+              "additionalProperties": false
+            }
+          },
+          "required": [
+            "schema_version",
+            "event_id",
+            "type",
+            "channel",
+            "occurred_at",
+            "data"
+          ],
+          "additionalProperties": false
+        },
+        {
+          "type": "object",
+          "properties": {
+            "schema_version": {
+              "const": 1
+            },
+            "event_id": {
+              "type": "string",
+              "format": "uuid"
+            },
+            "type": {
+              "const": "game.finished"
+            },
+            "channel": {
+              "anyOf": [
+                {
+                  "const": "public"
+                },
+                {
+                  "type": "string",
+                  "pattern": "^team:[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$"
+                }
+              ]
+            },
+            "occurred_at": {
+              "type": "string",
+              "format": "date-time",
+              "pattern": "Z$"
+            },
+            "data": {
+              "type": "object",
+              "properties": {
+                "game_id": {
+                  "type": "string",
+                  "format": "uuid"
+                },
+                "match_id": {
+                  "type": "string",
+                  "format": "uuid"
+                }
+              },
+              "required": [
+                "game_id",
+                "match_id"
+              ],
+              "additionalProperties": false
+            }
+          },
+          "required": [
+            "schema_version",
+            "event_id",
+            "type",
+            "channel",
+            "occurred_at",
+            "data"
+          ],
+          "additionalProperties": false
+        },
+        {
+          "type": "object",
+          "properties": {
+            "schema_version": {
+              "const": 1
+            },
+            "event_id": {
+              "type": "string",
+              "format": "uuid"
+            },
+            "type": {
+              "const": "match.finished"
+            },
+            "channel": {
+              "anyOf": [
+                {
+                  "const": "public"
+                },
+                {
+                  "type": "string",
+                  "pattern": "^team:[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$"
+                }
+              ]
+            },
+            "occurred_at": {
+              "type": "string",
+              "format": "date-time",
+              "pattern": "Z$"
+            },
+            "data": {
+              "type": "object",
+              "properties": {
+                "match_id": {
+                  "type": "string",
+                  "format": "uuid"
+                }
+              },
+              "required": [
+                "match_id"
+              ],
+              "additionalProperties": false
+            }
+          },
+          "required": [
+            "schema_version",
+            "event_id",
+            "type",
+            "channel",
+            "occurred_at",
+            "data"
+          ],
+          "additionalProperties": false
+        },
+        {
+          "type": "object",
+          "properties": {
+            "schema_version": {
+              "const": 1
+            },
+            "event_id": {
+              "type": "string",
+              "format": "uuid"
+            },
+            "type": {
+              "const": "standings.updated"
+            },
+            "channel": {
+              "anyOf": [
+                {
+                  "const": "public"
+                },
+                {
+                  "type": "string",
+                  "pattern": "^team:[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$"
+                }
+              ]
+            },
+            "occurred_at": {
+              "type": "string",
+              "format": "date-time",
+              "pattern": "Z$"
+            },
+            "data": {
+              "type": "object",
+              "properties": {
+                "tournament_id": {
+                  "type": "string",
+                  "format": "uuid"
+                },
+                "group_id": {
+                  "type": "string",
+                  "format": "uuid"
+                }
+              },
+              "required": [
+                "tournament_id",
+                "group_id"
+              ],
+              "additionalProperties": false
+            }
+          },
+          "required": [
+            "schema_version",
+            "event_id",
+            "type",
+            "channel",
+            "occurred_at",
+            "data"
+          ],
+          "additionalProperties": false
+        },
+        {
+          "type": "object",
+          "properties": {
+            "schema_version": {
+              "const": 1
+            },
+            "event_id": {
+              "type": "string",
+              "format": "uuid"
+            },
+            "type": {
+              "const": "announcement.published"
+            },
+            "channel": {
+              "anyOf": [
+                {
+                  "const": "public"
+                },
+                {
+                  "type": "string",
+                  "pattern": "^team:[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$"
+                }
+              ]
+            },
+            "occurred_at": {
+              "type": "string",
+              "format": "date-time",
+              "pattern": "Z$"
+            },
+            "data": {
+              "type": "object",
+              "properties": {
+                "announcement_id": {
+                  "type": "string",
+                  "format": "uuid"
+                }
+              },
+              "required": [
+                "announcement_id"
+              ],
+              "additionalProperties": false
+            }
+          },
+          "required": [
+            "schema_version",
+            "event_id",
+            "type",
+            "channel",
+            "occurred_at",
+            "data"
+          ],
+          "additionalProperties": false
+        }
+      ]
+    },
+    "WsServer": {
+      "oneOf": [
+        {
+          "$ref": "#/$defs/WsEvent"
+        },
+        {
+          "type": "object",
+          "properties": {
+            "type": {
+              "const": "auth.ok"
+            }
+          },
+          "required": [
+            "type"
+          ],
+          "additionalProperties": false
+        },
+        {
+          "type": "object",
+          "properties": {
+            "type": {
+              "const": "subscribed"
+            },
+            "channel": {
+              "anyOf": [
+                {
+                  "const": "public"
+                },
+                {
+                  "type": "string",
+                  "pattern": "^team:[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$"
+                }
+              ]
+            }
+          },
+          "required": [
+            "type",
+            "channel"
+          ],
+          "additionalProperties": false
+        },
+        {
+          "type": "object",
+          "properties": {
+            "type": {
+              "const": "unsubscribed"
+            },
+            "channel": {
+              "anyOf": [
+                {
+                  "const": "public"
+                },
+                {
+                  "type": "string",
+                  "pattern": "^team:[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$"
+                }
+              ]
+            }
+          },
+          "required": [
+            "type",
+            "channel"
+          ],
+          "additionalProperties": false
+        },
+        {
+          "type": "object",
+          "properties": {
+            "type": {
+              "const": "pong"
+            }
+          },
+          "required": [
+            "type"
+          ],
+          "additionalProperties": false
+        },
+        {
+          "type": "object",
+          "properties": {
+            "type": {
+              "const": "error"
+            },
+            "code": {
+              "type": "string",
+              "enum": [
+                "UNAUTHORIZED",
+                "FORBIDDEN",
+                "INVALID_MESSAGE",
+                "RATE_LIMITED",
+                "TOKEN_EXPIRED"
+              ]
+            },
+            "message": {
+              "type": "string",
+              "minLength": 1
+            }
+          },
+          "required": [
+            "type",
+            "code",
+            "message"
+          ],
+          "additionalProperties": false
+        }
+      ]
+    },
+    "WorkerHeartbeat": {
+      "type": "object",
+      "properties": {
+        "worker_id": {
+          "type": "string",
+          "minLength": 1
+        },
+        "kind": {
+          "type": "string",
+          "enum": [
+            "build",
+            "match"
+          ]
+        },
+        "job_id": {
+          "anyOf": [
+            {
+              "type": "string",
+              "format": "uuid"
+            },
+            {
+              "type": "null"
+            }
+          ]
+        },
+        "sent_at": {
+          "type": "string",
+          "format": "date-time",
+          "pattern": "Z$"
+        }
+      },
+      "required": [
+        "worker_id",
+        "kind",
+        "job_id",
+        "sent_at"
+      ],
+      "additionalProperties": false
+    },
+    "SubmissionPage": {
+      "type": "object",
+      "properties": {
+        "items": {
+          "type": "array",
+          "items": {
+            "$ref": "#/$defs/Submission"
+          }
+        },
+        "page": {
+          "type": "integer",
+          "minimum": 1
+        },
+        "page_size": {
+          "type": "integer",
+          "minimum": 1,
+          "maximum": 100
+        },
+        "total": {
+          "type": "integer",
+          "minimum": 0
+        }
+      },
+      "required": [
+        "items",
+        "page",
+        "page_size",
+        "total"
+      ],
+      "additionalProperties": false
+    },
+    "MatchPage": {
+      "type": "object",
+      "properties": {
+        "items": {
+          "type": "array",
+          "items": {
+            "$ref": "#/$defs/Match"
+          }
+        },
+        "page": {
+          "type": "integer",
+          "minimum": 1
+        },
+        "page_size": {
+          "type": "integer",
+          "minimum": 1,
+          "maximum": 100
+        },
+        "total": {
+          "type": "integer",
+          "minimum": 0
+        }
+      },
+      "required": [
+        "items",
+        "page",
+        "page_size",
+        "total"
+      ],
+      "additionalProperties": false
+    },
+    "TeamPublicPage": {
+      "type": "object",
+      "properties": {
+        "items": {
+          "type": "array",
+          "items": {
+            "$ref": "#/$defs/TeamPublic"
+          }
+        },
+        "page": {
+          "type": "integer",
+          "minimum": 1
+        },
+        "page_size": {
+          "type": "integer",
+          "minimum": 1,
+          "maximum": 100
+        },
+        "total": {
+          "type": "integer",
+          "minimum": 0
+        }
+      },
+      "required": [
+        "items",
+        "page",
+        "page_size",
+        "total"
+      ],
+      "additionalProperties": false
+    },
+    "TeamPage": {
+      "type": "object",
+      "properties": {
+        "items": {
+          "type": "array",
+          "items": {
+            "$ref": "#/$defs/Team"
+          }
+        },
+        "page": {
+          "type": "integer",
+          "minimum": 1
+        },
+        "page_size": {
+          "type": "integer",
+          "minimum": 1,
+          "maximum": 100
+        },
+        "total": {
+          "type": "integer",
+          "minimum": 0
+        }
+      },
+      "required": [
+        "items",
+        "page",
+        "page_size",
+        "total"
+      ],
+      "additionalProperties": false
+    },
+    "TournamentPage": {
+      "type": "object",
+      "properties": {
+        "items": {
+          "type": "array",
+          "items": {
+            "$ref": "#/$defs/Tournament"
+          }
+        },
+        "page": {
+          "type": "integer",
+          "minimum": 1
+        },
+        "page_size": {
+          "type": "integer",
+          "minimum": 1,
+          "maximum": 100
+        },
+        "total": {
+          "type": "integer",
+          "minimum": 0
+        }
+      },
+      "required": [
+        "items",
+        "page",
+        "page_size",
+        "total"
+      ],
+      "additionalProperties": false
+    },
+    "RoundPage": {
+      "type": "object",
+      "properties": {
+        "items": {
+          "type": "array",
+          "items": {
+            "$ref": "#/$defs/Round"
+          }
+        },
+        "page": {
+          "type": "integer",
+          "minimum": 1
+        },
+        "page_size": {
+          "type": "integer",
+          "minimum": 1,
+          "maximum": 100
+        },
+        "total": {
+          "type": "integer",
+          "minimum": 0
+        }
+      },
+      "required": [
+        "items",
+        "page",
+        "page_size",
+        "total"
+      ],
+      "additionalProperties": false
+    },
+    "StandingPage": {
+      "type": "object",
+      "properties": {
+        "items": {
+          "type": "array",
+          "items": {
+            "$ref": "#/$defs/Standing"
+          }
+        },
+        "page": {
+          "type": "integer",
+          "minimum": 1
+        },
+        "page_size": {
+          "type": "integer",
+          "minimum": 1,
+          "maximum": 100
+        },
+        "total": {
+          "type": "integer",
+          "minimum": 0
+        }
+      },
+      "required": [
+        "items",
+        "page",
+        "page_size",
+        "total"
+      ],
+      "additionalProperties": false
+    },
+    "BracketSlotPage": {
+      "type": "object",
+      "properties": {
+        "items": {
+          "type": "array",
+          "items": {
+            "$ref": "#/$defs/BracketSlot"
+          }
+        },
+        "page": {
+          "type": "integer",
+          "minimum": 1
+        },
+        "page_size": {
+          "type": "integer",
+          "minimum": 1,
+          "maximum": 100
+        },
+        "total": {
+          "type": "integer",
+          "minimum": 0
+        }
+      },
+      "required": [
+        "items",
+        "page",
+        "page_size",
+        "total"
+      ],
+      "additionalProperties": false
+    },
+    "AnnouncementPage": {
+      "type": "object",
+      "properties": {
+        "items": {
+          "type": "array",
+          "items": {
+            "$ref": "#/$defs/Announcement"
+          }
+        },
+        "page": {
+          "type": "integer",
+          "minimum": 1
+        },
+        "page_size": {
+          "type": "integer",
+          "minimum": 1,
+          "maximum": 100
+        },
+        "total": {
+          "type": "integer",
+          "minimum": 0
+        }
+      },
+      "required": [
+        "items",
+        "page",
+        "page_size",
+        "total"
+      ],
+      "additionalProperties": false
+    },
+    "SimilarityPage": {
+      "type": "object",
+      "properties": {
+        "items": {
+          "type": "array",
+          "items": {
+            "$ref": "#/$defs/Similarity"
+          }
+        },
+        "page": {
+          "type": "integer",
+          "minimum": 1
+        },
+        "page_size": {
+          "type": "integer",
+          "minimum": 1,
+          "maximum": 100
+        },
+        "total": {
+          "type": "integer",
+          "minimum": 0
+        }
+      },
+      "required": [
+        "items",
+        "page",
+        "page_size",
+        "total"
+      ],
+      "additionalProperties": false
+    },
+    "AuditPage": {
+      "type": "object",
+      "properties": {
+        "items": {
+          "type": "array",
+          "items": {
+            "$ref": "#/$defs/Audit"
+          }
+        },
+        "page": {
+          "type": "integer",
+          "minimum": 1
+        },
+        "page_size": {
+          "type": "integer",
+          "minimum": 1,
+          "maximum": 100
+        },
+        "total": {
+          "type": "integer",
+          "minimum": 0
+        }
+      },
+      "required": [
+        "items",
+        "page",
+        "page_size",
+        "total"
+      ],
+      "additionalProperties": false
+    },
+    "Upload": {
+      "type": "object",
+      "properties": {
+        "file": {
+          "type": "string",
+          "format": "binary"
+        },
+        "language": {
+          "$ref": "#/$defs/Language"
+        }
+      },
+      "required": [
+        "file",
+        "language"
+      ],
+      "additionalProperties": false
+    }
+  }
+}

@@ -1,0 +1,14 @@
+{
+  "items": [
+    {
+      "round": "quarterfinal",
+      "slot_index": 1,
+      "source_rule": "example",
+      "team": null,
+      "match_id": null
+    }
+  ],
+  "page": 1,
+  "page_size": 20,
+  "total": 1
+}

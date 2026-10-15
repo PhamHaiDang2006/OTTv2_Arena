@@ -1,0 +1,35 @@
+{
+  "format": 1,
+  "engine_version": "1.0.0",
+  "ruleset_id": "dev-v1",
+  "map_id": "standard",
+  "initial_fen": "9/k6B1/9/9/9/9/9/9/9",
+  "players": {
+    "BLUE": {
+      "team": "doi-a",
+      "submission_id": "00000003-0000-4000-8000-000000000001",
+      "bot_name": "ExampleBlue"
+    },
+    "RED": {
+      "team": "doi-b",
+      "submission_id": "00000004-0000-4000-8000-000000000001",
+      "bot_name": "ExampleRed"
+    }
+  },
+  "moves": [
+    {
+      "ply": 1,
+      "side": "BLUE",
+      "move": "h8i9",
+      "think_ms": 70,
+      "clock_ms": 59980,
+      "capture": null,
+      "debug": []
+    }
+  ],
+  "result": {
+    "winner": "BLUE",
+    "reason": "GOAL",
+    "plies": 1
+  }
+}
