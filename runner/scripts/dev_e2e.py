@@ -73,6 +73,19 @@ BOTS = {
         "        break\n"
     ),
     "crash": "import sys\nsys.exit(3)\n",
+    "cpp": (
+        "#include <iostream>\n#include <string>\n"
+        "int main() {\n"
+        "  std::cout << \"READY cppbot\" << std::endl;\n"
+        "  std::string line;\n"
+        "  while (std::getline(std::cin, line)) {\n"
+        "    if (line.rfind(\"INIT\", 0) == 0) std::cout << \"OK\" << std::endl;\n"
+        "    else if (line == \"GO\") { std::cout << \"# cpp thinking\" << std::endl; std::cout << \"MOVE c3d4\" << std::endl; }\n"
+        "    else if (line.rfind(\"END\", 0) == 0) break;\n"
+        "  }\n"
+        "}\n"
+    ),
+    "cpp_broken": "int main( { return 0; }\n",
     "syntax": "def broken(:\n",
 }
 
@@ -109,10 +122,10 @@ class Recorder(BaseHTTPRequestHandler):
         pass
 
 
-def zip_source(code: str) -> bytes:
+def zip_source(code: str, filename: str = "main.py") -> bytes:
     out = io.BytesIO()
     with zipfile.ZipFile(out, "w") as archive:
-        archive.writestr("main.py", code)
+        archive.writestr(filename, code)
     return out.getvalue()
 
 
@@ -134,6 +147,11 @@ def main() -> int:
         "RUNNER_WORK_DIR": os.path.join(workdir, "work"),
         "RUNNER_WORKER_ID": "dev-e2e",
         "RUNNER_IMAGE_PYTHON": PYTHON_IMAGE,
+        "RUNNER_IMAGE_CPP": PYTHON_IMAGE,
+        "RUNNER_BUILD_IMAGE_CPP": os.environ.get(
+            "RUNNER_BUILD_IMAGE_CPP",
+            "gcc@sha256:1d71f0f3450214bef38fe09e6f610fb6cca90cf97b43f4ce845bfc32a4168818",
+        ),
         "REGISTRY_URL": "127.0.0.1:5000",
         "OTTv2_ENGINE_FACTORY": "ottv2_runner.devkit:make_engine",
         "OTTv2_BUILD_VERIFIER": "ottv2_runner.devkit:make_build_verifier",
@@ -176,12 +194,13 @@ def main() -> int:
 
     def run_build(kind: str) -> dict:
         submission_id, job_id = str(uuid.uuid4()), str(uuid.uuid4())
-        data = zip_source(BOTS[kind])
+        language = "cpp" if kind.startswith("cpp") else "python"
+        data = zip_source(BOTS[kind], "main.cpp" if language == "cpp" else "main.py")
         key = f"submissions/{submission_id}/source.zip"
         s3.put_object(Bucket="ottv2-e2e", Key=key, Body=data)
         payload = {
             "schema_version": 1, "job_id": job_id, "submission_id": submission_id,
-            "language": "python", "source_key": key,
+            "language": language, "source_key": key,
             "source_sha256": hashlib.sha256(data).hexdigest(), "engine_version": "1.0.0",
         }
         enqueue_build(payload)
@@ -276,6 +295,35 @@ def main() -> int:
           and delivered[-1][2].get("image_tag") == saved_tag,
           "backend recovery: flush-outbox delivers the saved result without rebuilding")
     check(not runtime.outbox.pending(), "backend recovery: outbox drained")
+
+    # C++: compile in the isolated builder, then run the binary in a runtime image.
+    cpp = run_build("cpp")
+    cpp_final = cpp["calls"][-1][2] if cpp["calls"] else {}
+    check(cpp_final.get("status") == "ready", f"cpp bot build is ready ({cpp_final.get('status')} {cpp_final.get('error')})")
+    cpp_tag = cpp_final.get("image_tag") or ""
+    if cpp_tag:
+        # Pair the C++ image against the python image in a real match.
+        sides = {"BLUE": {"team": "b", "submission_id": cpp["payload"]["submission_id"]},
+                 "RED": {"team": "r", "submission_id": good["payload"]["submission_id"]}}
+        cpp_game, cpp_job = str(uuid.uuid4()), str(uuid.uuid4())
+        Queue("match:scrimmage", connection=connection).enqueue("ottv2_runner.jobs.run_match", {
+            "schema_version": 1, "job_id": cpp_job, "game_id": cpp_game, "attempt": 1,
+            "blue_image": cpp_tag, "red_image": image_tag, "map_id": "standard",
+            "engine_version": "1.0.0", "players": sides,
+            "config": {
+                "engine_version": "1.0.0", "ruleset_id": "dev-v1", "map_id": "standard",
+                "initial_fen": FEN, "players": json.loads(json.dumps(sides)),
+                "budget_ms": 60000, "init_ms": 10000, "grace_ms": 50,
+                "hard_timeout_extra_ms": 1000, "max_turns": 300, "seed": 11,
+            },
+        }, job_timeout=300)
+        drain("match:scrimmage")
+        cpp_calls = [c[2] for c in Recorder.calls if c[0].endswith(f"/internal/games/{cpp_game}")]
+        check(bool(cpp_calls) and cpp_calls[-1].get("status") == "finished",
+              f"cpp vs python match finished ({cpp_calls[-1].get('status') if cpp_calls else None})")
+    broken = run_build("cpp_broken")
+    broken_status = broken["calls"][-1][2].get("status") if broken["calls"] else None
+    check(broken_status == "failed", f"cpp compile error build is failed ({broken_status})")
 
     # Failure scenarios during a match. The build verifier is bypassed so misbehaving
     # images can be built; the real engine decides forfeits, the dev engine just errors.

@@ -137,7 +137,11 @@ class DockerSandbox:
             if compiled is not None:
                 for path in sorted(compiled.rglob("*")):
                     if path.is_file():
-                        tar.add(path, arcname=f"compiled/{path.relative_to(compiled).as_posix()}", recursive=False)
+                        member = tar.gettarinfo(path, arcname=f"compiled/{path.relative_to(compiled).as_posix()}")
+                        member.mode = 0o755
+                        member.uid = member.gid = 0
+                        with path.open("rb") as handle:
+                            tar.addfile(member, handle)
             dockerfile = self._dockerfile(spec).encode("utf-8")
             info = tarfile.TarInfo("Dockerfile")
             info.size = len(dockerfile)
@@ -181,7 +185,7 @@ class DockerSandbox:
 
     def _compile(self, spec: BuildSpec, source_dir: Path) -> Path:
         command = {
-            "cpp": ["g++", "-std=c++20", "-O2", "-pipe", "main.cpp", "-o", "/out/main"],
+            "cpp": ["sh", "-c", "g++ -std=c++20 -O2 -pipe -static main.cpp -o /tmp/main && cp /tmp/main /out/main"],
             "java": ["javac", "-d", "/out", "Main.java"],
         }[spec.language]
         output_dir = Path(tempfile.mkdtemp(prefix="compile-", dir=source_dir.parent))
@@ -322,7 +326,7 @@ class DockerBot:
             self._reader = threading.Thread(target=self._drain, name="runner-bot-io", daemon=True)
             self._reader.start()
         except Exception as exc:
-            self.close()
+            self.abort()
             raise InfrastructureError("Could not start sandbox container") from exc
 
     def _read_exact(self, count: int) -> bytes:
