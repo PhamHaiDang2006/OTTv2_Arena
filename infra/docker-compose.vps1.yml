@@ -1,0 +1,155 @@
+name: ottv2-vps1
+
+services:
+  caddy:
+    image: caddy:2.10.0-alpine
+    restart: unless-stopped
+    environment:
+      DOMAIN: ${DOMAIN:?Set DOMAIN to the public P1/P2 hostname}
+      STORAGE_DOMAIN: ${STORAGE_DOMAIN:?Set STORAGE_DOMAIN to the public signed-URL hostname}
+    ports:
+      - "80:80/tcp"
+      - "443:443/tcp"
+      - "443:443/udp"
+    volumes:
+      - ./Caddyfile:/etc/caddy/Caddyfile:ro
+      - caddy_data:/data
+      - caddy_config:/config
+    cap_drop: ["ALL"]
+    cap_add: ["NET_BIND_SERVICE"]
+    depends_on:
+      - backend
+      - web-p1
+      - web-p2
+      - minio
+
+  web-p1:
+    image: ${VPS1_P1_IMAGE:?Set VPS1_P1_IMAGE to an externally built immutable image digest}
+    pull_policy: always
+    restart: unless-stopped
+    expose: ["8080"]
+    read_only: true
+    tmpfs: ["/tmp"]
+
+  web-p2:
+    image: ${VPS1_P2_IMAGE:?Set VPS1_P2_IMAGE to an externally built immutable image digest}
+    pull_policy: always
+    restart: unless-stopped
+    expose: ["8080"]
+    read_only: true
+    tmpfs: ["/tmp"]
+
+  backend:
+    image: ${VPS1_BACKEND_IMAGE:?Set VPS1_BACKEND_IMAGE to an externally built immutable image digest}
+    pull_policy: always
+    restart: unless-stopped
+    expose: ["8000"]
+    ports:
+      - "${VPS1_WG_IP:?Set VPS1_WG_IP to the VPS1 WireGuard interface address}:8000:8000"
+    environment:
+      DATABASE_URL: ${DATABASE_URL:?Set DATABASE_URL for the VPS1 postgres service}
+      REDIS_URL: redis://:${REDIS_PASSWORD:?Set REDIS_PASSWORD}@redis:6379/0
+      S3_ENDPOINT_URL: http://minio:9000
+      S3_PUBLIC_ENDPOINT_URL: https://${STORAGE_DOMAIN:?Set STORAGE_DOMAIN}
+      S3_BUCKET: ${S3_BUCKET:-ottv2}
+      S3_ACCESS_KEY_ID: ${S3_ACCESS_KEY_ID:?Set a least-privilege S3 application key}
+      S3_SECRET_ACCESS_KEY: ${S3_SECRET_ACCESS_KEY:?Set a least-privilege S3 application secret}
+      JWT_SECRET: ${JWT_SECRET:?Set a unique production JWT_SECRET}
+      WORKER_API_TOKEN: ${WORKER_API_TOKEN:?Set a unique production worker token}
+      FRONTEND_ORIGINS: https://${DOMAIN:?Set DOMAIN}
+      ALLOW_DEVELOPMENT_TOURNAMENTS: ${ALLOW_DEVELOPMENT_TOURNAMENTS:-false}
+      RULESET_ID: ${RULESET_ID:-dev-v1}
+    depends_on:
+      postgres:
+        condition: service_healthy
+      redis:
+        condition: service_healthy
+      minio:
+        condition: service_healthy
+
+  postgres:
+    image: postgres:16.10-alpine
+    restart: unless-stopped
+    environment:
+      POSTGRES_DB: ${POSTGRES_DB:-ottv2}
+      POSTGRES_USER: ${POSTGRES_USER:-ottv2}
+      POSTGRES_PASSWORD: ${POSTGRES_PASSWORD:?Set a unique production POSTGRES_PASSWORD}
+    volumes:
+      - postgres_vps1_data:/var/lib/postgresql/data
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U \"$${POSTGRES_USER}\" -d \"$${POSTGRES_DB}\""]
+      interval: 10s
+      timeout: 5s
+      retries: 12
+      start_period: 20s
+
+  redis:
+    image: redis:7.4.2-alpine
+    restart: unless-stopped
+    environment:
+      REDIS_PASSWORD: ${REDIS_PASSWORD:?Set a unique production REDIS_PASSWORD}
+    command:
+      - sh
+      - -ec
+      - exec redis-server --appendonly yes --requirepass "$${REDIS_PASSWORD}"
+    ports:
+      - "${VPS1_WG_IP:?Set VPS1_WG_IP}:6379:6379"
+    volumes:
+      - redis_vps1_data:/data
+    healthcheck:
+      test: ["CMD-SHELL", "REDISCLI_AUTH=\"$${REDIS_PASSWORD}\" redis-cli ping | grep -q PONG"]
+      interval: 10s
+      timeout: 5s
+      retries: 12
+      start_period: 5s
+
+  minio:
+    image: ${VPS1_MINIO_IMAGE:?Set VPS1_MINIO_IMAGE to an externally built immutable MinIO image digest}
+    restart: unless-stopped
+    command: ["server", "/data", "--console-address", ":9001"]
+    environment:
+      MINIO_ROOT_USER: ${MINIO_ROOT_USER:?Set a unique MinIO root user}
+      MINIO_ROOT_PASSWORD: ${MINIO_ROOT_PASSWORD:?Set a unique MinIO root password}
+    ports:
+      - "${VPS1_WG_IP:?Set VPS1_WG_IP}:9000:9000"
+    volumes:
+      - minio_vps1_data:/data
+    healthcheck:
+      test: ["CMD-SHELL", "curl -fsS http://127.0.0.1:9000/minio/health/ready >/dev/null"]
+      interval: 10s
+      timeout: 5s
+      retries: 12
+      start_period: 20s
+
+  minio-backup:
+    image: ${VPS1_MC_IMAGE:?Set VPS1_MC_IMAGE to an externally built immutable mc image digest}
+    profiles: ["backup"]
+    restart: "no"
+    entrypoint: ["/bin/sh", "/scripts/mirror-minio.sh"]
+    environment:
+      S3_ENDPOINT_URL: http://minio:9000
+      S3_ACCESS_KEY_ID: ${MINIO_MIRROR_SOURCE_ACCESS_KEY_ID:?Set a mirror-read-only source key}
+      S3_SECRET_ACCESS_KEY: ${MINIO_MIRROR_SOURCE_SECRET_ACCESS_KEY:?Set a mirror-read-only source secret}
+      S3_BUCKET: ${S3_BUCKET:-ottv2}
+      MINIO_BACKUP_ENDPOINT_URL: ${MINIO_BACKUP_ENDPOINT_URL:?Set an external backup endpoint}
+      MINIO_BACKUP_BUCKET: ${MINIO_BACKUP_BUCKET:?Set an external backup bucket}
+      MINIO_BACKUP_PREFIX: ${MINIO_BACKUP_PREFIX:-arena/minio}
+      MINIO_BACKUP_ACCESS_KEY_ID: ${MINIO_BACKUP_ACCESS_KEY_ID:?Set an external backup access key}
+      MINIO_BACKUP_SECRET_ACCESS_KEY: ${MINIO_BACKUP_SECRET_ACCESS_KEY:?Set an external backup secret}
+    volumes:
+      - ./backup/mirror-minio.sh:/scripts/mirror-minio.sh:ro
+    depends_on:
+      minio:
+        condition: service_healthy
+
+volumes:
+  postgres_vps1_data:
+    name: ottv2_vps1_postgres_data
+  redis_vps1_data:
+    name: ottv2_vps1_redis_data
+  minio_vps1_data:
+    name: ottv2_vps1_minio_data
+  caddy_data:
+    name: ottv2_vps1_caddy_data
+  caddy_config:
+    name: ottv2_vps1_caddy_config

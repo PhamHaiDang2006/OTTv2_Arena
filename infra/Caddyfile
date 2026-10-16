@@ -1,0 +1,32 @@
+{$DOMAIN} {
+	encode zstd gzip
+	request_body {
+		max_size 2MB
+	}
+
+	route {
+		# Never expose worker callbacks, even if a future web route is added.
+		@internal path /internal /internal/* /api/v1/internal /api/v1/internal/*
+		respond @internal 404
+
+		@api path /api/v1 /api/v1/*
+		reverse_proxy @api backend:8000
+
+		@websocket path /ws
+		reverse_proxy @websocket backend:8000
+
+		@admin_root path /admin
+		redir @admin_root /admin/ 308
+
+		@admin path /admin/*
+		reverse_proxy @admin web-p2:8080
+
+		# SPA deep links go only to the corresponding static app server; the
+		# app images must implement history fallback without swallowing API paths.
+		reverse_proxy web-p1:8080
+	}
+}
+
+{$STORAGE_DOMAIN} {
+	reverse_proxy minio:9000
+}

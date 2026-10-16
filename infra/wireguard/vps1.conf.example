@@ -1,0 +1,10 @@
+# Template only. Generate a unique private/public key pair on each VPS.
+# Never put generated PrivateKey values into this repository.
+[Interface]
+# PrivateKey = <VPS1_PRIVATE_KEY_FROM_LOCAL_SECRET_STORE>
+Address = 10.77.0.1/24
+ListenPort = 51820
+
+[Peer]
+# PublicKey = <VPS2_PUBLIC_KEY>
+AllowedIPs = 10.77.0.2/32

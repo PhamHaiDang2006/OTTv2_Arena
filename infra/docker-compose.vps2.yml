@@ -1,0 +1,109 @@
+name: ottv2-vps2
+
+x-worker-common: &worker-common
+  image: ${VPS2_WORKER_IMAGE:?Set VPS2_WORKER_IMAGE to an externally built immutable image digest}
+  pull_policy: always
+  restart: unless-stopped
+  environment: &worker-environment
+    REDIS_URL: ${VPS2_REDIS_URL:?Set VPS2_REDIS_URL to VPS1 Redis over WireGuard}
+    INTERNAL_API_BASE_URL: ${VPS2_INTERNAL_API_BASE_URL:?Set private VPS1 API base URL}
+    WORKER_API_TOKEN: ${WORKER_API_TOKEN:?Set the worker-only callback token}
+    S3_ENDPOINT_URL: ${VPS2_S3_ENDPOINT_URL:?Set private VPS1 S3 endpoint}
+    S3_BUCKET: ${S3_BUCKET:-ottv2}
+    S3_ACCESS_KEY_ID: ${WORKER_S3_ACCESS_KEY_ID:?Set a worker-scoped least-privilege S3 key}
+    S3_SECRET_ACCESS_KEY: ${WORKER_S3_SECRET_ACCESS_KEY:?Set a worker-scoped least-privilege S3 secret}
+    REGISTRY_URL: ${VPS2_REGISTRY_URL:-127.0.0.1:5000}
+    RUNNER_OUTBOX_DIR: /var/lib/ottv2/outbox
+    RUNNER_WORK_DIR: /tmp/runner-work
+    RUNNER_IMAGE_PYTHON: ${RUNNER_IMAGE_PYTHON:?Set the pinned Python bot runtime image}
+    RUNNER_IMAGE_CPP: ${RUNNER_IMAGE_CPP:?Set the pinned C++ bot runtime image}
+    RUNNER_BUILD_IMAGE_CPP: ${RUNNER_BUILD_IMAGE_CPP:?Set the pinned C++ build image}
+    OTTv2_ENGINE_FACTORY: ${OTTv2_ENGINE_FACTORY:?Set the system-owned OTTv2 engine adapter}
+    OTTv2_BUILD_VERIFIER: ${OTTv2_BUILD_VERIFIER:?Set the system-owned build smoke verifier}
+  volumes:
+    - /var/run/docker.sock:/var/run/docker.sock
+  read_only: true
+  tmpfs: ["/tmp"]
+  cap_drop: ["ALL"]
+  security_opt: ["no-new-privileges:true"]
+  depends_on:
+    registry:
+      condition: service_started
+
+services:
+  registry:
+    image: registry:2.8.3
+    restart: unless-stopped
+    ports:
+      - "127.0.0.1:5000:5000"
+    volumes:
+      - registry_vps2_data:/var/lib/registry
+
+  build-worker:
+    <<: *worker-common
+    command: ["ottv2-runner-worker", "--queue", "build"]
+    environment:
+      <<: *worker-environment
+      WORKER_ROLE: build
+      WORKER_CONCURRENCY: "1"
+    volumes:
+      - /var/run/docker.sock:/var/run/docker.sock
+      - build_worker_state:/var/lib/ottv2
+
+  match-worker-1:
+    <<: *worker-common
+    command: ["ottv2-runner-worker", "--queue", "match:tournament", "--queue", "match:scrimmage"]
+    environment:
+      <<: *worker-environment
+      WORKER_ROLE: match
+      WORKER_CONCURRENCY: "1"
+    volumes:
+      - /var/run/docker.sock:/var/run/docker.sock
+      - match_worker_1_state:/var/lib/ottv2
+
+  match-worker-2:
+    <<: *worker-common
+    command: ["ottv2-runner-worker", "--queue", "match:tournament", "--queue", "match:scrimmage"]
+    environment:
+      <<: *worker-environment
+      WORKER_ROLE: match
+      WORKER_CONCURRENCY: "1"
+    volumes:
+      - /var/run/docker.sock:/var/run/docker.sock
+      - match_worker_2_state:/var/lib/ottv2
+
+  match-worker-3:
+    <<: *worker-common
+    command: ["ottv2-runner-worker", "--queue", "match:tournament", "--queue", "match:scrimmage"]
+    environment:
+      <<: *worker-environment
+      WORKER_ROLE: match
+      WORKER_CONCURRENCY: "1"
+    volumes:
+      - /var/run/docker.sock:/var/run/docker.sock
+      - match_worker_3_state:/var/lib/ottv2
+
+  match-worker-4:
+    <<: *worker-common
+    command: ["ottv2-runner-worker", "--queue", "match:tournament", "--queue", "match:scrimmage"]
+    environment:
+      <<: *worker-environment
+      WORKER_ROLE: match
+      WORKER_CONCURRENCY: "1"
+    volumes:
+      - /var/run/docker.sock:/var/run/docker.sock
+      - match_worker_4_state:/var/lib/ottv2
+
+volumes:
+  registry_vps2_data:
+    name: ottv2_vps2_registry_data
+  build_worker_state:
+    name: ottv2_vps2_build_worker_state
+  match_worker_1_state:
+    name: ottv2_vps2_match_worker_1_state
+  match_worker_2_state:
+    name: ottv2_vps2_match_worker_2_state
+  match_worker_3_state:
+    name: ottv2_vps2_match_worker_3_state
+  match_worker_4_state:
+    name: ottv2_vps2_match_worker_4_state

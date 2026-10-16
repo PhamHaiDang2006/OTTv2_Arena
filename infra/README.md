@@ -1,80 +1,117 @@
-# infra — Hạ tầng và triển khai
+# Infrastructure and deployment
 
-## Hợp đồng tích hợp và hướng dẫn cho AI
+This folder owns the development data services, two VPS Compose deployments, Caddy, WireGuard templates, backup tooling, and operating runbook. Read the repository [AGENTS.md](../AGENTS.md), [integration contract](../integration.md) (especially sections 7–9), [architecture](../architecture.md), and [contracts/behavior.md](../contracts/behavior.md).
 
-Đọc [AGENTS.md](../AGENTS.md), [hợp đồng tích hợp](../integration.md) mục 7–9 và README backend/runner/web. B sở hữu Compose, env mẫu, CI và điều phối smoke test.
+## Current implementation boundary
 
-- Không tự đổi cổng/tên biến/endpoint mà không cập nhật consumer. [.env.example](.env.example) đã có biến chuẩn; [contracts](../contracts/README.md) có validator/mock và CI trong .github/workflows/contracts.yml. Compose vẫn cần triển khai.
-- Khi tạo Compose, ghi bảng service → hostname nội bộ → container port → host port → healthcheck → volume. Tách URL trình duyệt với URL DNS Docker.
-- Public gateway route /api/v1 đến backend, /ws nâng cấp WebSocket; chặn /api/v1/internal/*. Internal API chỉ mở qua WireGuard và vẫn kiểm tra token.
-- P2 phục vụ dưới /admin, P1 ở /; cấu hình SPA fallback không nuốt /api/v1 hoặc /ws. D phải đối chiếu Vite base/router basename với reverse proxy.
-- C chạy migration một lần trước backend; healthcheck liveness không đồng nghĩa readiness DB/Redis/storage. Không khởi động worker khi dependency chưa sẵn.
-- Storage gzip phải có đúng Content-Type/Content-Encoding và CORS để browser dùng URL ký sẵn. S3 public endpoint không được là hostname chỉ container hiểu.
-- Secret chỉ trên backend/worker phù hợp; không đưa vào VITE_* hoặc log CI. VPS2 không có DATABASE_URL/JWT_SECRET.
-- Kiểm tra cấu hình rate limit thực tế của bản Caddy được chọn; nếu cần module phải ghi cách build, hoặc đặt enforcement ở backend. Không giả định directive có sẵn.
-- Mở UDP WireGuard trên máy làm endpoint theo cấu hình tunnel; tiêu chí quét cổng phải phân biệt TCP/UDP. Không dùng “chỉ cổng 22” để vô tình chặn tunnel.
+The repository currently has no deployable backend or web product images: the backend API and `web/p1-participant`, `web/p2-admin`, and `web/replay-viewer` applications are not implemented. Runner code (if present) still needs to be built into and verified as the pinned worker image used here. The VPS Compose files deliberately require externally built immutable image references. Their commands, ports, health routes, and static-server behavior are deployment interfaces to implement and verify with those components before production use. `dev-v1` is for development only; it is not an approved tournament ruleset.
 
-### Chạy và tích hợp
+The dev MinIO service builds the upstream community source at a fixed commit because MinIO no longer publishes community binaries/images and its repository is archived. This is a convenience for local development, not a maintained or production-secure storage distribution. VPS1 requires a separately built and digest-pinned MinIO-compatible server and `mc` image; verify provenance, updates, and applicable AGPLv3 obligations before deployment.
 
-Khi tạo file Compose, thêm lệnh dev up/down không xóa dữ liệu, migrate/seed, start worker, xem log và smoke test; nêu cwd và env file rõ ràng. Hiện các đường dẫn Compose trong kế hoạch chưa phải file đã có.
+Compose config validation checks YAML/interpolation only. It does not prove the app images exist, boot, migrate, expose the assumed ports, or satisfy API/SPA contracts. No production security claim is made: supply real secrets, TLS DNS, firewall/WireGuard setup, restricted S3 accounts, tested images, application rate limits, and a successful restore rehearsal first.
 
-CI tối thiểu: validate hợp đồng/fixture; unit test package bị ảnh hưởng; typecheck/build web; kiểm tra producer/consumer cho thay đổi ranh giới. Smoke test có 2 đội + admin: login → upload ZIP → ready → active bot → scrimmage 2 game → replay. Chạy test lỗi worker/callback riêng; không dùng database thật của giải.
+## Development services
 
-Trước merge: compose config hợp lệ, startup từ môi trường sạch, healthcheck, URL ký sẵn trong browser, P1/P2 deep link, WS và internal route isolation. Ghi lệnh/kết quả thật cùng giới hạn môi trường; backup phải có lần restore thử được xác nhận. B điều phối, chủ phần chịu trách nhiệm sửa lỗi phần mình.
+Commands below are run from `D:\Đại học\code\bruh\OTTv2_Arena\infra` in PowerShell, or from the equivalent repository `infra/` directory on Linux/macOS. Copy `.env.example` to `.env` and replace local placeholders. Do not commit `.env`.
 
-
-**Phụ trách:** B · **Dự phòng:** C
-
-## Cấu trúc dự kiến
-
-```
-infra/
-├── docker-compose.dev.yml     # PostgreSQL, Redis, MinIO cho máy phát triển
-├── docker-compose.vps1.yml    # Caddy, web, backend, PostgreSQL, Redis, MinIO
-├── docker-compose.vps2.yml    # build worker, match worker ×4, registry
-├── Caddyfile
-├── wireguard/                 # Mẫu cấu hình đường hầm giữa hai VPS
-├── backup/                    # Script sao lưu và khôi phục
-├── .env.example
-└── RUNBOOK.md                 # Xử lý sự cố trong ngày thi
+```powershell
+Copy-Item .env.example .env
+docker compose --env-file .env -f docker-compose.dev.yml up --build -d
+docker compose --env-file .env -f docker-compose.dev.yml ps
+docker compose --env-file .env -f docker-compose.dev.yml logs -f postgres redis minio
+docker compose --env-file .env -f docker-compose.dev.yml down
 ```
 
-## Máy chủ
+`down` preserves all named volumes; do not use `down -v` unless intentionally destroying local databases and objects. Before running backend directly on the host, override Docker-only service names in its process environment, for example:
 
-| Máy | Cấu hình | Mở ra Internet |
-| --- | --- | --- |
-| VPS 1 | 2 vCPU, 4 GB RAM, 80 GB SSD | Cổng 80, 443 (Caddy), 22 (SSH chỉ bằng khóa) |
-| VPS 2 | 8 vCPU, 8 GB RAM, 100 GB SSD | Chỉ cổng 22 và WireGuard |
+```powershell
+$env:DATABASE_URL = "postgresql+psycopg://ottv2:<URL-ENCODED-POSTGRES_PASSWORD>@localhost:5432/ottv2"
+$env:REDIS_URL = "redis://:<URL-SAFE-REDIS_PASSWORD>@localhost:6379/0"
+$env:S3_ENDPOINT_URL = "http://localhost:9000"
+$env:S3_PUBLIC_ENDPOINT_URL = "http://localhost:9000"
+```
 
-## Nhiệm vụ
+Create the `ottv2` bucket and a separate least-privilege S3 account in MinIO at `http://localhost:9001`; never use a production root account as an application credential.
 
-### Ngày 1
-- [ ] Khởi tạo repo, nhánh bảo vệ `main`, CI chạy kiểm thử của `engine/` và `backend/` mỗi Pull Request
-- [ ] `docker-compose.dev.yml` và `.env.example`
-- [ ] Thuê 2 VPS, tạo người dùng triển khai, tắt đăng nhập SSH bằng mật khẩu, bật tường lửa
+### Service/port map
 
-### Ngày 2
-- [ ] WireGuard giữa hai VPS; Redis, MinIO, endpoint `/internal/*` chỉ nghe trên địa chỉ WireGuard
-- [ ] Trỏ tên miền về VPS 1
+| Compose file/service | Docker hostname | Container port | Host bind | Healthcheck | Durable volume |
+| --- | --- | ---: | --- | --- | --- |
+| `docker-compose.dev.yml` `postgres` | `postgres` | 5432 | `127.0.0.1:5432` (override with `POSTGRES_PORT`) | `pg_isready` against configured DB | `ottv2_dev_postgres_data` |
+| `docker-compose.dev.yml` `redis` | `redis` | 6379 | `127.0.0.1:6379` (override with `REDIS_PORT`) | authenticated `redis-cli ping` | `ottv2_dev_redis_data` (AOF) |
+| `docker-compose.dev.yml` `minio` API | `minio` | 9000 | `127.0.0.1:9000` (override with `MINIO_PORT`) | MinIO `/minio/health/ready` | `ottv2_dev_minio_data` |
+| `docker-compose.dev.yml` `minio` console | `minio` | 9001 | `127.0.0.1:9001` (override with `MINIO_CONSOLE_PORT`) | Covered by MinIO API readiness | `ottv2_dev_minio_data` |
+| `docker-compose.vps1.yml` `caddy` | `caddy` | 80, 443 TCP/UDP | public TCP 80/443 and UDP 443 | None configured; validate the Caddyfile and monitor public HTTP/TLS | `ottv2_vps1_caddy_data`, `ottv2_vps1_caddy_config` |
+| `docker-compose.vps1.yml` `web-p1`, `web-p2` | `web-p1`, `web-p2` | 8080 | Internal Docker network only | None configured; app image health route is not yet defined | none |
+| `docker-compose.vps1.yml` `backend` | `backend` | 8000 | `VPS1_WG_IP:8000` only, plus internal Docker network | None configured; backend readiness route is not yet defined | none |
+| `docker-compose.vps1.yml` `postgres` | `postgres` | 5432 | Internal Docker network only | `pg_isready` | `ottv2_vps1_postgres_data` |
+| `docker-compose.vps1.yml` `redis` | `redis` | 6379 | `VPS1_WG_IP:6379` only | Authenticated `redis-cli ping` | `ottv2_vps1_redis_data` (AOF) |
+| `docker-compose.vps1.yml` `minio` API | `minio` | 9000 | `VPS1_WG_IP:9000` only | MinIO `/minio/health/ready` | `ottv2_vps1_minio_data` |
+| `docker-compose.vps1.yml` `minio-backup` (opt-in profile) | `minio-backup` → `minio`, external S3 | No listener | No published port | One-shot mirror exit status; source MinIO health dependency | none |
+| `docker-compose.vps2.yml` `registry` | `registry` | 5000 | `127.0.0.1:5000` only | None configured; monitor the registry `/v2/` endpoint | `ottv2_vps2_registry_data` |
+| `docker-compose.vps2.yml` worker services | `build-worker`, `match-worker-*` | Image-defined | No published ports | No Compose healthcheck; monitor app heartbeats/queue via backend | One callback-state volume per worker |
 
-### Ngày 7
-- [ ] `docker-compose.vps1.yml`, `docker-compose.vps2.yml`, triển khai lần đầu
-- [ ] Caddy: TLS tự động, giới hạn tần suất (10 lần nộp mỗi đội mỗi giờ, 100 yêu cầu đọc mỗi phút mỗi IP), giới hạn kích thước tải lên 2 MB
-- [ ] Sao lưu PostgreSQL mỗi giờ, giữ 48 bản; đồng bộ MinIO ra kho ngoài mỗi ngày
-- [ ] Giám sát và cảnh báo qua Telegram hoặc Discord:
-    - Hàng đợi dài quá 50 việc
-    - Tỷ lệ `INFRA_ERROR` quá 2%
-    - Đĩa còn dưới 20%
-    - Worker mất nhịp tim quá 5 phút
-    - Backend trả lỗi 5xx liên tục
-- [ ] Dọn image bot cũ: giữ image của bản nộp chính thức và 5 bản mới nhất mỗi đội
+VPS1's database, Redis, MinIO, and backend host ports are bound only to its WireGuard address (except internal Docker-only PostgreSQL). Ensure WireGuard is up before starting that Compose stack. VPS2 has no public service port; its registry binds loopback. The registry uses HTTP on loopback and the VPS2 Docker daemon must be configured for that loopback registry. Protect VPS2 accordingly.
 
-### Ngày 8
-- [ ] **Diễn tập khôi phục**: xóa DB trên máy thử, khôi phục từ bản sao lưu, đo thời gian
-- [ ] Viết `RUNBOOK.md`: VPS 2 chết, đĩa đầy, hàng đợi kẹt, cần chạy lại một vòng
+## VPS deployment
 
-## Tiêu chí hoàn thành
+Use separate host-specific secret files, not the development `.env.example`: copy `vps1.env.example` to `.env` on VPS1 and `vps2.env.example` to `.env` on VPS2. The VPS2 file contains only Redis/API/worker-scoped S3/registry secrets and the worker image reference—never `DATABASE_URL`, app S3 credentials, MinIO root credentials, or `JWT_SECRET`. Prefer URL-safe alphanumeric passwords, or percent-encode special characters in `DATABASE_URL` and `VPS2_REDIS_URL`. Do not copy secrets into a web build or any `VITE_*` variable.
 
-- Triển khai lại toàn bộ hệ thống từ đầu bằng một lệnh cho mỗi máy, trong dưới 30 phút.
-- Khôi phục từ bản sao lưu thành công và mất dữ liệu không quá 1 giờ.
-- Quét TCP từ bên ngoài chỉ thấy 22, 80, 443 trên VPS 1 và 22 trên VPS 2; UDP WireGuard mở trên endpoint theo cấu hình tunnel, dịch vụ nội bộ không lộ ra Internet.
+All `replace-*` values, example IPs/domains, and digest strings are placeholders. Build application images outside Compose and set `VPS1_BACKEND_IMAGE`, `VPS1_P1_IMAGE`, `VPS1_P2_IMAGE`, `VPS1_MINIO_IMAGE`, `VPS1_MC_IMAGE`, and `VPS2_WORKER_IMAGE` to registry references pinned by real `sha256` digests. Build the runner image from `runner/Dockerfile`, publish it, and configure the VPS2 `OTTv2_ENGINE_FACTORY` and `OTTv2_BUILD_VERIFIER` values to system-owned adapters included in that image. Check that the backend listens on `0.0.0.0:8000`, both static servers listen on `8080`, P2 is built for `/admin/`, and both static servers provide SPA history fallback. Frontends may be built with `VITE_API_BASE_URL=/api/v1` and `VITE_WS_URL=wss://DOMAIN/ws`; these are public URLs, never secrets. The backend must implement the health/readiness and migration behavior agreed with C before using production images.
+
+From `/srv/ottv2/infra` on VPS1:
+
+```sh
+cp vps1.env.example .env
+chmod 600 .env
+docker compose --env-file .env -f docker-compose.vps1.yml pull
+docker compose --env-file .env -f docker-compose.vps1.yml up -d postgres redis minio
+# Provision the application bucket and restricted S3 service account before the API.
+# After C confirms the exact migration command for the pinned backend image:
+docker compose --env-file .env -f docker-compose.vps1.yml run --rm --no-deps --entrypoint alembic backend upgrade head
+docker compose --env-file .env -f docker-compose.vps1.yml up -d
+```
+
+The migration command above is a placeholder pending a real backend image/CLI. Do not run it until confirmed against that image. Set up the VPN, DNS, firewall, MinIO accounts and database backup first. On VPS2, after WireGuard and the Docker daemon's local-registry configuration are ready:
+
+```sh
+cp vps2.env.example .env
+chmod 600 .env
+docker compose --env-file .env -f docker-compose.vps2.yml pull
+docker compose --env-file .env -f docker-compose.vps2.yml up -d
+docker compose --env-file .env -f docker-compose.vps2.yml logs -f build-worker match-worker-1 match-worker-2 match-worker-3 match-worker-4
+```
+
+See [RUNBOOK.md](RUNBOOK.md) for first-time provisioning, upgrades, backup/restore, monitoring, and incidents.
+
+### Migrations, seed, and smoke tests
+
+The only current migration command is a **placeholder**, not a verified product command:
+
+```sh
+docker compose --env-file .env -f docker-compose.vps1.yml run --rm --no-deps --entrypoint alembic backend upgrade head
+```
+
+Run only after C confirms that the pinned image includes Alembic and its configuration. No seed command or product smoke-test command exists in the repository yet; do not invent one or populate a live tournament with mock data. The first backend release must document safe development seeding and migration execution. The first integrated release must add a staging smoke test covering login, ZIP upload/build, ready bot, worker callback, WebSocket, scrimmage, replay browser URL, P1/P2 deep links, and rejection of public internal routes.
+
+## Edge routing and operational constraints
+
+- Caddy obtains TLS for `DOMAIN` and `STORAGE_DOMAIN`. `/` routes to P1, `/admin/` to P2, `/api/v1/*` and `/ws` to the backend. Caddy passes WebSocket upgrades through automatically. `S3_PUBLIC_ENDPOINT_URL` must be `https://STORAGE_DOMAIN` so signed browser URLs use a publicly resolvable host; backend/worker S3 endpoints stay private.
+- `/internal`, `/internal/*`, `/api/v1/internal`, and `/api/v1/internal/*` return 404 at the public edge. Workers call `/api/v1/internal/*` directly through WireGuard and must still authenticate with `WORKER_API_TOKEN`.
+- API and WebSocket routes are matched before the web catch-all, so an API 404 is never rewritten to an SPA page. Caddy proxies web routes to separately built static app images; those images must implement their own history fallback and P2 path prefix.
+- Caddy's built-in request body cap is 2 MiB; backend ZIP validation remains authoritative at 1 MiB. Caddy does **not** ship a general rate-limit directive. Implement and test the contract's per-team submission and per-IP read rate limits in the backend or supply/review a Caddy build with a suitable module; this Compose stack does not claim to enforce those limits.
+- Configure bucket CORS for the exact public frontend origin and required browser methods/headers. Compressed replay objects need `Content-Type: application/json` and `Content-Encoding: gzip`; configure object metadata at upload time and verify browser behavior instead of assuming the proxy will repair it.
+- PostgreSQL/Redis/MinIO and backend private API exposure depends on correct WireGuard interface addresses and host firewall rules. Docker port publishing can interact with host firewalls; verify external TCP/UDP scans from outside both hosts.
+- VPS2 workers mount `/var/run/docker.sock`; this is effectively root access to the VPS. Run only trusted, pinned worker images on the isolated VPS2, never mount the socket on VPS1, and allow no student-bot network access.
+
+## Validation
+
+From `infra/`, validate config against the provided placeholder env files:
+
+```sh
+docker compose --env-file .env.example -f docker-compose.dev.yml config --quiet
+docker compose --env-file vps1.env.example -f docker-compose.vps1.yml config --quiet
+docker compose --env-file vps2.env.example -f docker-compose.vps2.yml config --quiet
+```
+
+These checks require Docker Compose v2 and validate Compose parsing/interpolation only. Starting the services, production networking, application behavior, migrations, TLS, API/WS routing, signed URL browser access, backup synchronization, restore, and security controls require live dependencies and the missing product images; they are not claimed as tested by this folder.

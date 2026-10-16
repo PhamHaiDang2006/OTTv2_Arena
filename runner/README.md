@@ -1,5 +1,97 @@
 # runner — Sandbox, build worker, match worker
 
+> **Implementation status (contract v1.0.0):** `ottv2_runner` now provides
+> strict job validation, ZIP screening, Redis leases, durable callback outbox,
+> S3-compatible storage adapters, system-owned Docker build/run specifications,
+> and injectable engine/smoke-test interfaces. This is development/integration
+> ready, not a certified production deployment. No real Docker daemon, Redis,
+> MinIO, backend, registry, or OTTv2 engine was exercised by its unit tests.
+> In particular, builds are not reported `ready` unless an injected smoke-game
+> verifier succeeds; matches explicitly report `INFRA_ERROR` when the engine
+> adapter is absent. Worker code never creates attempts.
+
+## Implemented package
+
+The Python 3.12+ distribution lives in this folder:
+
+```powershell
+Set-Location runner
+python -m pip install -e .
+python -m unittest discover -s tests -v
+docker build -t ottv2-worker:local .
+ottv2-runner validate-build path\to\build-job.json
+ottv2-runner validate-match path\to\match-job.json
+ottv2-runner-worker --queue build
+ottv2-runner-worker --queue match:tournament --queue match:scrimmage
+ottv2-runner flush-outbox
+```
+
+Public RQ callables are `ottv2_runner.jobs.build_submission(payload)` and
+`ottv2_runner.jobs.run_match(payload)`. CLI validation uses the strict v1 DTO
+shape; contract schemas remain the source of truth. The worker requires these
+environment variables: `INTERNAL_API_BASE_URL` (base URL including `/api/v1`),
+`WORKER_API_TOKEN`, `REDIS_URL`, `S3_ENDPOINT_URL`, `S3_ACCESS_KEY_ID`,
+`S3_SECRET_ACCESS_KEY`, and `S3_BUCKET`, matching `infra/vps2.env.example`.
+Optional settings include
+`RUNNER_OUTBOX_DIR` (must be a persistent volume), `RUNNER_WORK_DIR`,
+`RUNNER_WORKER_ID`, and `RUNNER_CPUSET_BLUE`/`RUNNER_CPUSET_RED`.
+
+The worker image can be built with the included Dockerfile. Deployment images
+must be published and referenced by immutable digest. The worker also requires
+the system-owned `OTTv2_ENGINE_FACTORY=module:factory` and
+`OTTv2_BUILD_VERIFIER=module:factory` adapters to be included in its image;
+the VPS2 Compose configuration refuses to start without both settings.
+
+Configure `RUNNER_IMAGE_PYTHON` and `RUNNER_IMAGE_CPP` as trusted, digest-pinned
+images; C++ also needs `RUNNER_BUILD_IMAGE_CPP`. Java and Node remain disabled
+until explicitly enabled with `RUNNER_ENABLE_JAVA=true` /
+`RUNNER_ENABLE_NODE=true` and certified runtime/compiler images are configured.
+Docker builds and containers use runner-generated Dockerfiles/argv only. The
+runner never runs a participant Dockerfile, shell command, install script, or
+network-connected build.
+
+`OTTv2_ENGINE_FACTORY=module:factory` must resolve to a system-owned callable
+returning an object with async `run_game(blue_io, red_io, config)`. It is a
+narrow adapter around the public engine API; the runner implements no game
+rules. `OTTv2_BUILD_VERIFIER=module:factory` may resolve to a verifier with
+`verify(image, job, timeout_seconds=150)`; without it, the build result is an
+explicit `INFRA_ERROR`, not `ready`. When `REGISTRY_URL` is set, a verified image is
+pushed to that registry (`ottv2_runner.registry`) and the build callback's
+`image_tag` is the immutable `REGISTRY_URL/ottv2-bot@sha256:…` reference; match
+workers pull missing digest references before starting a bot. The push is done by
+the host Docker daemon, so on VPS2 the daemon must trust the loopback registry.
+
+Terminal callback payload/token pairs are fsync-written to the file outbox
+before HTTP delivery. Transport retries resend that exact payload and never
+rerun a completed build/game; preserve the outbox volume across restarts. S3
+artifacts use unique staging keys containing resource, job, and lease token;
+backend callback receipt/finalization remains backend-owned. Redis leases use
+compare-token Lua for renewal and release. Worker heartbeat is sent to
+`/api/v1/internal/workers/heartbeat`; callback requests use the worker bearer
+token plus `X-Worker-Lease`.
+
+Docker isolation options are specified in `ottv2_runner/sandbox.py`; the code
+has not been security-certified. A staging object-key layout/finalization
+adapter and an engine-backed smoke game remain deployment integration work.
+Contract profile `dev-v1` remains development-only and is not an official ruleset.
+
+### Live development acceptance run
+
+`ottv2_runner.devkit` provides a **development-only** stand-in engine and build
+verifier that speak the bot line protocol but implement no game rules
+(`OTTv2_ENGINE_FACTORY=ottv2_runner.devkit:make_engine`,
+`OTTv2_BUILD_VERIFIER=ottv2_runner.devkit:make_build_verifier`). With the dev
+Compose stack and a registry on `127.0.0.1:5000` running:
+
+```powershell
+python scripts\dev_e2e.py
+```
+
+it exercises real RQ, Redis leases, MinIO, Docker builds, registry push/pull,
+duplicate-job dedupe, crash/syntax-error bots, a full match, and callback outage
+recovery through the outbox against a fake backend. Never use `devkit` in a
+tournament.
+
 ## Hợp đồng tích hợp và hướng dẫn cho AI
 
 Đọc [AGENTS.md](../AGENTS.md), [hợp đồng tích hợp](../integration.md) mục 2, 4, 5, 7–9 và README của engine/backend/infra/starter-kits.
@@ -20,7 +112,11 @@ Kiểm tra ZIP trước/sau giải nén, traversal, symlink, số file/kích th�
 
 ### Chạy độc lập và bàn giao
 
-Chưa có worker/Compose thực thi trong repo hiện tại. PR đầu tiên bổ sung lệnh cài, chạy từng worker, chạy test với fake backend/storage và test Docker thật; liệt kê biến môi trường theo mục 7, không commit secret.
+Package worker và lệnh chạy/test bằng fake đã được bổ sung trong `pyproject.toml`,
+`ottv2_runner/` và `tests/`. Compose/production service wiring, Docker/MinIO/
+Redis/backend acceptance testing và registry publication chưa được chạy trong
+môi trường này; liệt kê biến môi trường cần triển khai ở phần Implemented
+package phía trên, không commit secret.
 
 Trước merge: bot mẫu kit build thành công; timeout/crash/illegal move giữ đúng lý do; container sạch sau engine exception; callback gửi lặp chỉ tạo một kết quả; storage/API mất kết nối và worker chết có cách phục hồi. Ghi rõ test nào cần Linux/Docker và test nào đã thực sự chạy. A review engine adapter; C review job/callback.
 

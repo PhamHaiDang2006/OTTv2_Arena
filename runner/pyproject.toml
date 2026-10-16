@@ -1,0 +1,27 @@
+[build-system]
+requires = ["setuptools>=68"]
+build-backend = "setuptools.build_meta"
+
+[project]
+name = "ottv2-runner"
+version = "0.1.0"
+description = "Development/integration-ready OTTv2 build and match workers"
+requires-python = ">=3.12"
+dependencies = [
+  "boto3>=1.34",
+  "docker>=7.0",
+  "redis>=5.0",
+  "rq>=1.16",
+]
+
+[project.scripts]
+ottv2-runner = "ottv2_runner.cli:main"
+ottv2-runner-worker = "ottv2_runner.worker:main"
+
+[tool.setuptools.packages.find]
+where = ["."]
+include = ["ottv2_runner*"]
+
+[tool.pytest.ini_options]
+testpaths = ["tests"]
+addopts = "-ra"
