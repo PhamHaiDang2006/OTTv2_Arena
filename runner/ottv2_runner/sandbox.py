@@ -124,8 +124,10 @@ class DockerSandbox:
         if not spec.enabled:
             raise UnsupportedLanguage(f"{language} support is disabled pending sandbox certification")
         self._validate_image(spec.runtime_image)
+        self._ensure_image(spec.runtime_image)
         if language in {"cpp", "java"}:
             self._validate_image(spec.builder_image)
+            self._ensure_image(spec.builder_image)
         compiled: Path | None = None
         if language in {"cpp", "java"}:
             compiled = self._compile(spec, source_dir)

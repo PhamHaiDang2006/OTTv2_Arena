@@ -14,7 +14,7 @@ x-worker-common: &worker-common
     S3_SECRET_ACCESS_KEY: ${WORKER_S3_SECRET_ACCESS_KEY:?Set a worker-scoped least-privilege S3 secret}
     REGISTRY_URL: ${VPS2_REGISTRY_URL:-127.0.0.1:5000}
     RUNNER_OUTBOX_DIR: /var/lib/ottv2/outbox
-    RUNNER_WORK_DIR: /tmp/runner-work
+    RUNNER_WORK_DIR: /var/lib/ottv2/work
     RUNNER_IMAGE_PYTHON: ${RUNNER_IMAGE_PYTHON:?Set the pinned Python bot runtime image}
     RUNNER_IMAGE_CPP: ${RUNNER_IMAGE_CPP:?Set the pinned C++ bot runtime image}
     RUNNER_BUILD_IMAGE_CPP: ${RUNNER_BUILD_IMAGE_CPP:?Set the pinned C++ build image}
@@ -49,6 +49,9 @@ services:
     volumes:
       - /var/run/docker.sock:/var/run/docker.sock
       - build_worker_state:/var/lib/ottv2
+      # The compiler container is started through the host Docker daemon, so the work
+      # directory must exist at the identical path on the host and in this container.
+      - /var/lib/ottv2/work:/var/lib/ottv2/work
 
   match-worker-1:
     <<: *worker-common

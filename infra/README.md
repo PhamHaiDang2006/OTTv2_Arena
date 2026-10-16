@@ -103,6 +103,8 @@ Run only after C confirms that the pinned image includes Alembic and its configu
 - Configure bucket CORS for the exact public frontend origin and required browser methods/headers. Compressed replay objects need `Content-Type: application/json` and `Content-Encoding: gzip`; configure object metadata at upload time and verify browser behavior instead of assuming the proxy will repair it.
 - PostgreSQL/Redis/MinIO and backend private API exposure depends on correct WireGuard interface addresses and host firewall rules. Docker port publishing can interact with host firewalls; verify external TCP/UDP scans from outside both hosts.
 - VPS2 workers mount `/var/run/docker.sock`; this is effectively root access to the VPS. Run only trusted, pinned worker images on the isolated VPS2, never mount the socket on VPS1, and allow no student-bot network access.
+- The build worker starts its compiler container through the host daemon, so its work directory is bind-mounted at the identical path (`/var/lib/ottv2/work`) on the host and in the container. Do not move it to a container-only path such as a tmpfs, or C++ builds fail with `main.cpp: No such file or directory`.
+- Local rehearsal: `runner/scripts/dev_e2e.py` runs the runner in-process; the full VPS2 Compose stack was also verified against the dev Redis/MinIO with a local registry (Python and C++ build, then a match). Shell scripts must keep LF line endings; `.gitattributes` enforces this.
 
 ## Validation
 
