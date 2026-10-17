@@ -1,0 +1,56 @@
+[project]
+name = "ottv2-backend"
+version = "0.1.0"
+description = "OTTv2 Arena backend: REST + WebSocket API, tournament logic, worker callbacks"
+requires-python = ">=3.12,<3.13"
+dependencies = [
+    "alembic>=1.20.0",
+    "argon2-cffi>=25.1.0",
+    "boto3>=1.43.114",
+    "fastapi>=0.143.3",
+    "jsonschema>=4.26.0",
+    "psycopg[binary]>=3.3.6",
+    "pydantic-settings>=2.16.0",
+    "pyjwt>=2.15.1",
+    "python-multipart>=0.0.32",
+    "redis>=8.1.0",
+    "referencing>=0.37.0",
+    "rfc3339-validator>=0.1.4",
+    "rq>=2.12.0",
+    "sqlalchemy>=2",
+    "tzdata>=2026.5",
+    "uvicorn[standard]>=0.54.0",
+]
+
+[tool.uv]
+package = false
+
+[dependency-groups]
+dev = [
+    "freezegun>=1.5.5",
+    "httpx>=0.28.1",
+    "moto[s3]>=5.2.4",
+    "pytest>=9.1.1",
+    "rfc3986-validator>=0.1.1",
+    "ruff>=0.17.1",
+    "websockets>=17.2",
+]
+
+[tool.pytest.ini_options]
+testpaths = ["tests"]
+addopts = "-ra"
+filterwarnings = ["ignore::DeprecationWarning:botocore.*"]
+
+[tool.ruff]
+line-length = 130
+target-version = "py312"
+
+[tool.ruff.lint]
+select = ["E", "F", "W", "I", "B", "UP"]
+ignore = ["B008", "UP017"]
+
+[tool.ruff.lint.per-file-ignores]
+"migrations/versions/*" = ["E501", "W291"]
+
+[tool.ruff.lint.isort]
+known-first-party = ["app", "tests"]
