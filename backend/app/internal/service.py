@@ -4,7 +4,10 @@
 - A terminal callback already stored: identical payload + same lease token → 200 (even after the lease is
   released); anything else → 409. A late `running`/`building` after terminal → 409, no event, no state change.
 - Otherwise X-Worker-Lease must equal the current Redis lease `ottv2:lease:{job_id}`.
-- Artifacts are finalized (copied from the worker's key to the canonical immutable key) before commit.
+- Artifacts are fenced: every artifact key in the payload must lie under `staging/{job_id}/{lease_token}/` of the
+  lease verified for this callback, and is promoted (server-side copy) to its canonical immutable key before
+  commit. All callbacks of a job hold the job row lock, so promotion of a canonical key is serialized; a
+  canonical key that already holds different content is never overwritten.
 """
 from __future__ import annotations
 
@@ -54,8 +57,20 @@ def verify_lease(job: WorkerJob, lease: uuid.UUID) -> None:
         job.lease_seen_at = utcnow()
 
 
-def _finalize(source: str, target: str, required: bool = True) -> str | None:
-    """Copy a worker-uploaded object to its canonical key; canonical keys are never overwritten."""
+def _require_staged(key: str, staging: str) -> None:
+    if not key.startswith(staging) or len(key) == len(staging):
+        raise invalid('Artifact phải nằm trong vùng staging của lease hiện hành', reason='artifact_not_staged',
+                      key=key, expected_prefix=staging)
+
+
+def _same(a: dict, b: dict) -> bool:
+    return a.get('ETag') == b.get('ETag') and a.get('ContentLength') == b.get('ContentLength')
+
+
+def _finalize(source: str, target: str, staging: str, required: bool = True) -> str | None:
+    """Promote a staged object to its canonical key. Canonical keys are immutable: an identical copy (callback
+    retry) is accepted, different content is a conflict."""
+    _require_staged(source, staging)
     storage = st.get_storage()
     try:
         src = storage.head(source)
@@ -63,26 +78,30 @@ def _finalize(source: str, target: str, required: bool = True) -> str | None:
             if required:
                 raise invalid('Artifact chưa được tải lên', reason='artifact_missing', key=source)
             return None
-        if source != target:
+        dst = storage.head(target)
+        if dst is None:
+            storage.copy(source, target, src['ETag'])
             dst = storage.head(target)
-            if dst is None:
-                storage.copy(source, target)
-            elif dst.get('ETag') != src.get('ETag') or dst.get('ContentLength') != src.get('ContentLength'):
-                raise conflict(message='Artifact chuẩn đã tồn tại với nội dung khác', reason='artifact_conflict',
-                               key=target)
+            if dst is None or not _same(src, dst):
+                raise conflict(message='Artifact chuẩn bị ghi bởi bên khác', reason='artifact_conflict', key=target)
+        elif not _same(src, dst):
+            raise conflict(message='Artifact chuẩn đã tồn tại với nội dung khác', reason='artifact_conflict', key=target)
+    except st.ArtifactChanged as exc:
+        raise conflict(message='Artifact staging thay đổi trong lúc xác nhận', reason='artifact_changed',
+                       key=source) from exc
     except st.StorageError as exc:
         raise st.unavailable(exc) from exc
     return target
 
 
-def _finalize_logs(game_id: uuid.UUID, log_key: str | None, required: bool) -> str | None:
-    """log_key is a prefix holding blue.stderr.log / red.stderr.log (architecture.md 5.3)."""
+def _finalize_logs(game_id: uuid.UUID, log_key: str | None, staging: str, required: bool) -> str | None:
+    """log_key is a staged prefix holding blue.stderr.log / red.stderr.log (architecture.md 5.3)."""
     if not log_key:
         return None
     prefix = log_key if log_key.endswith('/') else log_key + '/'
     target = st.log_prefix(str(game_id))
     for filename in st.STDERR_FILES.values():
-        _finalize(prefix + filename, target + filename, required=required)
+        _finalize(prefix + filename, target + filename, staging, required=required)
     return target
 
 
@@ -115,7 +134,8 @@ def handle_build(db: Session, submission_id: uuid.UUID, lease: uuid.UUID, body: 
         raise conflict(message='Bản nộp đã có kết quả build', reason='terminal_conflict')
     log_key = None
     if body['build_log_key']:
-        log_key = _finalize(body['build_log_key'], st.build_log_key(str(submission.id)), required=status == 'ready')
+        log_key = _finalize(body['build_log_key'], st.build_log_key(str(submission.id)), st.staging_prefix(job.id, lease),
+                            required=status == 'ready')
     submission.status, submission.updated_at, submission.build_log_key = status, now, log_key
     if status == 'ready':
         submission.image_tag = body['image_tag']
@@ -172,8 +192,9 @@ def handle_game(db: Session, game_id: uuid.UUID, lease: uuid.UUID, body: dict[st
         job.started_at = now
     game.duration_ms = body['duration_ms']
     if status == 'finished':
-        game.replay_key = _finalize(body['replay_key'], st.replay_key(str(game.id)))
-        game.log_key = _finalize_logs(game.id, body['log_key'], required=True)
+        staging = st.staging_prefix(job.id, lease)
+        game.replay_key = _finalize(body['replay_key'], st.replay_key(str(game.id)), staging)
+        game.log_key = _finalize_logs(game.id, body['log_key'], staging, required=True)
         result = body['result']
         game.status, game.winner, game.reason, game.total_plies = 'finished', result['winner'], result['reason'], result['plies']
         game.finished_at = now
@@ -182,6 +203,6 @@ def handle_game(db: Session, game_id: uuid.UUID, lease: uuid.UUID, body: dict[st
         matches.emit(db, match, 'game.finished', {'game_id': str(game.id), 'match_id': str(match.id)})
         matches.progress(db, match)
         return
-    game.log_key = _finalize_logs(game.id, body['log_key'], required=False)
+    game.log_key = _finalize_logs(game.id, body['log_key'], st.staging_prefix(job.id, lease), required=False)
     _receipt(db, job, status, lease, payload_hash, 'infra_error')
     fail_attempt(db, match, game, {'code': body['error']['code'], 'message': body['error']['message']}, 'callback')

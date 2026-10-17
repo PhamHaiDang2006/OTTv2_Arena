@@ -107,7 +107,7 @@ def main(argv: list[str] | None = None) -> None:
     p.add_argument('--no-password', action='store_true', help='create without password (set later)')
     sub.add_parser('seed-dev', help='admin + 2 approved teams (development only)')
     sub.add_parser('ensure-bucket', help='create S3 bucket if missing (development)')
-    p = sub.add_parser('scheduler', help='outbox delivery, lease watchdog, scheduled freeze, similarity')
+    p = sub.add_parser('scheduler', help='outbox delivery, paused-queue drain, lease watchdog, scheduled freeze, similarity')
     p.add_argument('--stop-after', type=float, default=None, help=argparse.SUPPRESS)
     p = sub.add_parser('similarity', help='recompute similarity for a round snapshot')
     p.add_argument('--round-id', required=True)

@@ -35,6 +35,15 @@ def log_prefix(game_id: str) -> str:
 STDERR_FILES = {'BLUE': 'blue.stderr.log', 'RED': 'red.stderr.log'}
 
 
+def staging_prefix(job_id, lease_token) -> str:
+    """Only the current lease owner's staging area may be promoted to canonical keys (behavior.md fencing)."""
+    return f'staging/{job_id}/{lease_token}/'
+
+
+class ArtifactChanged(StorageError):
+    """The source object changed between inspection and copy (CopySourceIfMatch failed)."""
+
+
 class Storage:
     def __init__(self) -> None:
         settings = get_settings()
@@ -91,11 +100,16 @@ class Storage:
         except BotoCoreError as exc:
             raise StorageError(str(exc)) from exc
 
-    def copy(self, source: str, target: str) -> None:
+    def copy(self, source: str, target: str, source_etag: str) -> None:
+        """Server-side copy that only succeeds if the source still has the inspected ETag."""
         try:
             self.client.copy_object(Bucket=self.bucket, Key=target, CopySource={'Bucket': self.bucket, 'Key': source},
-                                    MetadataDirective='COPY')
-        except (BotoCoreError, ClientError) as exc:
+                                    CopySourceIfMatch=source_etag, MetadataDirective='COPY')
+        except ClientError as exc:
+            if exc.response.get('Error', {}).get('Code') in ('PreconditionFailed', '412'):
+                raise ArtifactChanged(str(exc)) from exc
+            raise StorageError(str(exc)) from exc
+        except BotoCoreError as exc:
             raise StorageError(str(exc)) from exc
 
     def presign_get(self, key: str, ttl_seconds: int) -> str:

@@ -54,7 +54,7 @@ uv run python -m app.cli migrate          # alembic upgrade head (head hiện t�
 uv run python -m app.cli ensure-bucket    # dev: tạo bucket nếu chưa có
 OTTV2_PASSWORD=... uv run python -m app.cli seed-dev   # admin@example.test + 2 đội approved (doi-a, doi-b)
 uv run uvicorn app.main:app --host 127.0.0.1 --port 8000
-uv run python -m app.cli scheduler        # tiến trình riêng: outbox → RQ/WS, watchdog lease, freeze theo giờ, similarity
+uv run python -m app.cli scheduler        # tiến trình riêng: outbox → RQ/WS, gỡ job queue đang dừng, watchdog lease, freeze theo giờ, similarity
 ```
 
 Tài khoản: API không nhận mật khẩu (behavior.md). Đội trưởng tạo bằng `POST /admin/teams` hoặc import CSV chưa có mật khẩu; đặt bằng `OTTV2_PASSWORD=... uv run python -m app.cli set-password --email ...`. Thêm thành viên: `app.cli add-member --team <slug> --email ...`. Admin: `app.cli create-admin --email ...`.

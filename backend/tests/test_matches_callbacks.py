@@ -168,7 +168,7 @@ def test_callback_validation_and_stale_lease(api):
     assert worker.post_game(str(uuid.uuid4()), running, lease).status_code == 422  # URL id ≠ payload id
     assert worker.post_game(g1, {**running, 'duration_ms': 5}, lease).status_code == 422  # schema: running → 0
     finished = worker.game_payload(job, 'finished', lease=lease)
-    missing = {**finished, 'replay_key': f'staging/{job.id}/nothing.json.gz'}
+    missing = {**finished, 'replay_key': f'staging/{job.id}/{lease}/nothing.json.gz'}
     response = worker.post_game(g1, missing, lease)
     assert response.status_code == 422 and response.json()['error']['details']['reason'] == 'artifact_missing'
     assert worker.post_game(g1, running, lease).status_code == 200

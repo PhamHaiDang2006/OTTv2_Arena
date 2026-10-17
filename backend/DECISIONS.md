@@ -19,6 +19,7 @@ Contract **v1.0.0** (`contracts/version.json`), profile **dev-v1** (`ruleset_sta
 
 ### Nộp bài
 
+- Request upload bị giới hạn 2 MiB **ngay trong lúc đọc luồng** (kể cả chunked, không có `Content-Length`): vượt là `413 reason=zip_too_large`, không đọc tiếp, không spool ra đĩa. Multipart chỉ được parse sau đó.
 - Thứ tự kiểm tra upload: role → đọc multipart (đúng hai trường, `language` đã bật) → idempotency (hash bytes ZIP + language) → đội không bị khóa/loại → rate limit → kiểm tra ZIP. S3 được ghi trước khi commit DB; nếu DB lỗi sau đó chỉ để lại object mồ côi, không có submission.
 - Tên tệp trong ZIP phải khớp pattern `key` của hợp đồng (chữ Latin không dấu, số, `_ . / -`) vì `SourceTree.files[].path` dùng pattern đó. Tệp tên có dấu bị từ chối với `reason=invalid_path`.
 - Đường dẫn trùng được so sau NFC + casefold (`A.py` và `a.py` là trùng).
@@ -28,12 +29,16 @@ Contract **v1.0.0** (`contracts/version.json`), profile **dev-v1** (`ruleset_sta
 
 - Outbox giao dịch: job RQ và event WS ghi cùng transaction, giao sau commit; scheduler giao lại bản ghi còn treo (Redis lỗi lúc commit) với cùng `job_id`. RQ job id = `payload.job_id`; func là chuỗi `ottv2_runner.jobs.build_submission` / `run_match`; `job_timeout` theo env.
 - Callback không thuộc idempotency-key; khử trùng bằng `callback_receipts` (hash payload + lease token). Non-terminal callback yêu cầu `X-Worker-Lease` khớp `ottv2:lease:{job_id}` hiện hành; Redis lỗi → `503`.
-- Artifact: backend kiểm tra object worker báo đã tồn tại rồi **copy sang key chuẩn bất biến** (`builds/{submission_id}/build.log`, `replays/{game_id}.json.gz`, `logs/{game_id}/{blue,red}.stderr.log`). Key chuẩn đã có với nội dung khác (ETag/size) → `409`. Thiếu artifact → `422 reason=artifact_missing`, trạng thái không đổi để worker gửi lại.
-- `log_key` của game là **prefix** chứa `blue.stderr.log` và `red.stderr.log` (theo fixture `logs/{game_id}/` và architecture 5.3). Callback `finished` bắt buộc có đủ replay và hai stderr; `infra_error` không bắt buộc.
+- Fencing artifact: mọi key artifact trong callback (`build_log_key`, `replay_key`, `log_key`) phải nằm dưới `staging/{job_id}/{lease_token}/`, với `lease_token` là `X-Worker-Lease` đã được xác minh khớp lease hiện hành. Key khác, kể cả key chuẩn, bị `422 reason=artifact_not_staged`. Backend copy server-side sang key chuẩn bất biến (`builds/{submission_id}/build.log`, `replays/{game_id}.json.gz`, `logs/{game_id}/{blue,red}.stderr.log`) với `CopySourceIfMatch` = ETag đã kiểm tra, rồi đọc lại key chuẩn để xác nhận. Mọi callback của một job giữ khóa dòng job, nên việc ghi key chuẩn được tuần tự hóa. Key chuẩn đã có nội dung khác → `409 artifact_conflict`, không ghi đè; bản giống hệt (callback gửi lại sau khi copy xong nhưng transaction lỗi) được chấp nhận. Thiếu artifact → `422 reason=artifact_missing`, trạng thái không đổi để worker gửi lại.
+- Giới hạn còn lại của fencing: backend không ngăn được ai có credential S3 ghi thẳng vào prefix chuẩn. Credential của worker chỉ nên được ghi vào `staging/` (cấu hình MinIO, phần của B). moto không áp dụng điều kiện trên CopyObject, nên test chứng minh fencing ở mức backend, không chứng minh hành vi điều kiện của MinIO.
+- `log_key` của game là **prefix** (trong vùng staging) chứa `blue.stderr.log` và `red.stderr.log` (theo fixture `logs/{game_id}/` và architecture 5.3). Callback `finished` bắt buộc có đủ replay và hai stderr; `infra_error` không bắt buộc.
 - Retry tự động: attempt 1..4, cùng cặp, cùng bên, cùng submission, **cùng seed**, game_id/job_id mới. Hết retry → match `blocked`; admin rerun tạo attempt tiếp theo (có thể > 4).
 - Watchdog (15 s): job đã thấy lease mà lease biến mất trước terminal callback → `infra_error` + attempt mới (game) hoặc submission `failed` với `INFRA_ERROR` (build). Job chưa ai claim không bị coi là thua; nếu RQ báo job `failed/stopped/canceled` khi chưa từng có lease thì cũng xử lý như mất worker. Job queued mất khỏi Redis quá 5 phút được giao lại.
 - Heartbeat: thời điểm `last_seen_at` lấy theo đồng hồ server; offline khi quá 90 s.
-- Tạm dừng queue: không giao job mới từ outbox **và** gỡ khỏi RQ các job chưa có lease; tiếp tục thì giao lại cùng `job_id`. Không đụng job đang chạy.
+- Tạm dừng queue: trạng thái pause được commit trước, rồi mới gỡ khỏi RQ các job chưa có lease. Thứ tự gỡ: đánh dấu outbox "chưa giao" và commit trước, sau đó mới xóa khỏi danh sách RQ. Scheduler chạy lại bước gỡ mỗi 15 s cho queue đang dừng. Không đụng job đang chạy. Lỗi giữa chừng được audit `queue.drain_incomplete`.
+- Giao job là idempotent theo trạng thái thật của RQ: job đang nằm trong danh sách queue, đang chạy, đã xong hoặc đã có kết quả cuối trong DB thì chỉ đánh dấu đã giao, không đẩy lần hai. Vì vậy tiếp tục queue sau một lần gỡ dở dang không làm mất job và không tạo bản trùng.
+- Bản ghi outbox của queue đang dừng bị loại ngay trong SQL trước `LIMIT`, nên không chặn được job của queue khác hay event.
+- Watchdog giao lại (cùng `job_id`) job đã giao, chưa từng có lease, quá 5 phút mà không còn trong danh sách RQ, dù hash RQ còn hay mất.
 - `Queue.failed` = số job kết thúc `infra_error` trong 24 giờ gần nhất của queue đó.
 - Thứ tự khóa dòng ở mọi nơi: `worker_job → match → game → tournament → round → group`. Callback đồng thời được tuần tự hóa ở tournament/round khi cập nhật standings/bracket (có test tất định).
 
@@ -59,8 +64,8 @@ Contract **v1.0.0** (`contracts/version.json`), profile **dev-v1** (`ruleset_sta
 
 | # | Câu hỏi | Ai chốt | Đang làm tạm |
 | --- | --- | --- | --- |
-| Q1 | Quy ước key staging để fencing artifact. behavior.md yêu cầu "upload key có ownership token ở vùng staging" nhưng hợp đồng không có định dạng. Đề xuất `staging/{job_id}/{lease_token}/...`. | B + C | Backend chấp nhận mọi key hợp lệ, copy sang key chuẩn; **chưa** kiểm tra token trong path. |
-| Q2 | Worker có được upload thẳng vào key chuẩn (như fixture `replays/{game_id}.json.gz`) không? Nếu có thì mất fencing với worker cũ. | B + C | Chấp nhận (source = target thì chỉ kiểm tra tồn tại). |
+| Q1 | Quy ước key staging để fencing artifact: behavior.md bắt buộc ownership token trong key staging nhưng hợp đồng không ghi định dạng. | B review | **Backend đã bắt buộc** `staging/{job_id}/{lease_token}/...`. B cần xác nhận trước khi viết uploader. |
+| Q2 | Fixture `GameResultCallback`/`BuildResult` trong contracts dùng key chuẩn (`replays/{game_id}.json.gz`, `builds/...`) làm ví dụ. Backend thật sẽ từ chối các key đó (`artifact_not_staged`). Có cập nhật ví dụ trong `contracts/build.mjs` không? | Anh/C + B (ngoài `backend/`) | Chưa sửa contracts; fixture chỉ là ví dụ cấu trúc, schema không đổi. |
 | Q3 | `log_key` là prefix chứa `blue.stderr.log`/`red.stderr.log`? Callback `finished` có bắt buộc đủ hai tệp không? | B | Prefix; bắt buộc đủ hai tệp khi `finished`. |
 | Q4 | Heartbeat: runner/README ghi "gửi về Redis", behavior.md ghi endpoint nội bộ. | B | Theo behavior.md/OpenAPI: `POST /internal/workers/heartbeat`. Đề nghị B sửa runner/README. |
 | Q5 | Rerun một ván sớm của trận loại trực tiếp khi các ván sau đã có: ván sau giữ nguyên hay bị hủy? | C + ban tổ chức | Giữ nguyên; tính lại theo thứ tự ván, ván sau điểm quyết định không được tính nhưng vẫn hiển thị. |
@@ -77,5 +82,6 @@ Contract **v1.0.0** (`contracts/version.json`), profile **dev-v1** (`ruleset_sta
 
 - **B (infra):** image backend phải chứa `contracts/` và `architecture.md` (hoặc đặt `CONTRACTS_DIR`/`ARCHITECTURE_PATH`). Cần thêm vào Compose một tiến trình `python -m app.cli scheduler` bên cạnh API, chạy `app.cli migrate` một lần trước API. Các biến backend mới (bảng trong README) chưa có trong `infra/.env.example`.
 - **B (CI):** test backend cần service PostgreSQL 16 + Redis 7 trong `.github/workflows`; chưa thêm.
-- **B (runner):** upload replay với `Content-Type: application/json` + `Content-Encoding: gzip` (backend copy giữ metadata); key staging theo Q1; heartbeat theo Q4.
+- **B (runner):** upload mọi artifact vào `staging/{job_id}/{lease_token}/` (ví dụ `.../replay.json.gz`, `.../blue.stderr.log`, `.../red.stderr.log`, `.../build.log`), `log_key` là prefix đó; replay với `Content-Type: application/json` + `Content-Encoding: gzip` (backend copy giữ metadata); heartbeat theo Q4.
+- **B (infra/MinIO):** credential worker chỉ ghi được prefix `staging/`; backend cần đọc `staging/` và ghi prefix chuẩn. Có thể đặt lifecycle xóa `staging/` sau vài ngày.
 - **D (web):** trận đánh tập ở `/scrimmages`, không phải `/matches`; `Match.games` có nhiều attempt, dùng `is_current`; lỗi chi tiết nằm ở `error.details` (`reason`, `errors`, `team_ids`...).

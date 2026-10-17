@@ -26,15 +26,35 @@ router = APIRouter()
 MAX_REQUEST_BYTES = 2 * 1024 * 1024
 
 
+def _too_large() -> ApiError:
+    return ApiError(413, 'PAYLOAD_TOO_LARGE', 'Tệp ZIP vượt quá 1 MiB', {'reason': 'zip_too_large'})
+
+
+async def read_bounded(request: Request, limit: int) -> bytes:
+    """Read the raw body, stopping as soon as it exceeds `limit` (works without Content-Length, e.g. chunked):
+    nothing beyond the limit is buffered in memory or spooled to disk."""
+    length = request.headers.get('content-length')
+    if length is not None and length.isdigit() and int(length) > limit:
+        raise _too_large()
+    chunks, size = [], 0
+    async for chunk in request.stream():
+        size += len(chunk)
+        if size > limit:
+            raise _too_large()
+        chunks.append(chunk)
+    return b''.join(chunks)
+
+
 async def upload_form(request: Request) -> tuple[bytes, str]:
-    """Parse multipart {file, language} strictly: exactly those two fields, file read with a hard cap."""
+    """Parse multipart {file, language} strictly: exactly those two fields, the whole request bounded first."""
     if not request.headers.get('content-type', '').startswith('multipart/form-data'):
         raise invalid('Chỉ nhận multipart/form-data')
-    length = request.headers.get('content-length')
-    if length is not None and length.isdigit() and int(length) > MAX_REQUEST_BYTES:
-        raise ApiError(413, 'PAYLOAD_TOO_LARGE', 'Tệp ZIP vượt quá 1 MiB', {'reason': 'zip_too_large'})
+    body = await read_bounded(request, MAX_REQUEST_BYTES)
+
+    async def replay() -> dict:
+        return {'type': 'http.request', 'body': body, 'more_body': False}
     try:
-        form = await request.form(max_files=1, max_fields=2, max_part_size=MAX_REQUEST_BYTES)
+        form = await Request(request.scope, replay).form(max_files=1, max_fields=2, max_part_size=1024)
     except Exception as exc:  # noqa: BLE001 - malformed multipart from the client
         raise invalid('Dữ liệu multipart không hợp lệ') from exc
     keys = list(form.keys())

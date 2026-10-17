@@ -70,13 +70,22 @@ def _rq_gave_up(client, job: WorkerJob) -> bool:
 
 
 def _redeliver_if_lost(db, client, job: WorkerJob) -> None:
-    """Redis lost the RQ job (e.g. restart without persistence): deliver again with the same job_id."""
-    if Job.exists(str(job.id), connection=client):
+    """The job is in no RQ queue although it was delivered and never claimed (Redis restart without persistence,
+    or removed from the queue list while its hash survived): deliver again with the same job_id."""
+    if queue.rq_state(client, job.queue, job.id) != 'orphan':
         return
     entry = db.scalar(select(Outbox).where(Outbox.job_id == job.id, Outbox.kind == 'job'))
     if entry is not None and entry.delivered_at is not None:
         entry.delivered_at = None
-        log.warning('Re-delivering job %s missing from Redis', job.id)
+        log.warning('Re-delivering job %s missing from its RQ queue', job.id)
+
+
+def drain_paused_once() -> int:
+    """Finish draining paused queues (a drain interrupted by Redis/process failure, or a job delivered just as
+    the pause was committed)."""
+    with session_scope() as db:
+        paused = list(db.scalars(select(QueueControl.name).where(QueueControl.paused)))
+    return sum(queue.drain(name) for name in paused)
 
 
 def _lost(db, job: WorkerJob) -> None:
@@ -150,7 +159,7 @@ def run(stop_after: float | None = None) -> None:
         running = False
     signal.signal(signal.SIGTERM, _stop)
     signal.signal(signal.SIGINT, _stop)
-    tasks = [(2, queue.deliver), (15, watchdog_once), (15, scheduled_freeze_once), (60, similarity_once),
+    tasks = [(2, queue.deliver), (15, drain_paused_once), (15, watchdog_once), (15, scheduled_freeze_once), (60, similarity_once),
              (3600, cleanup_once)]
     last = {fn: 0.0 for _, fn in tasks}
     started = time.monotonic()

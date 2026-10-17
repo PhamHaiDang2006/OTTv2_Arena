@@ -234,7 +234,7 @@ def test_ready_callback_requires_uploaded_log(api):
     worker = FakeWorker(api)
     lease = worker.claim(job.id)
     body = {'schema_version': 1, 'job_id': str(job.id), 'submission_id': submission_id, 'status': 'ready',
-            'image_tag': 'registry.local/x@sha256:' + 'e' * 64, 'build_log_key': f'staging/{job.id}/missing.log',
+            'image_tag': 'registry.local/x@sha256:' + 'e' * 64, 'build_log_key': f'staging/{job.id}/{lease}/missing.log',
             'error': None}
     response = worker.post_build(submission_id, body, lease)
     assert response.status_code == 422 and response.json()['error']['details']['reason'] == 'artifact_missing'
@@ -254,3 +254,73 @@ def test_active_bot_rules(api):
     assert api.put('/api/v1/teams/me/active-bot', headers=b.captain, json=body).status_code == 404
     team = api.get('/api/v1/teams/me', headers=a.member).json()
     assert team['active_bots'] == [{'team_id': str(a.id), **body}]
+
+
+def test_chunked_upload_is_bounded_while_streaming(api):
+    """No Content-Length (chunked transfer): rejected with 413 once the request passes 2 MiB."""
+    team = make_team('doi-a')
+    boundary = 'smoke-boundary'
+    head = (f'--{boundary}\r\nContent-Disposition: form-data; name="language"\r\n\r\npython\r\n--{boundary}\r\n'
+            'Content-Disposition: form-data; name="file"; filename="bot.zip"\r\n'
+            'Content-Type: application/zip\r\n\r\n').encode()
+
+    def body():
+        yield head
+        for _ in range(48):  # 3 MiB of payload
+            yield b'a' * 65536
+        yield f'\r\n--{boundary}--\r\n'.encode()
+    response = api.post('/api/v1/submissions', headers={**team.member,
+                                                        'Content-Type': f'multipart/form-data; boundary={boundary}'},
+                        content=body())
+    assert response.request.headers.get('transfer-encoding') == 'chunked'
+    assert 'content-length' not in response.request.headers
+    assert response.status_code == 413 and response.json()['error']['details']['reason'] == 'zip_too_large'
+    assert rq_job_ids('build') == []
+
+
+@pytest.mark.anyio
+async def test_read_bounded_stops_consuming_at_limit():
+    from starlette.requests import Request
+
+    from app.errors import ApiError
+    from app.submissions.router import read_bounded
+    sent = 0
+
+    async def receive():
+        nonlocal sent
+        sent += 1
+        return {'type': 'http.request', 'body': b'a' * 65536, 'more_body': sent < 1000}  # 64 MiB offered
+    scope = {'type': 'http', 'method': 'POST', 'path': '/', 'headers': [], 'query_string': b''}
+    with pytest.raises(ApiError) as error:
+        await read_bounded(Request(scope, receive), 2 * 1024 * 1024)
+    assert error.value.status == 413
+    assert sent == 33  # 32 chunks fill 2 MiB exactly, the 33rd crosses the limit; nothing more is read
+
+
+@pytest.mark.anyio
+async def test_upload_endpoint_stops_reading_oversized_stream(raw_client):
+    """Through the real ASGI app: the endpoint stops pulling body chunks right after the 2 MiB limit."""
+    team = make_team('doi-a')
+    boundary = 'b0undary'
+    head = (f'--{boundary}\r\nContent-Disposition: form-data; name="language"\r\n\r\npython\r\n--{boundary}\r\n'
+            'Content-Disposition: form-data; name="file"; filename="bot.zip"\r\n\r\n').encode()
+    sent = 0
+
+    async def receive():
+        nonlocal sent
+        sent += 1
+        return {'type': 'http.request', 'body': head if sent == 1 else b'a' * 65536, 'more_body': sent < 1000}
+    messages = []
+
+    async def send(message):
+        messages.append(message)
+    scope = {'type': 'http', 'asgi': {'version': '3.0'}, 'http_version': '1.1', 'method': 'POST', 'scheme': 'http',
+             'path': '/api/v1/submissions', 'raw_path': b'/api/v1/submissions', 'query_string': b'',
+             'server': ('testserver', 80), 'client': ('127.0.0.1', 1234), 'root_path': '',
+             'headers': [(b'host', b'testserver'), (b'authorization', team.member['Authorization'].encode()),
+                         (b'idempotency-key', str(uuid.uuid4()).encode()),
+                         (b'content-type', f'multipart/form-data; boundary={boundary}'.encode())]}
+    await raw_client.app(scope, receive, send)
+    start = next(m for m in messages if m['type'] == 'http.response.start')
+    assert start['status'] == 413
+    assert sent <= 34  # ~2 MiB read out of 64 MiB offered

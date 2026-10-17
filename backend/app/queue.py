@@ -1,5 +1,9 @@
 """Transactional outbox: worker jobs (RQ) and WebSocket events are written with the business change and
-delivered after commit. A failed delivery stays pending and the scheduler retries it with the same job_id."""
+delivered after commit. A failed delivery stays pending and the scheduler retries it with the same job_id.
+
+Job delivery is idempotent against RQ's actual state: a job already waiting in its RQ queue, running or done is
+only marked delivered, never pushed twice. That lets pausing a queue mark rows pending *before* pulling jobs out
+of RQ, so a crash halfway through can never strand a job (see `drain`)."""
 from __future__ import annotations
 
 import json
@@ -10,7 +14,9 @@ from typing import Any
 
 import redis
 from rq import Queue
-from sqlalchemy import select
+from rq.exceptions import NoSuchJobError
+from rq.job import Job
+from sqlalchemy import or_, select, update
 from sqlalchemy.orm import Session
 
 from app.config import get_settings
@@ -69,20 +75,42 @@ def publish_event(event: dict[str, Any]) -> None:
     get_redis().publish(EVENTS_CHANNEL, json.dumps(event, ensure_ascii=False))
 
 
+def rq_state(client: redis.Redis, queue_name: str, job_id: uuid.UUID | str) -> str:
+    """'waiting' (in the RQ queue list), 'active' (started, finished, failed... RQ does not need it again) or
+    'orphan' (unknown to RQ, or its hash says queued but it is in no queue list, e.g. removed by a drain)."""
+    if client.lpos(Queue(queue_name, connection=client).key, str(job_id)) is not None:
+        return 'waiting'
+    try:
+        status = Job.fetch(str(job_id), connection=client).get_status(refresh=False)
+    except NoSuchJobError:
+        return 'orphan'
+    return 'orphan' if status in (None, 'queued') else 'active'
+
+
+def _deliver_job(db: Session, entry: Outbox) -> None:
+    job = db.get(WorkerJob, entry.job_id)
+    if job is None or job.status == 'terminal':
+        return
+    if rq_state(get_redis(), entry.target, entry.job_id) == 'orphan':
+        enqueue(entry.target, entry.job_id, entry.payload)
+
+
 def deliver(ids: list[int] | None = None, limit: int = 200) -> int:
-    """Deliver pending outbox rows; SKIP LOCKED lets several processes run this safely."""
+    """Deliver pending outbox rows; SKIP LOCKED lets several processes run this safely. Rows of paused queues
+    are excluded in SQL, before LIMIT, so they can never starve other queues or events."""
     delivered = 0
     with session_scope() as db:
-        paused = set(db.scalars(select(QueueControl.name).where(QueueControl.paused)))
-        query = select(Outbox).where(Outbox.delivered_at.is_(None)).order_by(Outbox.id).limit(limit)
+        paused = list(db.scalars(select(QueueControl.name).where(QueueControl.paused)))
+        query = select(Outbox).where(Outbox.delivered_at.is_(None))
+        if paused:
+            query = query.where(or_(Outbox.kind != 'job', Outbox.target.not_in(paused)))
         if ids is not None:
             query = query.where(Outbox.id.in_(ids))
+        query = query.order_by(Outbox.id).limit(limit)
         for entry in db.scalars(query.with_for_update(skip_locked=True)):
-            if entry.kind == 'job' and entry.target in paused:
-                continue
             try:
                 if entry.kind == 'job':
-                    enqueue(entry.target, entry.job_id, entry.payload)
+                    _deliver_job(db, entry)
                 else:
                     publish_event(entry.payload)
             except Exception as exc:  # noqa: BLE001 - delivery is retried by the scheduler
@@ -93,6 +121,23 @@ def deliver(ids: list[int] | None = None, limit: int = 200) -> int:
             entry.delivered_at = utcnow()
             delivered += 1
     return delivered
+
+
+def drain(queue_name: str) -> int:
+    """Take not-yet-claimed jobs back out of a paused RQ queue. Their outbox rows are marked pending and committed
+    first; only then are the jobs removed. If Redis or the process fails in between, the leftovers are either
+    still in RQ (delivery later recognises them and does not push them again) or removed with a pending row
+    (re-enqueued on resume). Safe to repeat; the scheduler re-runs it for paused queues."""
+    client = get_redis()
+    rq_queue = Queue(queue_name, connection=client)
+    ids = [x.decode() if isinstance(x, bytes) else x for x in client.lrange(rq_queue.key, 0, -1)]
+    candidates = [job_id for job_id in ids if not client.exists(lease_key(job_id))]
+    if not candidates:
+        return 0
+    with session_scope() as db:
+        db.execute(update(Outbox).where(Outbox.kind == 'job', Outbox.job_id.in_([uuid.UUID(x) for x in candidates]))
+                   .values(delivered_at=None))
+    return sum(1 for job_id in candidates if rq_queue.remove(job_id))
 
 
 def commit(db: Session) -> None:

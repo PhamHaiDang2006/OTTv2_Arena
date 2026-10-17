@@ -2,18 +2,18 @@
 Function names equal contract operationIds (the rejection audit uses them as action names)."""
 from __future__ import annotations
 
+import logging
 import uuid
 from datetime import timedelta
 
 from fastapi import APIRouter, Depends, Request
-from rq import Queue as RQueue
-from sqlalchemy import func, select, update
+from sqlalchemy import func, select
 from sqlalchemy.orm import Session
 
 from app import idempotency
 from app import serializers as ser
 from app.admin import teams as team_admin
-from app.audit import audit
+from app.audit import audit, audit_separately
 from app.db import get_db
 from app.deps import Actor, OpInput, contract_input, require_admin
 from app.errors import conflict, not_found
@@ -25,7 +25,6 @@ from app.models import (
     CodeSimilarity,
     Game,
     Match,
-    Outbox,
     QueueControl,
     RoundSnapshot,
     Submission,
@@ -34,7 +33,7 @@ from app.models import (
     WorkerJob,
     WorkerStatus,
 )
-from app.queue import add_event, commit, deliver, get_redis
+from app.queue import add_event, commit, deliver, drain
 from app.storage import STDERR_FILES, StorageError, get_storage, unavailable
 from app.submissions import service as submission_service
 from app.timeutil import parse_iso, utcnow
@@ -42,6 +41,7 @@ from app.tournament import service as tournament
 from app.tournament.router import rounds_page
 
 router = APIRouter()
+log = logging.getLogger('ottv2.admin')
 LOG_LIMIT = 1024 * 1024
 
 
@@ -335,21 +335,6 @@ def adminQueue(actor: Actor = Depends(require_admin), db: Session = Depends(get_
     return queue_body(db)
 
 
-def _drain_rq_queue(db: Session, name: str) -> int:
-    """Pull not-yet-claimed jobs back out of RQ so a paused queue really stops handing out work; their outbox
-    rows become pending again and are re-enqueued (same job_id) on resume."""
-    rq_queue = RQueue(name, connection=get_redis())
-    removed = []
-    for job_id in rq_queue.get_job_ids():
-        if get_redis().exists(f'ottv2:lease:{job_id}'):
-            continue
-        if rq_queue.remove(job_id):
-            removed.append(uuid.UUID(job_id))
-    if removed:
-        db.execute(update(Outbox).where(Outbox.job_id.in_(removed), Outbox.kind == 'job').values(delivered_at=None))
-    return len(removed)
-
-
 @router.put('/admin/queue')
 def adminControlQueue(request: Request, actor: Actor = Depends(require_admin),
                       inp: OpInput = Depends(contract_input('adminControlQueue')), db: Session = Depends(get_db)):
@@ -364,13 +349,20 @@ def adminControlQueue(request: Request, actor: Actor = Depends(require_admin),
         db.add(control)
     control.paused, control.updated_at = paused, utcnow()
     db.flush()
-    drained = _drain_rq_queue(db, name) if paused else 0
     audit(db, actor.id, 'queue.control', 'queue', None,
-          {'name': name, 'reason': inp.body['reason'], 'before': {'paused': before}, 'after': {'paused': paused},
-           'drained_jobs': drained})
+          {'name': name, 'reason': inp.body['reason'], 'before': {'paused': before}, 'after': {'paused': paused}})
+    # The pause is committed before RQ is touched; draining is repeatable and also re-run by the scheduler.
     response = _done(db, idem, 200, queue_body(db))
-    if not paused:
-        deliver()
+    try:
+        if paused:
+            drained = drain(name)
+            audit_separately(actor.id, 'queue.drain', 'queue', None, {'name': name, 'removed_jobs': drained})
+        else:
+            deliver()
+    except Exception as exc:  # noqa: BLE001 - the scheduler finishes draining / delivery
+        log.warning('Queue %s %s incomplete: %s', name, 'drain' if paused else 'resume delivery', exc)
+        audit_separately(actor.id, 'queue.drain_incomplete' if paused else 'queue.resume_incomplete', 'queue', None,
+                         {'name': name, 'error': str(exc)[:300]})
     return response
 
 
