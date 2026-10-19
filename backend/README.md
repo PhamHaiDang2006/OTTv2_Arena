@@ -25,7 +25,7 @@
 
 ### Chạy độc lập và bàn giao
 
-PR implementation đầu tiên bổ sung lệnh cài, migrate, seed 2 đội + admin, start API và test, cùng biến DATABASE_URL/REDIS_URL/S3/JWT/worker token theo mục 7. Các lệnh này chưa tồn tại trong baseline tài liệu.
+Lệnh chạy ở mục [Chạy backend](#chạy-backend) bên dưới. Quyết định đã chọn và câu hỏi còn mở: [DECISIONS.md](DECISIONS.md).
 
 Trước merge: response thật khớp OpenAPI/fixture, phân quyền chéo đội, refresh/logout, callback lặp và sai job, snapshot bất biến, retry attempt, bảng điểm và nhánh; WS reconnect refetch được với D. Migration kiểm tra từ DB trống và từ revision trước. Chỉ C tạo migration, ghi head/revision và thứ tự merge để tránh hai head. D review API, B review queue/callback.
 
@@ -34,24 +34,80 @@ Trước merge: response thật khớp OpenAPI/fixture, phân quyền chéo đ�
 
 Backend là trung tâm điều phối: xác thực người dùng, giữ dữ liệu đội và bản nộp, đẩy việc cho worker, nhận kết quả, tính bảng xếp hạng và dựng nhánh đấu.
 
-## Cấu trúc dự kiến
+## Chạy backend
+
+Triển khai contract **v1.0.0**, profile **dev-v1** (development). Công cụ: Python 3.12 qua [uv](https://docs.astral.sh/uv/) (đã dùng uv 0.13.1), PostgreSQL 16, Redis 7, S3/MinIO. Mọi lệnh chạy từ `backend/`.
+
+```bash
+uv sync                                   # tạo .venv từ uv.lock (Python 3.12)
+
+# Biến môi trường: tên theo infra/.env.example, cộng thêm các biến backend ở bảng dưới
+export DATABASE_URL=postgresql+psycopg://ottv2:ottv2@127.0.0.1:5432/ottv2
+export REDIS_URL=redis://127.0.0.1:6379/0
+export S3_ENDPOINT_URL=http://127.0.0.1:9000 S3_PUBLIC_ENDPOINT_URL=http://127.0.0.1:9000 S3_BUCKET=ottv2
+export S3_ACCESS_KEY_ID=... S3_SECRET_ACCESS_KEY=...
+export JWT_SECRET=... WORKER_API_TOKEN=...
+export FRONTEND_ORIGINS=http://localhost:5173,http://localhost:5174
+export COOKIE_SECURE=false                # chỉ dev loopback; production để mặc định true
+
+uv run python -m app.cli migrate          # alembic upgrade head (head hiện tại: 0001)
+uv run python -m app.cli ensure-bucket    # dev: tạo bucket nếu chưa có
+OTTV2_PASSWORD=... uv run python -m app.cli seed-dev   # admin@example.test + 2 đội approved (doi-a, doi-b)
+uv run uvicorn app.main:app --host 127.0.0.1 --port 8000
+uv run python -m app.cli scheduler        # tiến trình riêng: outbox → RQ/WS, gỡ job queue đang dừng, watchdog lease, freeze theo giờ, similarity
+```
+
+Tài khoản: API không nhận mật khẩu (behavior.md). Đội trưởng tạo bằng `POST /admin/teams` hoặc import CSV chưa có mật khẩu; đặt bằng `OTTV2_PASSWORD=... uv run python -m app.cli set-password --email ...`. Thêm thành viên: `app.cli add-member --team <slug> --email ...`. Admin: `app.cli create-admin --email ...`.
+
+### Test
+
+Test chạy trên PostgreSQL và Redis thật, S3 giả lập bằng moto. Test **TRUNCATE mọi bảng và FLUSHDB**, nên tên DB phải chứa `test` và Redis phải chọn DB khác 0 (conftest từ chối nếu sai).
+
+```bash
+docker run -d --name ottv2-test-pg -e POSTGRES_USER=ottv2 -e POSTGRES_PASSWORD=ottv2 -e POSTGRES_DB=ottv2_test -p 127.0.0.1:55432:5432 postgres:16-alpine
+docker run -d --name ottv2-test-redis -p 127.0.0.1:56379:6379 redis:7-alpine
+export DATABASE_URL=postgresql+psycopg://ottv2:ottv2@127.0.0.1:55432/ottv2_test REDIS_URL=redis://127.0.0.1:56379/15
+uv run pytest                                            # toàn bộ
+uv run pytest tests/test_tournament_flow.py -k full      # một test
+uv run ruff check app tests migrations scripts
+```
+
+Smoke với tiến trình thật (`scripts/smoke.py` đóng vai worker: lease Redis, upload S3, callback; không build/chạy bot thật): chạy API + scheduler với cùng env, `seed-dev`, rồi `OTTV2_PASSWORD=... uv run python scripts/smoke.py --api http://127.0.0.1:8000 --origin http://localhost:5173`.
+
+### Biến môi trường riêng của backend
+
+Chưa có trong `infra/.env.example` (B sở hữu file đó); mặc định dùng được cho dev.
+
+| Biến | Mặc định | Ý nghĩa |
+| --- | --- | --- |
+| `ENGINE_VERSION` | `1.0.0` | engine_version ghi vào submission/build job và scrimmage |
+| `ENABLED_LANGUAGES` | `python,cpp` | Ngôn ngữ nhận upload; Java/Node chỉ bật sau khi sandbox đạt |
+| `COOKIE_SECURE` | `true` | Cờ Secure của cookie refresh |
+| `S3_REGION` | `us-east-1` | Region ký S3 |
+| `CONTRACTS_DIR` | `../contracts` | Backend đọc schema/operations/version/rules từ đây lúc chạy; image phải chứa thư mục này |
+| `ARCHITECTURE_PATH` | `../architecture.md` | Nguồn `protocol_markdown` cho `GET /docs` |
+| `REPLAY_URL_TTL_SECONDS` | `300` | Hạn URL ký sẵn của replay |
+| `STARTER_KITS_JSON` | `[]` | Danh sách starter kit cho `GET /docs` (B cung cấp) |
+| `SUBMISSION_RATE_PER_HOUR` | `10` | Giới hạn nộp mỗi đội mỗi giờ (429 RATE_LIMITED) |
+| `LOGIN_RATE_PER_MINUTE` | `10` | Giới hạn login mỗi IP+email mỗi phút |
+| `RQ_BUILD_TIMEOUT_SECONDS`, `RQ_MATCH_TIMEOUT_SECONDS` | `600`, `1800` | job_timeout khi enqueue RQ |
+
+## Cấu trúc
 
 ```
 backend/
 ├── app/
-│   ├── main.py
-│   ├── auth/           # JWT, refresh token, phân quyền
-│   ├── teams/
-│   ├── submissions/
-│   ├── matches/        # match, game, đánh tập
-│   ├── tournament/     # bốc thăm, vòng bảng, loại trực tiếp, tiêu chí phụ
-│   ├── admin/          # endpoint quản trị, nhật ký kiểm toán
-│   ├── internal/       # endpoint cho worker
-│   ├── ws/             # WebSocket
-│   ├── storage.py      # MinIO
-│   └── queue.py        # RQ
+│   ├── main.py          # ASGI app; tắt OpenAPI tự sinh, hợp đồng là contracts/openapi.yaml
+│   ├── contract.py      # nạp schema/operations từ contracts/, validate request theo JSON Schema chung
+│   ├── models.py        # lược đồ SQL (C sở hữu); migrations/versions/0001_initial_schema.py
+│   ├── deps.py, idempotency.py, errors.py, security.py, ratelimit.py, audit.py, serializers.py
+│   ├── auth/ teams/ submissions/ matches/ tournament/ admin/ internal/ ws/ public/
+│   ├── queue.py         # outbox giao dịch → RQ (job_id = RQ id) và Redis pub/sub cho WS
+│   ├── scheduler.py     # outbox, watchdog lease, freeze theo giờ, similarity, dọn dẹp
+│   └── cli.py
 ├── migrations/
-└── tests/
+├── scripts/smoke.py
+└── tests/               # pytest; mọi response được validate với contracts/
 ```
 
 ## Nhiệm vụ
