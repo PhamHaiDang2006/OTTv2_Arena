@@ -1,5 +1,42 @@
 # starter-kits — Bộ khởi động cho thí sinh
 
+## Các kit hiện có — 1.0.0
+
+Đã triển khai [Python](python/README.md) và [C++20](cpp/README.md), mỗi kit có
+random/greedy, giao thức tự flush, FEN, sinh nước, apply/undo và debug.
+Kit dùng contract v1.0.0, protocol OTTV2 1, luật phát triển dev-v1.
+Java/Node chưa triển khai/bật vì chưa có pipeline image được kiểm chứng.
+
+Từ repo root:
+
+```sh
+python -m pip install -e engine
+python -m pip install --target contracts/.deps -r contracts/requirements.txt
+python engine/scripts/generate_fixtures.py
+python starter-kits/tests/check_kits.py
+python starter-kits/tests/play_kits.py
+python starter-kits/tools/package.py
+```
+
+Hai script test nhận `--cxx /path/to/g++`. `check_kits.py` so 1.000 thế trận
+cả hai màu và kiểm tra apply/undo; `play_kits.py` kiểm tra ZIP bằng runner,
+compile C++ rồi chạy tám cặp Python/C++ với random/greedy và đổi màu.
+
+`dist/` chứa bốn ZIP chỉ có source, tên file gốc đúng hợp đồng, cùng manifest
+version/SHA-256. Sinh bằng `tools/package.py` (Python 3.12.14); không sửa ZIP
+bằng tay. Kết quả này là artifact local, chưa publish link tải lên P1.
+
+Local runner dùng chính `ottv2.run_game`, không có vòng lặp luật riêng:
+
+```sh
+python starter-kits/tools/local_runner.py starter-kits/python starter-kits/cpp --games 10 --replay starter-kits/dist/game.json
+```
+
+Compile C++ theo README con trước. Local runner chạy code với quyền người dùng,
+chỉ dùng cho bot phát triển đáng tin cậy. Image Python trên runner cần cài sẵn
+ottv2 1.0.0; xem `engine/Dockerfile.bot`. ZIP đã qua giải nén/build/play cục bộ,
+nhưng chưa được upload qua backend và chạy trong Docker ở lượt triển khai này.
+
 ## Hợp đồng tích hợp và hướng dẫn cho AI
 
 Đọc [AGENTS.md](../AGENTS.md), [hợp đồng tích hợp](../integration.md) mục 2, 5, 9 và README engine/runner. Phân công hiện hành: B sở hữu kit, A đối chiếu luật.

@@ -1,5 +1,68 @@
 # engine — Trọng tài OTTv2
 
+## Implementation 1.0.0 — dev-v1
+
+Đã có package Python không phụ thuộc runtime bên ngoài: Board/FEN, sinh và áp
+nước, undo, phân định thắng/thua, clock, protocol, replay, local process adapter
+và CLI. Profile vẫn **chưa được ban tổ chức xác nhận**. Checklist thiết kế ở
+cuối tài liệu là mục tiêu tổng thể, không phải chứng nhận nghiệm thu production.
+
+Từ repo root (Python 3.12+):
+
+```sh
+python -m pip install -e engine -e runner
+python -m pip install --target contracts/.deps -r contracts/requirements.txt
+python -m unittest discover -s engine/tests -v
+python -m unittest discover -s runner/tests -v
+python -m ottv2 play starter-kits/python starter-kits/python --replay engine/dist/local.json
+python engine/scripts/generate_fixtures.py
+python starter-kits/tests/check_kits.py
+python starter-kits/tests/play_kits.py
+python engine/scripts/stress.py --games 10000
+```
+
+Các script C++ nhận `--cxx /path/to/g++`. Local runner chỉ dành cho bot phát
+triển đáng tin cậy, không giới hạn quyền/mạng/RAM như Docker. CLI `--games N`
+đổi màu sau mỗi ván. Hai đường dẫn bot có thể là folder, file `.py` hoặc binary.
+
+Public exports `run_game`, `GameConfig`, `GameResult`, `BotIO`,
+`BotProtocolError`, `InfrastructureError` thực hiện `contracts/engine_api.py`.
+`Board` được dùng trực tiếp bởi kit Python: `apply` trả bản sao; `push/pop`
+sửa tại chỗ và hoàn tác LIFO. Không dùng engine để gọi Docker/DB/storage.
+
+### Ghép với runner
+
+`OTTv2_ENGINE_FACTORY=ottv2.adapter:make_engine` chuyển dict cấu hình của runner
+thành `GameConfig`. `OTTv2_BUILD_VERIFIER=ottv2_runner.engine_verifier:make_build_verifier`
+chạy cả ván với đối thủ random tin cậy; bot thua bình thường vẫn build thành
+công, lỗi CRASH/TIMEOUT/ILLEGAL_MOVE của bot nộp thì build thất bại.
+
+```sh
+docker build -f runner/Dockerfile.engine -t ottv2-worker:local .
+docker build -f engine/Dockerfile.bot -t ottv2-python:local .
+```
+
+Build từ repo root. Khi triển khai, publish image rồi cấu hình digest bất biến
+trong VPS2, không dùng digest Python trần vì kit cần `ottv2` cài sẵn. Dockerfile
+worker cũ vẫn dành cho adapter tự cung cấp; bản `.engine` đóng gói engine này.
+Runner/backend giữ nguyên hợp đồng v1.0.0; bên chịu ảnh hưởng là B (image/adapter),
+C (callback) và D/viewer (fixture). Không cần thay schema hoặc thứ tự merge khác
+ngoài runner hiện có và engine này phải cùng có mặt trong image tích hợp.
+
+Wire GameConfig vẫn theo giá trị cố định trong schema; engine cho phép giảm
+clock/max_turns qua API trực tiếp để test cục bộ, không gửi các override đó vào
+job backend. Seed của bot mẫu cố định riêng; protocol v1 không có trường seed
+gửi tới bot, nên config.seed không được tự ý chèn vào INIT.
+
+### Kiểm chứng và fixture
+
+`fixtures/manifest.json` có replay thật từ engine và bàn cuối để viewer đối
+chiếu; `fixtures/positions.json` có 1.000 thế trận cho hai kit. Nguồn/lệnh tái
+sinh tại `fixtures/README.md`. Công cụ đã dùng: Python 3.12.14, g++ 16.1.0.
+Test tích hợp runner dùng engine thật với Docker/storage giả lập; test kit
+chạy subprocess Python/C++ thật. Chưa chứng nhận Docker sandbox, upload backend
+thật hay cân bằng giải đấu. Xem `HANDOFF.md` cho kết quả chạy và phần còn mở.
+
 ## Hợp đồng tích hợp và hướng dẫn cho AI
 
 Đọc [AGENTS.md](../AGENTS.md), [hợp đồng tích hợp](../integration.md) mục 2, 5, 6, 9 và README của runner/starter-kits/replay-viewer trước khi triển khai.
@@ -14,7 +77,8 @@
 
 ### Chạy độc lập và bàn giao
 
-Hiện chưa có implementation/lệnh chạy đã xác nhận. PR đầu tiên phải thêm pyproject, entrypoint CLI và lệnh cài/chạy/test chính xác từ repo root. Khung dự kiến: cài editable package engine, chạy pytest trong engine, dùng CLI đấu hai bot mẫu; không ghi “đã chạy” trước khi thực sự có kết quả.
+Implementation và lệnh chạy hiện hành nằm ở đầu tài liệu; các mục ngày bên dưới
+giữ lại kế hoạch gốc. Dùng unittest và các script kiểm chứng đã công bố.
 
 Trước merge: round-trip FEN; ca đúng/sai cho luật đã chốt; đồng hồ giả tại biên deadline; EOF/timeout khác lỗi hạ tầng; run_game với BotIO giả; fixture đọc được ở kit/viewer. Khi tích hợp, chạy với adapter pipe của B. B review API Python/clock; D đối chiếu replay. PR ghi engine_version và commit fixture.
 

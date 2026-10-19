@@ -228,6 +228,7 @@ class RunnerRuntime:
                 image = self.publisher.publish(image, job["submission_id"])
                 guard.check()
         except BotBuildError as exc:
+            image = None
             status, error = "failed", {"code": "COMPILE_ERROR", "message": self._bounded_message(exc)}
             log.extend(getattr(self.sandbox, "last_build_log", b""))
         except UnsupportedLanguage as exc:
@@ -332,7 +333,7 @@ class RunnerRuntime:
                 or player.get("team") != expected["team"]
                 or player.get("submission_id") != expected["submission_id"]
                 or not isinstance(player.get("bot_name"), str)
-                or not player["bot_name"]
+                or len(player["bot_name"]) > 64
             ):
                 raise InfrastructureError(f"Engine replay {side} player does not match the job")
         moves = replay["moves"]

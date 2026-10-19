@@ -1,0 +1,35 @@
+{
+  "format": 1,
+  "engine_version": "1.0.0",
+  "ruleset_id": "dev-v1",
+  "map_id": "standard",
+  "initial_fen": "9/9/9/9/9/3k5/2B6/9/9",
+  "players": {
+    "BLUE": {
+      "team": "local-blue",
+      "submission_id": "00000001-0000-4000-8000-000000000001",
+      "bot_name": "TestBot"
+    },
+    "RED": {
+      "team": "local-red",
+      "submission_id": "00000002-0000-4000-8000-000000000001",
+      "bot_name": "TestBot"
+    }
+  },
+  "moves": [
+    {
+      "ply": 1,
+      "side": "BLUE",
+      "move": "c3d4",
+      "think_ms": 1,
+      "clock_ms": 60000,
+      "capture": "k",
+      "debug": []
+    }
+  ],
+  "result": {
+    "winner": "BLUE",
+    "reason": "WIPEOUT",
+    "plies": 1
+  }
+}

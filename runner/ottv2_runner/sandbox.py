@@ -21,9 +21,9 @@ from .errors import BotBuildError, InfrastructureError, UnsupportedLanguage
 
 MAX_BUILD_LOG_BYTES = 1024 * 1024
 MAX_BOT_STDERR_BYTES = 1024 * 1024
-MAX_BOT_DEBUG_BYTES = 1024 * 1024
+MAX_BOT_DEBUG_BYTES = 64 * 1024
 MAX_BOT_STDOUT_BYTES = 1024 * 1024
-MAX_BOT_LINE_BYTES = 64 * 1024
+MAX_BOT_LINE_BYTES = 4096  # Includes the terminating LF (dev-v1).
 
 
 @dataclass(frozen=True)
@@ -362,13 +362,21 @@ class DockerBot:
         while b"\n" in pending:
             line, _, tail = pending.partition(b"\n")
             pending[:] = tail
-            if len(line) > MAX_BOT_LINE_BYTES:
-                self._error = RuntimeError("Bot protocol line exceeded 64 KiB")
+            if len(line) + 1 > MAX_BOT_LINE_BYTES:
+                self._line_overflow()
                 continue
             self._queue_line(line.rstrip(b"\r"))
-        if len(pending) > MAX_BOT_LINE_BYTES:
-            self._error = _protocol_error("Bot protocol line exceeded 64 KiB")
+        if len(pending) >= MAX_BOT_LINE_BYTES:
+            self._line_overflow()
             pending.clear()
+
+    def _line_overflow(self) -> None:
+        self._error = _protocol_error("Bot protocol line exceeded 4096 bytes including LF")
+        # Wake an engine already waiting for a line, even if the bot keeps stdout open.
+        try:
+            self._lines.put_nowait(self._error)
+        except queue.Full:
+            pass  # A queued item already wakes read_line, which checks _error.
 
     def _drain(self) -> None:
         pending = bytearray()
@@ -403,7 +411,7 @@ class DockerBot:
             try:
                 self._lines.put_nowait(None)
             except queue.Full:
-                self._error = RuntimeError("Bot output queue was full at EOF")
+                self._error = _protocol_error("Bot output queue was full at EOF")
 
     async def send_line(self, text: str) -> None:
         if "\n" in text or "\r" in text:
@@ -416,6 +424,8 @@ class DockerBot:
             raise EOFError from exc
 
     async def read_line(self, timeout_ms: int) -> str:
+        if self._error:
+            raise self._error
         try:
             line = await asyncio.to_thread(self._lines.get, True, max(timeout_ms, 0) / 1000)
         except queue.Empty as exc:

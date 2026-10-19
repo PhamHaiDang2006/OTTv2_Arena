@@ -1,0 +1,22 @@
+name: Engine and starter kits
+on:
+  push:
+    paths: ['engine/**', 'starter-kits/**', 'runner/**', 'contracts/**', '.github/workflows/engine-kits.yml']
+  pull_request:
+    paths: ['engine/**', 'starter-kits/**', 'runner/**', 'contracts/**', '.github/workflows/engine-kits.yml']
+jobs:
+  test:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with:
+          python-version: '3.12'
+      - run: python -m pip install -e engine -e runner -r contracts/requirements.txt -r engine/requirements-test.txt
+      - run: python -m coverage run --source=engine/ottv2 -m unittest discover -s engine/tests -v
+      - run: python -m coverage report --include='*/ottv2/rules.py,*/ottv2/clock.py' --fail-under=95
+      - run: python -m unittest discover -s runner/tests -v
+      - run: python engine/scripts/generate_fixtures.py
+      - run: git diff --exit-code -- engine/fixtures
+      - run: python starter-kits/tests/check_kits.py
+      - run: python starter-kits/tests/play_kits.py

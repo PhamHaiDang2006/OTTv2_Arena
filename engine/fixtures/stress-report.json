@@ -1,0 +1,19 @@
+{
+  "engine_version": "1.0.0",
+  "ruleset_id": "dev-v1",
+  "games": 10000,
+  "seeds": [
+    0,
+    9999
+  ],
+  "deterministic": true,
+  "counts": {
+    "RED": 5125,
+    "MOVE_LIMIT": 9217,
+    "BLUE": 4875,
+    "GOAL": 783
+  },
+  "blue_win_percent": 48.75,
+  "result_sha256": "9e5dcb2f3959d70f01bf2583c770f775ac8dccfd584902d4b819249124be89dc",
+  "elapsed_seconds": 188.53
+}

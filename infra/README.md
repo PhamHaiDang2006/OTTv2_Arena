@@ -55,6 +55,13 @@ VPS1's database, Redis, MinIO, and backend host ports are bound only to its Wire
 
 ## VPS deployment
 
+VPS2's four match workers assign bot CPU pairs `0/1`, `2/3`, `4/5`, and `6/7`
+through `RUNNER_CPUSET_BLUE`/`RUNNER_CPUSET_RED`. This layout requires host CPU
+IDs 0–7 to be available. On a smaller host, reduce the number of match workers
+and adjust their pairs before deployment; do not run multiple matches on the
+same pair. These assignments isolate match bots from each other, but do not
+reserve CPUs from the build worker or other host processes.
+
 Use separate host-specific secret files, not the development `.env.example`: copy `vps1.env.example` to `.env` on VPS1 and `vps2.env.example` to `.env` on VPS2. The VPS2 file contains only Redis/API/worker-scoped S3/registry secrets and the worker image reference—never `DATABASE_URL`, app S3 credentials, MinIO root credentials, or `JWT_SECRET`. Prefer URL-safe alphanumeric passwords, or percent-encode special characters in `DATABASE_URL` and `VPS2_REDIS_URL`. Do not copy secrets into a web build or any `VITE_*` variable.
 
 All `replace-*` values, example IPs/domains, and digest strings are placeholders. Build application images outside Compose and set `VPS1_BACKEND_IMAGE`, `VPS1_P1_IMAGE`, `VPS1_P2_IMAGE`, `VPS1_MINIO_IMAGE`, `VPS1_MC_IMAGE`, and `VPS2_WORKER_IMAGE` to registry references pinned by real `sha256` digests. Build the runner image from `runner/Dockerfile`, publish it, and configure the VPS2 `OTTv2_ENGINE_FACTORY` and `OTTv2_BUILD_VERIFIER` values to system-owned adapters included in that image. Check that the backend listens on `0.0.0.0:8000`, both static servers listen on `8080`, P2 is built for `/admin/`, and both static servers provide SPA history fallback. Frontends may be built with `VITE_API_BASE_URL=/api/v1` and `VITE_WS_URL=wss://DOMAIN/ws`; these are public URLs, never secrets. The backend must implement the health/readiness and migration behavior agreed with C before using production images.

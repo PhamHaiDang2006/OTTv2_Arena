@@ -12,11 +12,19 @@
 
 ## Implemented package
 
+Engine thật hiện có trong `engine/`. Cài `python -m pip install -e engine -e runner`
+từ repo root, dùng `OTTv2_ENGINE_FACTORY=ottv2.adapter:make_engine` và
+`OTTv2_BUILD_VERIFIER=ottv2_runner.engine_verifier:make_build_verifier`.
+Build image chứa cả hai bằng `docker build -f runner/Dockerfile.engine -t ottv2-worker:local .`
+từ repo root. Python bot base cần `engine/Dockerfile.bot` để có package ottv2.
+Adapter devkit cũ vẫn chỉ dùng kiểm tra plumbing, không phải trọng tài.
+
 The Python 3.12+ distribution lives in this folder:
 
 ```powershell
 Set-Location runner
 python -m pip install -e .
+python -m pip install --target ../contracts/.deps -r ../contracts/requirements.txt
 python -m unittest discover -s tests -v
 docker build -t ottv2-worker:local .
 ottv2-runner validate-build path\to\build-job.json
@@ -35,6 +43,12 @@ environment variables: `INTERNAL_API_BASE_URL` (base URL including `/api/v1`),
 Optional settings include
 `RUNNER_OUTBOX_DIR` (must be a persistent volume), `RUNNER_WORK_DIR`,
 `RUNNER_WORKER_ID`, and `RUNNER_CPUSET_BLUE`/`RUNNER_CPUSET_RED`.
+
+Contract regression tests validate failed smoke-build callbacks and startup
+CRASH/TIMEOUT results against the shared v1.0.0 schemas. Bot stdout is limited
+to 4096 bytes per line including LF; debug capture is truncated at 64 KiB per
+bot, as specified by `dev-v1`. Oversized lines raise the public engine
+`BotProtocolError`, including when a bot never terminates the line.
 
 The worker image can be built with the included Dockerfile. Deployment images
 must be published and referenced by immutable digest. The worker also requires

@@ -1,0 +1,4 @@
+.test-deps/
+.coverage
+build/
+*.egg-info/

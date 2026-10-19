@@ -1,0 +1,60 @@
+{
+  "engine_version": "1.0.0",
+  "ruleset_id": "dev-v1",
+  "cases": [
+    {
+      "file": "capture.json",
+      "expected_final_fen": "9/9/9/9/9/3B5/9/9/9",
+      "result": {
+        "winner": "BLUE",
+        "reason": "WIPEOUT",
+        "plies": 1
+      }
+    },
+    {
+      "file": "goal.json",
+      "expected_final_fen": "8B/k8/9/9/9/9/9/9/9",
+      "result": {
+        "winner": "BLUE",
+        "reason": "GOAL",
+        "plies": 1
+      }
+    },
+    {
+      "file": "crash-zero-ply.json",
+      "expected_final_fen": "9/pbkpbkpbk/kpbkpbkpb/9/9/9/BPKBPKBPK/KBPKBPKBP/9",
+      "result": {
+        "winner": "RED",
+        "reason": "CRASH",
+        "plies": 0
+      }
+    },
+    {
+      "file": "timeout.json",
+      "expected_final_fen": "9/pbkpbkpbk/kpbkpbkpb/9/9/9/BPKBPKBPK/KBPKBPKBP/9",
+      "result": {
+        "winner": "RED",
+        "reason": "TIMEOUT",
+        "plies": 0
+      }
+    },
+    {
+      "file": "illegal-move.json",
+      "expected_final_fen": "9/pbkpbkpbk/kpbkpbkpb/9/9/9/BPKBPKBPK/KBPKBPKBP/9",
+      "result": {
+        "winner": "RED",
+        "reason": "ILLEGAL_MOVE",
+        "plies": 0
+      }
+    },
+    {
+      "file": "move-limit.json",
+      "expected_final_fen": "9/7k1/9/9/9/9/9/1B7/9",
+      "result": {
+        "winner": "RED",
+        "reason": "MOVE_LIMIT",
+        "plies": 300
+      }
+    }
+  ]
+}

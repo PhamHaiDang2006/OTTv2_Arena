@@ -1,0 +1,6 @@
+# Trusted Python bot base; build from repository root and deploy by digest.
+FROM python:3.12.10-slim-bookworm
+COPY engine /opt/engine
+RUN python -m pip install --no-cache-dir /opt/engine numpy==2.2.6
+USER 10001:10001
+WORKDIR /bot
