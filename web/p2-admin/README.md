@@ -1,5 +1,18 @@
 # web/p2-admin — Cổng quản trị
 
+## Implementation 1.0.0
+
+Mã P2 ở `../src/admin.tsx`, dùng routing/layout/auth/API client chung. Đã có đội/CSV,
+tạo giải/bốc thăm/chốt, vòng/snapshot/freeze/run, attempt/rerun/override, queue,
+source có tô cú pháp và xem hai bên, similarity, draft/publish thông báo và audit.
+Mọi mutation P2 đi qua form xác nhận; nghiệp vụ cần reason đều có trường bắt buộc.
+
+Chạy `npm run dev:admin` từ `web/`, mở `/admin/` trên port 5174.
+Xem [README workspace](../README.md) và [CHECKS.md](../CHECKS.md).
+Checklist ngày công bên dưới là kế hoạch gốc, không thay thế nghiệm thu giải trọn luồng.
+Audit API 1.0.0 chỉ có filter actor/action và pagination, chưa có query lọc khoảng ngày;
+UI không giả vờ lọc toàn bộ dữ liệu bằng các dòng của một trang.
+
 ## Hợp đồng tích hợp và hướng dẫn cho AI
 
 Đọc [AGENTS.md](../../AGENTS.md), [hợp đồng tích hợp](../../integration.md) mục 2–4, 6–9 và README backend/P1/replay-viewer.
@@ -20,7 +33,7 @@
 
 ### Chạy độc lập và bàn giao
 
-D bổ sung lệnh dev mock/dev thật, typecheck/test/build qua workspace web chung khi tạo code. Mock phải có admin, member bị từ chối, vòng đã khóa, game đang chạy, rerun và callback đến muộn.
+Lệnh dev thật, typecheck/test/build đã có trong workspace web chung. Mock HTTP chuẩn trả captain khi login; P2 dùng backend dev để kiểm tra admin và member bị từ chối. Test bổ sung cho 409, xác nhận mutation, errors trong kết quả import và WS nằm trong web/tests.
 
 Trước merge: member không truy cập nguồn/log; thao tác nguy hiểm có reason và backend audit; double click không tạo hai vòng; 409 không làm UI báo thành công; xem attempt cũ/mới rõ ràng; chạy giải giả lập qua API thật. C review nghiệp vụ, A đối chiếu replay, B đối chiếu routing.
 

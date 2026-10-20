@@ -1,5 +1,19 @@
 # web/replay-viewer — Trình phát replay
 
+## Implementation 1.0.0
+
+Package `@ottv2/replay-viewer` export `ReplayViewer`, `parseFen`, `applyMove`, `toFen`.
+`ReplayViewerProps` lấy trực tiếp từ `contracts/viewer-api.ts`; không phụ thuộc router,
+auth hay HTTP client. JSON Schema dùng validator chung ở `web/shared/schema.ts`.
+
+Đã có SVG 9×9, điều khiển/tua/phím tắt/tốc độ, clock/debug/count quân/capture,
+download callback và stderr chỉ ở admin mode. Tua dùng timeline bất biến.
+`applyMove` áp nước đã ghi trong replay, không thay engine kiểm tra luật di chuyển.
+
+Test so sánh 6 fixture cố định và 100 replay sinh từ public engine API; round-trip 1000 FEN.
+Chạy generator và npm test theo [README workspace](../README.md).
+Xem [CHECKS.md](../CHECKS.md) để phân biệt kiểm tra tự động với nghiệm thu browser thực tế.
+
 ## Hợp đồng tích hợp và hướng dẫn cho AI
 
 Đọc [AGENTS.md](../../AGENTS.md), [hợp đồng tích hợp](../../integration.md) mục 5, 6, 7, 9 và README engine/P1/P2. A sở hữu viewer theo phân công hiện hành; D sở hữu workspace web và tích hợp trang.
@@ -15,7 +29,7 @@
 
 ### Chạy độc lập và bàn giao
 
-Khi tạo package, A/D bổ sung trang demo hoặc harness dùng fixture, lệnh test/typecheck/build qua workspace web chung. Không thêm lockfile con; dependency và scripts root phối hợp D.
+Package dùng chung lockfile và scripts tại web root. Harness ở web/tests/replay.test.tsx; hai trang /games/:id và /admin/games/:id nhúng cùng component.
 
 Trước merge: FEN round-trip, board cuối khớp fixture engine, tua đầu/cuối/lùi sau ăn quân, 0 nước, format lạ/dữ liệu hỏng; participant/admin props; keyboard/mobile và replay dài. Replay dài 600 ply là ca hiệu năng, không tự xác nhận max_turns có nghĩa 600 ply. Bàn giao public exports, fixture version và kết quả kiểm tra cho D.
 

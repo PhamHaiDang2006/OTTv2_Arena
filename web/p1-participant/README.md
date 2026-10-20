@@ -1,5 +1,16 @@
 # web/p1-participant — Cổng thí sinh
 
+## Implementation 1.0.0
+
+Mã P1 ở `../src/participant.tsx`, routing/layout/auth ở `../src/main.tsx` và client
+dùng chung ở `../src/api.ts`. Đã có login, trang đội/lịch đóng băng, upload ZIP có
+progress, build log, lịch sử/chọn bot, scrimmage/quota, trận/replay, bảng/nhánh và tài liệu.
+Nguồn bot được xem qua endpoint own-source. Không gọi admin API từ luồng P1.
+
+Chạy/build/test từ `web/` theo [README workspace](../README.md).
+Kết quả thực tế và giới hạn nghiệm thu ở [CHECKS.md](../CHECKS.md).
+Checklist ngày công bên dưới giữ làm kế hoạch gốc, không phải kết quả test trình duyệt.
+
 ## Hợp đồng tích hợp và hướng dẫn cho AI
 
 Đọc [AGENTS.md](../../AGENTS.md), [hợp đồng tích hợp](../../integration.md) mục 2, 3, 6–9 và README backend/replay-viewer/P2.
@@ -28,7 +39,7 @@
 
 ### Chạy độc lập và bàn giao
 
-Khi tạo workspace, D bổ sung lệnh npm ci, dev mock/dev API thật, typecheck/test/build từ web root; chưa có script thực thi ở baseline này. Dùng VITE_API_BASE_URL/VITE_WS_URL theo integration, không nhúng secret.
+Workspace đã có `npm ci`, `npm run dev`, `npm run typecheck`, `npm test`, `npm run build`. Cấu hình mock/dev API thật ở README workspace. Dùng VITE_API_BASE_URL/VITE_WS_URL theo integration, không nhúng secret.
 
 Trước merge: mock và HTTP thật cùng schema, refresh đồng thời, WS mất kết nối, upload lỗi, submission failed, hết quota, replay 0 nước/hỏng; build và kiểm tra màn hình nhỏ. C review API usage, A đối chiếu viewer props. PR ghi fixture và commit OpenAPI được dùng.
 

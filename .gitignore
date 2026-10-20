@@ -9,3 +9,4 @@ dist/
 .env
 *.log
 .DS_Store
+web/tests/generated/
