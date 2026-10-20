@@ -60,28 +60,37 @@ Contract **v1.0.0** (`contracts/version.json`), profile **dev-v1** (`ruleset_sta
 - `GET /capabilities.languages` = `ENABLED_LANGUAGES` (mặc định `python,cpp`); `tournament_enabled` phản ánh `ALLOW_DEVELOPMENT_TOURNAMENTS` thật.
 - Tạo tài khoản: API không nhận mật khẩu; đặt bằng CLI `set-password`. Chưa có luồng email/kích hoạt.
 
+## Đã thống nhất khi tích hợp backend / runner / engine
+
+- Q1–Q3: prefix ownership `staging/{job_id}/{lease_token}/`; runner thêm
+  `builds/{submission_id}/` hoặc `games/{game_id}/` bên dưới. `log_key` là prefix
+  có hai file `{blue,red}.stderr.log`, dùng cả khi infra_error. Fixture callback
+  trong `contracts/build.mjs` đã chuyển sang staging và được tái sinh.
+- Q4: heartbeat theo endpoint nội bộ; README runner đã cập nhật.
+- Q9: freeze chỉ lấy bot ready đúng engine_version của giải; tạo game cũng kiểm
+  tra version của cả hai submission, từ chối trước khi đẩy job không tương thích.
+- Dockerfile backend chứa contracts/migrations; VPS1 có scheduler riêng. CI
+  backend-integration chạy cả backend/runner/engine với PostgreSQL và Redis test.
+- Contract vẫn v1.0.0, không thay tên/kiểu field; đây là cụ thể hóa staging và sửa
+  fixture. B/C/A cần triển khai cùng thay đổi uploader/consumer và chạy test liên thông.
+
 ## Câu hỏi mở
 
 | # | Câu hỏi | Ai chốt | Đang làm tạm |
 | --- | --- | --- | --- |
-| Q1 | Quy ước key staging để fencing artifact: behavior.md bắt buộc ownership token trong key staging nhưng hợp đồng không ghi định dạng. | B review | **Backend đã bắt buộc** `staging/{job_id}/{lease_token}/...`. B cần xác nhận trước khi viết uploader. |
-| Q2 | Fixture `GameResultCallback`/`BuildResult` trong contracts dùng key chuẩn (`replays/{game_id}.json.gz`, `builds/...`) làm ví dụ. Backend thật sẽ từ chối các key đó (`artifact_not_staged`). Có cập nhật ví dụ trong `contracts/build.mjs` không? | Anh/C + B (ngoài `backend/`) | Chưa sửa contracts; fixture chỉ là ví dụ cấu trúc, schema không đổi. |
-| Q3 | `log_key` là prefix chứa `blue.stderr.log`/`red.stderr.log`? Callback `finished` có bắt buộc đủ hai tệp không? | B | Prefix; bắt buộc đủ hai tệp khi `finished`. |
-| Q4 | Heartbeat: runner/README ghi "gửi về Redis", behavior.md ghi endpoint nội bộ. | B | Theo behavior.md/OpenAPI: `POST /internal/workers/heartbeat`. Đề nghị B sửa runner/README. |
 | Q5 | Rerun một ván sớm của trận loại trực tiếp khi các ván sau đã có: ván sau giữ nguyên hay bị hủy? | C + ban tổ chức | Giữ nguyên; tính lại theo thứ tự ván, ván sau điểm quyết định không được tính nhưng vẫn hiển thị. |
 | Q6 | "Tổng ply của các ván thắng ít hơn" (TOUR-02) tính trên mọi ván trong bảng hay chỉ ván giữa các đội đang bằng nhau? | A + C (luật) | Mọi ván thắng trong bảng (cột `winning_plies` của Standing). |
 | Q7 | WS: "team subscribe cần auth frame trong 10s trước đó" nghĩa là auth phải gửi trong 10 s đầu kết nối, hay auth phải mới hơn 10 s so với lúc subscribe? | C + D | Auth chỉ được nhận trong 10 s đầu kết nối. |
 | Q8 | Đội `pending` (chưa duyệt) có được tạo scrimmage không? (Đội pending không xuất hiện trong danh sách đối thủ.) | C + ban tổ chức | Được, chỉ chặn đội bị khóa/loại. |
-| Q9 | Freeze có cần kiểm tra submission được build với đúng `engine_version` của giải không? | A + C | Chưa kiểm tra. |
 | Q10 | Đội bị loại giữa giải: trận chưa đấu, standings và slot nhánh xử lý thế nào? | Ban tổ chức | Chỉ loại khỏi danh sách freeze; không tự xử thua. |
 | Q11 | Override vòng bảng có giới hạn tỉ số (tối đa 2 ván) không? | C | Chỉ kiểm tra winner khớp tỉ số. |
 | Q12 | Scrimmage có được rerun/override không? | C + D | Rerun được (không có downstream); override bị từ chối `409`. |
 | Q13 | Quy trình tạo/kích hoạt tài khoản thật (email mời, đặt mật khẩu lần đầu). | C + ban tổ chức | CLI `set-password`/`add-member`. |
 
-## Ảnh hưởng tới bên khác (cần phối hợp, chưa sửa vì ngoài `backend/`)
+## Ảnh hưởng tới bên khác
 
-- **B (infra):** image backend phải chứa `contracts/` và `architecture.md` (hoặc đặt `CONTRACTS_DIR`/`ARCHITECTURE_PATH`). Cần thêm vào Compose một tiến trình `python -m app.cli scheduler` bên cạnh API, chạy `app.cli migrate` một lần trước API. Các biến backend mới (bảng trong README) chưa có trong `infra/.env.example`.
-- **B (CI):** test backend cần service PostgreSQL 16 + Redis 7 trong `.github/workflows`; chưa thêm.
-- **B (runner):** upload mọi artifact vào `staging/{job_id}/{lease_token}/` (ví dụ `.../replay.json.gz`, `.../blue.stderr.log`, `.../red.stderr.log`, `.../build.log`), `log_key` là prefix đó; replay với `Content-Type: application/json` + `Content-Encoding: gzip` (backend copy giữ metadata); heartbeat theo Q4.
-- **B (infra/MinIO):** credential worker chỉ ghi được prefix `staging/`; backend cần đọc `staging/` và ghi prefix chuẩn. Có thể đặt lifecycle xóa `staging/` sau vài ngày.
-- **D (web):** trận đánh tập ở `/scrimmages`, không phải `/matches`; `Match.games` có nhiều attempt, dùng `is_current`; lỗi chi tiết nằm ở `error.details` (`reason`, `errors`, `team_ids`...).
+- B: dùng `runner/Dockerfile.engine`, `engine/Dockerfile.bot`; worker chỉ ghi staging.
+- C: dùng `backend/Dockerfile`; migrate trước API và scheduler. Không cần migration mới.
+- A: public engine API không đổi; engine 1.0.0, ruleset dev-v1.
+- D: HTTP/WS DTO không đổi; replay vẫn lấy URL được backend cấp quyền.
+- Kết quả kiểm tra và giới hạn được ghi trong `INTEGRATION_CHECK.md`.

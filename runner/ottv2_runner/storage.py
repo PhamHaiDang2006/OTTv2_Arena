@@ -55,7 +55,7 @@ class S3ObjectStore:
 
 
 def staging_key(kind: str, resource_id: str, job_id: str, lease_token: str, filename: str) -> str:
-    return f"staging/{kind}/{resource_id}/{job_id}/{lease_token}/{filename}"
+    return f"staging/{job_id}/{lease_token}/{kind}/{resource_id}/{filename}"
 
 
 def build_log_key(store: ObjectStore, key: str, data: bytes) -> str:
@@ -66,6 +66,11 @@ def game_artifacts(store: ObjectStore, game_id: str, job_id: str, lease_token: s
     replay_key = staging_key("games", game_id, job_id, lease_token, "replay.json.gz")
     compressed = gzip.compress(json.dumps(replay, separators=(",", ":"), ensure_ascii=False).encode("utf-8"), mtime=0)
     store.put_immutable(replay_key, compressed, "application/json", content_encoding="gzip")
+    return replay_key, game_logs(store, game_id, job_id, lease_token, logs)
+
+
+def game_logs(store: ObjectStore, game_id: str, job_id: str, lease_token: str, logs: dict[str, bytes]) -> str:
+    """Use the same filenames for finished games and infrastructure diagnostics."""
     log_keys: list[str] = []
     filenames = {
         "blue": "blue.stderr.log",
@@ -79,7 +84,7 @@ def game_artifacts(store: ObjectStore, game_id: str, job_id: str, lease_token: s
         log_keys.append(key)
     # A slash-terminated key identifies the staged group without inventing a manifest protocol.
     log_group = log_keys[0].rsplit("/", 1)[0] + "/"
-    return replay_key, log_group
+    return log_group
 
 
 def sha256(data: bytes) -> str:

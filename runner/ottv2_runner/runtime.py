@@ -20,7 +20,7 @@ from .http import HttpTransport, UrllibTransport
 from .lease import LeaseHeartbeat, RedisLease
 from .outbox import CallbackOutbox, PendingCallback
 from .sandbox import DockerSandbox, Sandbox
-from .storage import ObjectStore, S3ObjectStore, build_log_key, game_artifacts, sha256, staging_key
+from .storage import ObjectStore, S3ObjectStore, build_log_key, game_artifacts, game_logs, sha256, staging_key
 from .validation import validate_build_job, validate_match_job
 
 MAX_BUILD_LOG_BYTES = 1024 * 1024
@@ -461,11 +461,7 @@ class RunnerRuntime:
         elif any(logs.values()):
             try:
                 # Store diagnostics for failed infrastructure while preserving null game result.
-                keys = []
-                for name, content in logs.items():
-                    key = staging_key("games", job["game_id"], job["job_id"], lease.token, f"{name}.log")
-                    keys.append(self.storage.put_immutable(key, content[:1024 * 1024], "text/plain; charset=utf-8"))
-                log_key = keys[0].rsplit("/", 1)[0] + "/"
+                log_key = game_logs(self.storage, job["game_id"], job["job_id"], lease.token, logs)
             except Exception:
                 log_key = None
         try:

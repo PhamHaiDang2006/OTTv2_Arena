@@ -265,7 +265,8 @@ class RunnerRuntimeTests(unittest.TestCase):
             self.assertEqual(callback["status"], "finished")
             self.assertEqual(callback["result"], {"winner": "BLUE", "reason": "GOAL", "plies": 0})
             self.assertEqual(sandbox.started, 2)
-            self.assertTrue(callback["replay_key"].startswith("staging/games/"))
+            token = transport.requests[-1][2]["X-Worker-Lease"]
+            self.assertTrue(callback["replay_key"].startswith(f"staging/{match_payload()['job_id']}/{token}/games/{GAME_ID}/"))
             replay_object = storage.objects[callback["replay_key"]]
             self.assertEqual(replay_object[1], "application/json")
             self.assertEqual(replay_object[2], "gzip")

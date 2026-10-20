@@ -61,15 +61,43 @@ Tài khoản: API không nhận mật khẩu (behavior.md). Đội trưởng t�
 
 ### Test
 
+Kiểm tra liên thông backend → runner → engine nằm trong
+`tests/test_runner_engine_integration.py`. Cài cả hai package local trước khi
+chạy suite backend. Kết quả và giới hạn nghiệm thu tại
+[INTEGRATION_CHECK.md](INTEGRATION_CHECK.md). Từ repo root:
+
+```sh
+uv sync --project backend --frozen
+uv pip install --python backend/.venv/bin/python -e engine -e runner
+uv pip install --python backend/.venv/bin/python --target contracts/.deps -r contracts/requirements.txt
+docker compose -f infra/docker-compose.test.yml up -d --wait
+export DATABASE_URL='postgresql+psycopg://ottv2_test:local-test-only@127.0.0.1:55432/ottv2_test'
+export REDIS_URL='redis://127.0.0.1:56379/15'
+cd backend
+.venv/bin/python -m pytest -q
+```
+
+Windows dùng `.venv/Scripts/python.exe` thay `.venv/bin/python` và đặt biến bằng
+`$env:DATABASE_URL=...`, `$env:REDIS_URL=...`. Sau cài runner/engine, gọi Python
+trực tiếp như trên để `uv run` không gỡ package tích hợp khi đồng bộ môi trường.
+Compose test chỉ dùng dữ liệu tạm, tách khỏi dev/production. Suite dùng PostgreSQL,
+Redis và RQ thật, adapter S3 thật với moto, engine thật; Docker và transport HTTP
+được thay bằng test adapter. Đây chưa phải chứng nhận sandbox Docker/MinIO thật.
+
+Image backend build từ repo root bằng
+`docker build -f backend/Dockerfile -t ottv2-backend:local .`.
+Image chứa contracts, architecture, migrations và CLI. Chạy
+`python -m app.cli migrate` trước API/scheduler; Compose VPS1 có scheduler riêng.
+Nguồn hợp đồng v1.0.0 được giữ; fixture callback được tái sinh bằng
+`node contracts/build.mjs`, dùng staging theo `contracts/behavior.md`.
+
 Test chạy trên PostgreSQL và Redis thật, S3 giả lập bằng moto. Test **TRUNCATE mọi bảng và FLUSHDB**, nên tên DB phải chứa `test` và Redis phải chọn DB khác 0 (conftest từ chối nếu sai).
 
 ```bash
-docker run -d --name ottv2-test-pg -e POSTGRES_USER=ottv2 -e POSTGRES_PASSWORD=ottv2 -e POSTGRES_DB=ottv2_test -p 127.0.0.1:55432:5432 postgres:16-alpine
-docker run -d --name ottv2-test-redis -p 127.0.0.1:56379:6379 redis:7-alpine
-export DATABASE_URL=postgresql+psycopg://ottv2:ottv2@127.0.0.1:55432/ottv2_test REDIS_URL=redis://127.0.0.1:56379/15
-uv run pytest                                            # toàn bộ
-uv run pytest tests/test_tournament_flow.py -k full      # một test
-uv run ruff check app tests migrations scripts
+# Sau thiết lập môi trường tích hợp ở trên, từ backend/:
+.venv/bin/python -m pytest                              # toàn bộ
+.venv/bin/python -m pytest tests/test_tournament_flow.py -k full
+.venv/bin/python -m ruff check app tests migrations scripts
 ```
 
 Smoke với tiến trình thật (`scripts/smoke.py` đóng vai worker: lease Redis, upload S3, callback; không build/chạy bot thật): chạy API + scheduler với cùng env, `seed-dev`, rồi `OTTV2_PASSWORD=... uv run python scripts/smoke.py --api http://127.0.0.1:8000 --origin http://localhost:5173`.

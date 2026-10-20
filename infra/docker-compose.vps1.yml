@@ -46,7 +46,7 @@ services:
     expose: ["8000"]
     ports:
       - "${VPS1_WG_IP:?Set VPS1_WG_IP to the VPS1 WireGuard interface address}:8000:8000"
-    environment:
+    environment: &backend-environment
       DATABASE_URL: ${DATABASE_URL:?Set DATABASE_URL for the VPS1 postgres service}
       REDIS_URL: redis://:${REDIS_PASSWORD:?Set REDIS_PASSWORD}@redis:6379/0
       S3_ENDPOINT_URL: http://minio:9000
@@ -59,13 +59,21 @@ services:
       FRONTEND_ORIGINS: https://${DOMAIN:?Set DOMAIN}
       ALLOW_DEVELOPMENT_TOURNAMENTS: ${ALLOW_DEVELOPMENT_TOURNAMENTS:-false}
       RULESET_ID: ${RULESET_ID:-dev-v1}
-    depends_on:
+    depends_on: &backend-dependencies
       postgres:
         condition: service_healthy
       redis:
         condition: service_healthy
       minio:
         condition: service_healthy
+
+  scheduler:
+    image: ${VPS1_BACKEND_IMAGE:?Set VPS1_BACKEND_IMAGE to an externally built immutable image digest}
+    pull_policy: always
+    restart: unless-stopped
+    command: ["python", "-m", "app.cli", "scheduler"]
+    environment: *backend-environment
+    depends_on: *backend-dependencies
 
   postgres:
     image: postgres:16.10-alpine

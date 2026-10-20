@@ -1,6 +1,6 @@
 # Operations runbook
 
-This is an operational template, not evidence that the product stack is production-ready. At the time of writing, the repository has no deployable backend, worker, or web product images. Confirm image ports, migrations, readiness routes, callback persistence, and object-storage policy with their owners before a real rollout. Do not run an official tournament on `dev-v1`; it is an unconfirmed development ruleset.
+This is an operational template, not evidence that the product stack is production-ready. Backend/engine/runner Dockerfiles now exist; web product images remain unimplemented. Confirm image ports, migrations, readiness routes, callback persistence, and object-storage policy with their owners before a real rollout. Do not run an official tournament on `dev-v1`; it is an unconfirmed development ruleset.
 
 ## 1. First-time preparation
 
@@ -24,12 +24,12 @@ docker compose --env-file .env -f docker-compose.vps1.yml up -d postgres redis m
 docker compose --env-file .env -f docker-compose.vps1.yml ps
 ```
 
-Provision the bucket/accounts before starting the backend. Run the exact migration command supplied by the backend image owner once, before backend application replicas. Then:
+Provision the bucket/accounts before starting the backend. Run `docker compose --env-file .env -f docker-compose.vps1.yml run --rm --no-deps backend python -m app.cli migrate` once, before the API and scheduler services. Then:
 
 ```sh
 docker compose --env-file .env -f docker-compose.vps1.yml up -d
 docker compose --env-file .env -f docker-compose.vps1.yml ps
-docker compose --env-file .env -f docker-compose.vps1.yml logs --tail=100 caddy backend
+docker compose --env-file .env -f docker-compose.vps1.yml logs --tail=100 caddy backend scheduler
 ```
 
 On VPS2, after WireGuard and registry access are verified:

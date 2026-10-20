@@ -4,7 +4,13 @@ This folder owns the development data services, two VPS Compose deployments, Cad
 
 ## Current implementation boundary
 
-The repository currently has no deployable backend or web product images: the backend API and `web/p1-participant`, `web/p2-admin`, and `web/replay-viewer` applications are not implemented. Runner code (if present) still needs to be built into and verified as the pinned worker image used here. The VPS Compose files deliberately require externally built immutable image references. Their commands, ports, health routes, and static-server behavior are deployment interfaces to implement and verify with those components before production use. `dev-v1` is for development only; it is not an approved tournament ruleset.
+Backend, runner and engine implementations now exist. Build backend from
+`backend/Dockerfile`, integrated workers from `runner/Dockerfile.engine`, and the
+Python bot base from `engine/Dockerfile.bot` (all use repo-root build context).
+VPS1 runs API and scheduler as separate services from the same backend image.
+Web P1/P2/viewer are still documentation-only; full public deployment requires
+those images. Publish/deploy images separately with immutable digests.
+`dev-v1` remains development-only.
 
 The dev MinIO service builds the upstream community source at a fixed commit because MinIO no longer publishes community binaries/images and its repository is archived. This is a convenience for local development, not a maintained or production-secure storage distribution. VPS1 requires a separately built and digest-pinned MinIO-compatible server and `mc` image; verify provenance, updates, and applicable AGPLv3 obligations before deployment.
 
@@ -64,7 +70,7 @@ reserve CPUs from the build worker or other host processes.
 
 Use separate host-specific secret files, not the development `.env.example`: copy `vps1.env.example` to `.env` on VPS1 and `vps2.env.example` to `.env` on VPS2. The VPS2 file contains only Redis/API/worker-scoped S3/registry secrets and the worker image reference—never `DATABASE_URL`, app S3 credentials, MinIO root credentials, or `JWT_SECRET`. Prefer URL-safe alphanumeric passwords, or percent-encode special characters in `DATABASE_URL` and `VPS2_REDIS_URL`. Do not copy secrets into a web build or any `VITE_*` variable.
 
-All `replace-*` values, example IPs/domains, and digest strings are placeholders. Build application images outside Compose and set `VPS1_BACKEND_IMAGE`, `VPS1_P1_IMAGE`, `VPS1_P2_IMAGE`, `VPS1_MINIO_IMAGE`, `VPS1_MC_IMAGE`, and `VPS2_WORKER_IMAGE` to registry references pinned by real `sha256` digests. Build the runner image from `runner/Dockerfile`, publish it, and configure the VPS2 `OTTv2_ENGINE_FACTORY` and `OTTv2_BUILD_VERIFIER` values to system-owned adapters included in that image. Check that the backend listens on `0.0.0.0:8000`, both static servers listen on `8080`, P2 is built for `/admin/`, and both static servers provide SPA history fallback. Frontends may be built with `VITE_API_BASE_URL=/api/v1` and `VITE_WS_URL=wss://DOMAIN/ws`; these are public URLs, never secrets. The backend must implement the health/readiness and migration behavior agreed with C before using production images.
+All `replace-*` values, example IPs/domains, and digest strings are placeholders. Build application images outside Compose and set `VPS1_BACKEND_IMAGE`, `VPS1_P1_IMAGE`, `VPS1_P2_IMAGE`, `VPS1_MINIO_IMAGE`, `VPS1_MC_IMAGE`, and `VPS2_WORKER_IMAGE` to registry references pinned by real `sha256` digests. Build the integrated runner image from `runner/Dockerfile.engine`, publish it, and configure the VPS2 `OTTv2_ENGINE_FACTORY` and `OTTv2_BUILD_VERIFIER` values to system-owned adapters included in that image. Check that the backend listens on `0.0.0.0:8000`, both static servers listen on `8080`, P2 is built for `/admin/`, and both static servers provide SPA history fallback. Frontends may be built with `VITE_API_BASE_URL=/api/v1` and `VITE_WS_URL=wss://DOMAIN/ws`; these are public URLs, never secrets. The backend must implement the health/readiness and migration behavior agreed with C before using production images.
 
 From `/srv/ottv2/infra` on VPS1:
 
@@ -74,12 +80,12 @@ chmod 600 .env
 docker compose --env-file .env -f docker-compose.vps1.yml pull
 docker compose --env-file .env -f docker-compose.vps1.yml up -d postgres redis minio
 # Provision the application bucket and restricted S3 service account before the API.
-# After C confirms the exact migration command for the pinned backend image:
-docker compose --env-file .env -f docker-compose.vps1.yml run --rm --no-deps --entrypoint alembic backend upgrade head
+# Run migrations once before API and scheduler:
+docker compose --env-file .env -f docker-compose.vps1.yml run --rm --no-deps backend python -m app.cli migrate
 docker compose --env-file .env -f docker-compose.vps1.yml up -d
 ```
 
-The migration command above is a placeholder pending a real backend image/CLI. Do not run it until confirmed against that image. Set up the VPN, DNS, firewall, MinIO accounts and database backup first. On VPS2, after WireGuard and the Docker daemon's local-registry configuration are ready:
+The migration command above is provided by backend/Dockerfile and app.cli. Set up the VPN, DNS, firewall, MinIO accounts and database backup first. On VPS2, after WireGuard and the Docker daemon's local-registry configuration are ready:
 
 ```sh
 cp vps2.env.example .env
@@ -93,13 +99,16 @@ See [RUNBOOK.md](RUNBOOK.md) for first-time provisioning, upgrades, backup/resto
 
 ### Migrations, seed, and smoke tests
 
-The only current migration command is a **placeholder**, not a verified product command:
+Build from repo root with `docker build -f backend/Dockerfile -t ottv2-backend:local .`.
+From infra, migrate once with
+`docker compose --env-file .env -f docker-compose.vps1.yml run --rm --no-deps backend python -m app.cli migrate`.
+Then start API and scheduler. Never seed a live tournament with development data.
+Development seed and test instructions are in [backend/README.md](../backend/README.md).
 
-```sh
-docker compose --env-file .env -f docker-compose.vps1.yml run --rm --no-deps --entrypoint alembic backend upgrade head
-```
-
-Run only after C confirms that the pinned image includes Alembic and its configuration. No seed command or product smoke-test command exists in the repository yet; do not invent one or populate a live tournament with mock data. The first backend release must document safe development seeding and migration execution. The first integrated release must add a staging smoke test covering login, ZIP upload/build, ready bot, worker callback, WebSocket, scrimmage, replay browser URL, P1/P2 deep links, and rejection of public internal routes.
+`docker-compose.test.yml` provides isolated, disposable PostgreSQL/Redis on
+loopback ports 55432/56379. It has no persistent DB volume and must not be used
+for participant data. The integration test uses moto for S3 and simulated Docker
+processes; full MinIO/Docker/public frontend acceptance remains separate.
 
 ## Edge routing and operational constraints
 

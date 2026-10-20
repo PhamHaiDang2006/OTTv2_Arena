@@ -237,7 +237,8 @@ def freeze_round(db: Session, actor_id: uuid.UUID | None, row: Round, reason: st
     teams = participants(db, row)
     bots = dict(db.execute(
         select(ActiveBot.team_id, Submission.id).join(Submission, Submission.id == ActiveBot.submission_id)
-        .where(ActiveBot.team_id.in_(teams), ActiveBot.scope == 'tournament', Submission.status == 'ready')).all())
+        .where(ActiveBot.team_id.in_(teams), ActiveBot.scope == 'tournament', Submission.status == 'ready',
+               Submission.engine_version == tournament.engine_version)).all())
     missing = [t for t in teams if t not in bots]
     if missing:
         raise conflict('SUBMISSION_NOT_READY', 'Có đội chưa có bot thi đấu sẵn sàng', team_ids=[s(t) for t in missing])

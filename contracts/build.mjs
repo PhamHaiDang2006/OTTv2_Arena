@@ -203,7 +203,7 @@ const examples={
  Result:{winner:'RED',reason:'CRASH',plies:0},
  GameConfig:{engine_version:'1.0.0',ruleset_id:'dev-v1',map_id:'standard',initial_fen:initial,players:P,budget_ms:60000,init_ms:10000,grace_ms:50,hard_timeout_extra_ms:1000,max_turns:300,seed:42},
  BuildJob:{schema_version:1,job_id:U(5),submission_id:U(3),language:'python',source_key:`submissions/${U(3)}/source.zip`,source_sha256:'a'.repeat(64),engine_version:'1.0.0'},
- BuildResult:{schema_version:1,job_id:U(5),submission_id:U(3),status:'ready',image_tag:`registry.local/ottv2-bot@sha256:${'a'.repeat(64)}`,build_log_key:`builds/${U(3)}/build.log`,error:null},
+ BuildResult:{schema_version:1,job_id:U(5),submission_id:U(3),status:'ready',image_tag:`registry.local/ottv2-bot@sha256:${'a'.repeat(64)}`,build_log_key:`staging/${U(5)}/${U(12)}/builds/${U(3)}/build.log`,error:null},
  Replay:{format:1,engine_version:'1.0.0',ruleset_id:'dev-v1',map_id:'standard',initial_fen:initial,players:{BLUE:{...P.BLUE,bot_name:'ExampleBlue'},RED:{...P.RED,bot_name:'ExampleRed'}},moves:[],result:{winner:'RED',reason:'CRASH',plies:0}},
  WsEvent:{schema_version:1,event_id:U(6),type:'build.updated',channel:`team:${U(2)}`,occurred_at:now,data:{submission_id:U(3),status:'ready'}},
  WorkerHeartbeat:{worker_id:'match-1',kind:'match',job_id:null,sent_at:now},
@@ -220,7 +220,7 @@ const examples={
 };
 examples.Auth.user=examples.User;
 examples.MatchJob={schema_version:1,job_id:U(7),game_id:U(8),attempt:1,blue_image:examples.BuildResult.image_tag,red_image:`registry.local/ottv2-bot@sha256:${'b'.repeat(64)}`,map_id:'standard',engine_version:'1.0.0',players:P,config:examples.GameConfig};
-examples.GameResultCallback={schema_version:1,job_id:U(7),game_id:U(8),attempt:1,status:'finished',result:examples.Result,replay_key:`replays/${U(8)}.json.gz`,log_key:`logs/${U(8)}/`,duration_ms:20,error:null};
+examples.GameResultCallback={schema_version:1,job_id:U(7),game_id:U(8),attempt:1,status:'finished',result:examples.Result,replay_key:`staging/${U(7)}/${U(12)}/games/${U(8)}/replay.json.gz`,log_key:`staging/${U(7)}/${U(12)}/games/${U(8)}/`,duration_ms:20,error:null};
 examples.EngineResult={...examples.Result,duration_ms:20,replay:examples.Replay};
 examples.Team={...examples.TeamPublic,status:'approved',is_locked:false,seed:1,group_id:null,members:[examples.User],active_bots:[{team_id:U(2),scope:'scrimmage',submission_id:U(3)}]};
 examples.Game={id:U(8),match_id:U(10),game_index:1,attempt:1,is_current:true,blue_submission_id:U(3),red_submission_id:U(4),map_id:'standard',engine_version:'1.0.0',ruleset_id:'dev-v1',status:'finished',result:examples.Result,duration_ms:20,replay_available:true};

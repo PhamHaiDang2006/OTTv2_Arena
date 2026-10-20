@@ -85,8 +85,12 @@ compare-token Lua for renewal and release. Worker heartbeat is sent to
 token plus `X-Worker-Lease`.
 
 Docker isolation options are specified in `ottv2_runner/sandbox.py`; the code
-has not been security-certified. A staging object-key layout/finalization
-adapter and an engine-backed smoke game remain deployment integration work.
+has not been security-certified. Staging ownership is aligned with backend:
+`staging/{job_id}/{lease_token}/{builds|games}/{resource_id}/...`.
+Game logs use `blue.stderr.log` / `red.stderr.log` for both success and infra errors.
+The real engine adapter and build verifier ship in `runner/Dockerfile.engine`;
+backend integration tests exercise their callbacks and replay promotion (Docker
+processes and the S3 server are substituted). See backend/README.md.
 Contract profile `dev-v1` remains development-only and is not an official ruleset.
 
 ### Live development acceptance run
@@ -182,7 +186,7 @@ runner/
 ### Ngày 5–6
 - [ ] Image C++ (bắt buộc), Java và Node (nếu kịp)
 - [ ] Benchmark: cùng một cặp bot chạy 100 lần, độ lệch thời gian tiêu thụ dưới 2%
-- [ ] Nhịp tim worker gửi về Redis mỗi 30 giây
+- [ ] Nhịp tim worker gửi endpoint nội bộ `/api/v1/internal/workers/heartbeat` mỗi 30 giây
 
 ### Ngày 7 — Gia cố
 - [ ] Viết cùng A bộ 10 bot phá hoại và xác nhận tất cả bị chặn:

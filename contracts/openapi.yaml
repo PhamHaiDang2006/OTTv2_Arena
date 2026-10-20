@@ -9861,7 +9861,7 @@
                 "submission_id": "00000003-0000-4000-8000-000000000001",
                 "status": "ready",
                 "image_tag": "registry.local/ottv2-bot@sha256:aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa",
-                "build_log_key": "builds/00000003-0000-4000-8000-000000000001/build.log",
+                "build_log_key": "staging/00000005-0000-4000-8000-000000000001/00000012-0000-4000-8000-000000000001/builds/00000003-0000-4000-8000-000000000001/build.log",
                 "error": null
               }
             }
@@ -10034,8 +10034,8 @@
                   "reason": "CRASH",
                   "plies": 0
                 },
-                "replay_key": "replays/00000008-0000-4000-8000-000000000001.json.gz",
-                "log_key": "logs/00000008-0000-4000-8000-000000000001/",
+                "replay_key": "staging/00000007-0000-4000-8000-000000000001/00000012-0000-4000-8000-000000000001/games/00000008-0000-4000-8000-000000000001/replay.json.gz",
+                "log_key": "staging/00000007-0000-4000-8000-000000000001/00000012-0000-4000-8000-000000000001/games/00000008-0000-4000-8000-000000000001/",
                 "duration_ms": 20,
                 "error": null
               }

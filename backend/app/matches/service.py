@@ -15,7 +15,7 @@ from sqlalchemy import select
 from sqlalchemy.orm import Session
 
 from app import contract
-from app.errors import not_found
+from app.errors import conflict, not_found
 from app.models import Game, Match, Submission, Team, WorkerJob
 from app.queue import add_event, add_job, team_channel
 from app.timeutil import utcnow
@@ -39,6 +39,11 @@ def game_config(engine_version: str, players: dict, seed: int) -> dict:
 def _enqueue_game(db: Session, match: Match, game: Game, teams: dict[uuid.UUID, Team],
                   submissions: dict[uuid.UUID, Submission]) -> None:
     blue, red = submissions[game.blue_submission_id], submissions[game.red_submission_id]
+    for submission in (blue, red):
+        if submission.engine_version != game.engine_version:
+            raise conflict('SUBMISSION_NOT_READY', 'Bot cần được build bằng phiên bản engine của ván',
+                           reason='engine_version_mismatch', submission_id=str(submission.id),
+                           expected=game.engine_version, actual=submission.engine_version)
     players = {'BLUE': {'team': teams[game.blue_team_id].slug, 'submission_id': str(blue.id)},
                'RED': {'team': teams[game.red_team_id].slug, 'submission_id': str(red.id)}}
     job_id = uuid.uuid4()

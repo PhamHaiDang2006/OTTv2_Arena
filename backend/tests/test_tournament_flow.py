@@ -286,6 +286,20 @@ def test_development_ruleset_blocks_tournaments_without_flag(api):
     assert response.status_code == 409 and response.json()['error']['code'] == 'RULESET_UNCONFIRMED'
 
 
+def test_freeze_rejects_bot_built_for_another_engine(api):
+    from app.models import Submission
+    t = Tournament(api)
+    t.post(f'/tournaments/{t.id}/draw', reason())
+    t.post(f'/tournaments/{t.id}/draw/lock', reason())
+    t.create_rounds()
+    with session_scope() as db:
+        db.get(Submission, t.bots[t.teams[0].id]).engine_version = '0.9.0'
+    response = t.post(f'/rounds/{t.rounds["group"]}/freeze', reason())
+    assert response.status_code == 409 and response.json()['error']['code'] == 'SUBMISSION_NOT_READY'
+    with session_scope() as db:
+        assert db.scalar(select(func.count()).select_from(FrozenBot)) == 0
+
+
 def test_scheduled_freeze_uses_same_code_path(api):
     from datetime import UTC, datetime, timedelta
 
