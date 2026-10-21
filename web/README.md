@@ -2,7 +2,7 @@
 
 Implementation React 18 + TypeScript cho cổng thí sinh **P1**, cổng quản trị **P2** và package
 `@ottv2/replay-viewer`. Hai bản build dùng chung session, API client, schema validator và UI.
-Contract **1.0.0**, engine **1.0.0**, profile **dev-v1** chưa phải luật giải chính thức.
+Contract **1.1.0**, engine **1.0.0**, profile **dev-v1** chưa phải luật giải chính thức.
 
 ## Chạy
 
@@ -114,3 +114,13 @@ P1 fallback `/index.html`, P2 fallback `/admin/index.html`; asset không tồn t
 tới digest image sau quy trình publish riêng. Không sửa Caddy vì routing hiện có đã khớp.
 
 Xem [CHECKS.md](CHECKS.md) cho kết quả kiểm thử thực tế và các bước nghiệm thu còn lại.
+
+## Đăng ký người chơi
+
+Nếu web báo không thực hiện được yêu cầu, kiểm tra API đã chạy: từ repo root dùng
+`powershell -ExecutionPolicy Bypass -File .\infra\start-local-api.ps1` (Docker Desktop
+phải mở). Script giữ tài khoản trong database dev bền; chỉ chạy `npm run dev` chưa đủ.
+
+Mở cổng thí sinh → **Chưa có tài khoản? Đăng ký** → nhập tên đội, email, mật khẩu (ít nhất 8 ký tự), nhập lại mật khẩu → **Đăng ký và vào đấu trường**. Hệ thống đăng nhập luôn và tạo đội riêng. Sau khi nộp bot và build thành công, chọn bot đánh tập để thi đấu. Đội chưa được duyệt vẫn được đánh tập; giải chính thức cần admin duyệt. Không có đăng ký admin, xác minh email, quên mật khẩu hoặc mã mời gia nhập đội trong đợt này.
+
+Yêu cầu backend + contracts 1.1.0 cùng checkout. Form dùng `register` trong client generated, không lưu mật khẩu/token vào localStorage. Nếu mất kết nối sau đăng ký, thử đăng nhập bằng tài khoản vừa nhập.

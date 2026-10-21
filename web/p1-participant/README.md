@@ -98,3 +98,9 @@ Mục tiêu của P1 là rút ngắn vòng lặp *sửa code → biết bot mạ
 
 - Một đội đi trọn luồng: đăng nhập → nộp → xem build → đặt bot → đánh tập → xem replay, không cần tải lại trang.
 - Chạy được trên Chrome, Firefox, Safari và trình duyệt điện thoại.
+
+## Đăng ký người chơi
+
+Mở cổng thí sinh → **Chưa có tài khoản? Đăng ký** → nhập tên đội, email, mật khẩu (ít nhất 8 ký tự), nhập lại mật khẩu → **Đăng ký và vào đấu trường**. Hệ thống đăng nhập luôn và tạo đội riêng. Sau khi nộp bot và build thành công, chọn bot đánh tập để thi đấu. Đội chưa được duyệt vẫn được đánh tập; giải chính thức cần admin duyệt. Không có đăng ký admin, xác minh email, quên mật khẩu hoặc mã mời gia nhập đội trong đợt này.
+
+Yêu cầu backend + contracts 1.1.0 cùng checkout. Form dùng `register` trong client generated, không lưu mật khẩu/token vào localStorage. Nếu mất kết nối sau đăng ký, thử đăng nhập bằng tài khoản vừa nhập.

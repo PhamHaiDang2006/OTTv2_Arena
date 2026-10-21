@@ -67,7 +67,11 @@ export async function api<K extends Op>(
   try {
     result = await send();
   } catch (error) {
-    if (!(error instanceof ApiError) || error.status !== 401 || ['login', 'refresh', 'logout'].includes(op))
+    if (
+      !(error instanceof ApiError) ||
+      error.status !== 401 ||
+      ['register', 'login', 'refresh', 'logout'].includes(op)
+    )
       throw error;
     // Another request may already have rotated the token. Replay only once, with the same key.
     if (token === usedToken) await refresh();
@@ -84,6 +88,10 @@ export function errorText(error: unknown) {
       404: 'Chưa có dữ liệu này.',
       409: 'Trạng thái đã thay đổi. Dữ liệu đang được tải lại.',
       429: 'Đã hết hạn mức hoặc gửi quá nhiều yêu cầu. Vui lòng thử lại sau.',
+      500: 'Máy chủ chưa sẵn sàng hoặc gặp lỗi. Kiểm tra backend đang chạy rồi thử lại.',
+      502: 'Không kết nối được backend. Hãy khởi động backend rồi thử lại.',
+      503: 'Dịch vụ tạm thời chưa sẵn sàng. Vui lòng thử lại sau.',
+      504: 'Backend phản hồi quá chậm. Vui lòng thử lại sau.',
     };
     return `${prefix[error.status] ?? 'Không thực hiện được yêu cầu.'} ${error.payload?.error.message ?? ''}`;
   }

@@ -2,9 +2,9 @@ import React, { useEffect, useState, useSyncExternalStore } from 'react';
 import { createRoot } from 'react-dom/client';
 import { BrowserRouter, NavLink, Navigate, Route, Routes, useLocation } from 'react-router-dom';
 import { QueryClient, QueryClientProvider, useQueryClient } from '@tanstack/react-query';
-import { api, refresh, session, signOut } from './api';
+import { refresh, session, signOut } from './api';
 import { useLive } from './live';
-import { Field, Heading, ErrorBox, useApi } from './ui';
+import { Heading, ErrorBox, useApi } from './ui';
 import { Docs, GamePage, Home, MatchDetail, Scrimmage, Standings, Submissions, Upload } from './participant';
 import {
   AdminMatches,
@@ -18,7 +18,8 @@ import {
   Teams,
 } from './admin';
 import './style.css';
-import { adminUrl, participantUrl } from './urls';
+import { participantUrl } from './urls';
+import { Login } from './auth-page';
 declare const __ADMIN__: boolean;
 const admin = __ADMIN__;
 const participantNav = [
@@ -41,66 +42,6 @@ const adminNav = [
   ['/similarity', 'Trùng lặp'],
   ['/audit-log', 'Kiểm toán'],
 ];
-function Login({ initialError }: { initialError?: unknown }) {
-  const cache = useQueryClient();
-  const [busy, setBusy] = useState(false),
-    [error, setError] = useState<unknown>(initialError);
-  return (
-    <div className="login">
-      <div className="login-brand">
-        <span className="logo">◈ OTTv2</span>
-        <h1>
-          Chiến thuật của bạn.
-          <br />
-          Đấu trường của chúng ta.
-        </h1>
-        <p>Viết bot. Thử sức. Hiểu từng nước đi.</p>
-        <div className="login-art" aria-hidden="true">
-          ● ■ ▲
-        </div>
-      </div>
-      <section className="card">
-        <span className="eyebrow">{admin ? 'CỔNG QUẢN TRỊ' : 'CỔNG THÍ SINH'}</span>
-        <h2>Chào mừng trở lại</h2>
-        <p className="muted">Đăng nhập bằng tài khoản do ban tổ chức cấp.</p>
-        <form
-          onSubmit={async (e) => {
-            e.preventDefault();
-            const f = new FormData(e.currentTarget);
-            setBusy(true);
-            setError(undefined);
-            try {
-              const auth = await api('login', {
-                email: String(f.get('email')),
-                password: String(f.get('password')),
-              });
-              cache.clear();
-              session.set(auth);
-            } catch (err) {
-              setError(err);
-            } finally {
-              setBusy(false);
-            }
-          }}
-        >
-          <Field label="Email">
-            <input name="email" type="email" autoComplete="username" required />
-          </Field>
-          <Field label="Mật khẩu">
-            <input name="password" type="password" autoComplete="current-password" required />
-          </Field>
-          <button className="primary" disabled={busy}>
-            {busy ? 'Đang đăng nhập…' : 'Đăng nhập →'}
-          </button>
-          <ErrorBox error={error} />
-        </form>
-        <p>
-          <a href={admin ? participantUrl : adminUrl}>{admin ? 'Về cổng thí sinh' : 'Đăng nhập quản trị'}</a>
-        </p>
-      </section>
-    </div>
-  );
-}
 function App() {
   const user = useSyncExternalStore(session.subscribe, session.user);
   const [booting, setBooting] = useState(true),
@@ -121,7 +62,7 @@ function App() {
       </p>
     );
   const publicPage = !admin && ['/docs', '/standings', '/bracket'].includes(location.pathname);
-  if (!user && !publicPage) return <Login initialError={logoutError} />;
+  if (!user && !publicPage) return <Login initialError={logoutError} admin={admin} />;
   if (admin && user?.role !== 'admin')
     return (
       <main className="card">
@@ -150,7 +91,7 @@ function App() {
         <div className="sidebar-foot">
           <span className={`dot ${online ? 'online' : ''}`} />
           {online ? 'Cập nhật trực tiếp' : 'Đang kết nối lại'}
-          <small>Engine 1.0.0 · Contract 1.0.0</small>
+          <small>Engine 1.0.0 · Contract 1.1.0</small>
         </div>
       </aside>
       <div className="workspace">
