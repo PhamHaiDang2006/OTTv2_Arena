@@ -1,6 +1,6 @@
 # Hợp đồng tích hợp cho bốn người làm bằng AI
 
-Baseline triển khai **contract v1.0.0** ngày 2026-10-15. Bộ artifact thực tế đã có trong [contracts/README.md](contracts/README.md): OpenAPI, JSON Schema, fixture, type Python/TypeScript, mock HTTP và validator. Engine/backend/worker/web sản phẩm chưa được triển khai.
+Baseline triển khai **contract v1.1.0** ngày 2026-10-15. Bộ artifact thực tế đã có trong [contracts/README.md](contracts/README.md): OpenAPI, JSON Schema, fixture, type Python/TypeScript, mock HTTP và validator. Engine/backend/worker/web sản phẩm chưa được triển khai.
 
 ## 1. Nguồn sự thật
 
@@ -84,3 +84,7 @@ python contracts/mock_server.py --port 4010
 | RULE-01..08, TOUR-01..02 phần luật | Có profile đề xuất dev-v1 để làm thử nhất quán; chưa phải quyết định ban tổ chức |
 
 AI được dùng dev-v1 cho implementation/test phát triển, phải giữ nhãn development. Không tự tuyên bố luật chính thức hoặc bỏ khóa production tournament. Khi có luật thật, tạo profile/version mới, fixture và thay consumer cùng đợt. Việc chưa xác nhận luật chính thức không cản tạo API, UI, worker hoặc engine theo profile phát triển đã ghi rõ.
+
+## Cập nhật đăng ký 1.1.0
+
+Backend + web + contracts phải đi cùng nhau: POST /auth/register trả Auth + cookie, tạo đội pending có quyền đấu tập. Mock đã có operation/fixture. Không thay job/callback, engine hay replay. Tái sinh bằng node contracts/build.mjs; không cần migration.

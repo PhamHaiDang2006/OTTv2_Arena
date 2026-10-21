@@ -2,7 +2,7 @@
   "openapi": "3.1.0",
   "info": {
     "title": "OTTv2 Arena Contract",
-    "version": "1.0.0",
+    "version": "1.1.0",
     "description": "Development integration baseline; dev-v1 rules are provisional. JSON encoding is valid YAML 1.2. Generated from contracts/build.mjs."
   },
   "servers": [
@@ -33,7 +33,7 @@
                 },
                 "example": {
                   "status": "ok",
-                  "contract_version": "1.0.0"
+                  "contract_version": "1.1.0"
                 }
               }
             }
@@ -158,7 +158,7 @@
                   "$ref": "#/components/schemas/Capabilities"
                 },
                 "example": {
-                  "contract_version": "1.0.0",
+                  "contract_version": "1.1.0",
                   "languages": [
                     "python",
                     "cpp"
@@ -418,6 +418,155 @@
               "example": {
                 "email": "member@example.test",
                 "password": "example"
+              }
+            }
+          }
+        }
+      }
+    },
+    "/auth/register": {
+      "post": {
+        "operationId": "register",
+        "summary": "register",
+        "x-role": "public",
+        "description": "public access. See contracts/behavior.md for authorization and state transitions.",
+        "parameters": [],
+        "responses": {
+          "201": {
+            "description": "Success",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Auth"
+                },
+                "example": {
+                  "access_token": "mock-captain-token",
+                  "token_type": "bearer",
+                  "expires_in": 900,
+                  "user": {
+                    "id": "00000001-0000-4000-8000-000000000001",
+                    "email": "captain@example.test",
+                    "role": "captain",
+                    "team_id": "00000002-0000-4000-8000-000000000001",
+                    "is_active": true
+                  }
+                }
+              }
+            }
+          },
+          "400": {
+            "description": "Error; see error.code",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Error"
+                }
+              }
+            }
+          },
+          "401": {
+            "description": "Error; see error.code",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Error"
+                }
+              }
+            }
+          },
+          "403": {
+            "description": "Error; see error.code",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Error"
+                }
+              }
+            }
+          },
+          "404": {
+            "description": "Error; see error.code",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Error"
+                }
+              }
+            }
+          },
+          "409": {
+            "description": "Error; see error.code",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Error"
+                }
+              }
+            }
+          },
+          "413": {
+            "description": "Error; see error.code",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Error"
+                }
+              }
+            }
+          },
+          "422": {
+            "description": "Error; see error.code",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Error"
+                }
+              }
+            }
+          },
+          "429": {
+            "description": "Error; see error.code",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Error"
+                }
+              }
+            }
+          },
+          "500": {
+            "description": "Error; see error.code",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Error"
+                }
+              }
+            }
+          },
+          "503": {
+            "description": "Error; see error.code",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Error"
+                }
+              }
+            }
+          }
+        },
+        "security": [],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/Register"
+              },
+              "example": {
+                "email": "new-captain@example.test",
+                "password": "example-password",
+                "team_name": "Đội mới"
               }
             }
           }
@@ -10424,6 +10573,33 @@
         ],
         "additionalProperties": false
       },
+      "Register": {
+        "type": "object",
+        "properties": {
+          "email": {
+            "type": "string",
+            "format": "email",
+            "maxLength": 320
+          },
+          "password": {
+            "type": "string",
+            "minLength": 8,
+            "maxLength": 256
+          },
+          "team_name": {
+            "type": "string",
+            "minLength": 1,
+            "maxLength": 100,
+            "pattern": "\\S"
+          }
+        },
+        "required": [
+          "email",
+          "password",
+          "team_name"
+        ],
+        "additionalProperties": false
+      },
       "ActiveBot": {
         "type": "object",
         "properties": {
@@ -12025,7 +12201,7 @@
         "type": "object",
         "properties": {
           "contract_version": {
-            "const": "1.0.0"
+            "const": "1.1.0"
           },
           "languages": {
             "type": "array",
@@ -12118,7 +12294,7 @@
             ]
           },
           "contract_version": {
-            "const": "1.0.0"
+            "const": "1.1.0"
           }
         },
         "required": [

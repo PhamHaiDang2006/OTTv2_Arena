@@ -1,23 +1,28 @@
 """Login / refresh / logout / me per contracts/behavior.md (JWT 15 min, rotating opaque refresh cookie)."""
 from __future__ import annotations
 
+import uuid
+
 from fastapi import APIRouter, Depends, Request, Response
 from fastapi.responses import JSONResponse
 from sqlalchemy import func, select, update
+from sqlalchemy.exc import IntegrityError
 from sqlalchemy.orm import Session
 
 from app import ratelimit
 from app import serializers as ser
+from app.audit import audit
 from app.config import get_settings
 from app.db import get_db
 from app.deps import Actor, OpInput, contract_input, load_actor, require_member
-from app.errors import ApiError
-from app.models import RefreshToken, RefreshTokenFamily, User
+from app.errors import ApiError, conflict
+from app.models import RefreshToken, RefreshTokenFamily, Team, TeamMember, User
 from app.security import (
     ACCESS_TTL_SECONDS,
     REFRESH_COOKIE,
     REFRESH_COOKIE_PATH,
     REFRESH_TTL,
+    hash_password,
     hash_refresh_token,
     issue_access_token,
     new_refresh_token,
@@ -54,6 +59,38 @@ def _issue_refresh(db: Session, family_id) -> str:
     token, digest = new_refresh_token()
     db.add(RefreshToken(family_id=family_id, token_hash=digest, expires_at=utcnow() + REFRESH_TTL))
     return token
+
+
+@router.post('/auth/register', status_code=201)
+def register(request: Request, _origin: None = Depends(check_origin),
+             inp: OpInput = Depends(contract_input('register')), db: Session = Depends(get_db)):
+    client = request.client.host if request.client else 'unknown'
+    ratelimit.hit('register', client, get_settings().registration_rate_per_hour, 3600, fail_closed=True)
+    email = inp.body['email'].strip().lower()
+    if db.scalar(select(User.id).where(func.lower(User.email) == email)) is not None:
+        raise conflict(message='Email đã được sử dụng. Vui lòng đăng nhập.', reason='email_taken')
+    user = User(email=email, password_hash=hash_password(inp.body['password']), role='captain', is_active=True)
+    team = Team(name=inp.body['team_name'].strip(), slug=f'team-{uuid.uuid4().hex}',
+                status='pending', is_locked=False)
+    db.add_all([user, team])
+    try:
+        db.flush()
+        db.add(TeamMember(team_id=team.id, user_id=user.id))
+        audit(db, user.id, 'account.register', 'team', team.id, {'team_name': team.name})
+        family = RefreshTokenFamily(user_id=user.id)
+        db.add(family)
+        db.flush()
+        token = _issue_refresh(db, family.id)
+        body = _auth_body(Actor(user=user, team_id=team.id))
+        db.commit()
+    except IntegrityError as exc:
+        db.rollback()
+        if getattr(exc.orig.diag, 'constraint_name', None) == 'uq_users_email_lower':
+            raise conflict(message='Email đã được sử dụng. Vui lòng đăng nhập.', reason='email_taken') from exc
+        raise
+    response = JSONResponse(body, status_code=201)
+    _set_cookie(response, token)
+    return response
 
 
 @router.post('/auth/login')

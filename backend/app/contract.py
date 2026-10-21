@@ -15,7 +15,7 @@ from referencing import Registry, Resource
 
 from app.config import get_settings
 
-CONTRACT_VERSION = '1.0.0'
+CONTRACT_VERSION = '1.1.0'
 SCHEMA_VERSION = 1
 RULESET_STATUS = 'development'
 MAP_ID = 'standard'
@@ -49,7 +49,8 @@ def validator(definition: str) -> Draft202012Validator:
 def errors(definition: str, data: Any) -> list[dict[str, str]]:
     found = []
     for error in sorted(validator(definition).iter_errors(data), key=lambda e: list(e.absolute_path)):
-        found.append({'field': '/' + '/'.join(str(p) for p in error.absolute_path), 'reason': error.message[:300]})
+        reason = 'Giá trị không hợp lệ' if definition in ('Login', 'Register') else error.message[:300]
+        found.append({'field': '/' + '/'.join(str(p) for p in error.absolute_path), 'reason': reason})
     return found
 
 

@@ -39,6 +39,7 @@ class Settings(BaseSettings):
     starter_kits_json: str = '[]'
     submission_rate_per_hour: int = 10
     login_rate_per_minute: int = 10
+    registration_rate_per_hour: int = 5
     rq_build_timeout_seconds: int = 600
     rq_match_timeout_seconds: int = 1800
 

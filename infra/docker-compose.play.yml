@@ -1,0 +1,47 @@
+# Combine with docker-compose.dev.yml; backend runs on Windows via start-local-api.ps1.
+services:
+  registry:
+    image: registry:2.8.3
+    restart: unless-stopped
+    ports: ["127.0.0.1:5000:5000"]
+    volumes: ["registry_play_data:/var/lib/registry"]
+
+  build-worker:
+    image: ottv2-worker:local
+    restart: unless-stopped
+    command: ["ottv2-runner-worker", "--queue", "build"]
+    environment: &worker-env
+      REDIS_URL: redis://:${REDIS_PASSWORD}@redis:6379/0
+      INTERNAL_API_BASE_URL: http://host.docker.internal:8000/api/v1
+      WORKER_API_TOKEN: ${WORKER_API_TOKEN}
+      S3_ENDPOINT_URL: http://minio:9000
+      S3_ACCESS_KEY_ID: ${S3_ACCESS_KEY_ID}
+      S3_SECRET_ACCESS_KEY: ${S3_SECRET_ACCESS_KEY}
+      S3_BUCKET: ${S3_BUCKET:-ottv2}
+      REGISTRY_URL: 127.0.0.1:5000
+      RUNNER_IMAGE_PYTHON: ${RUNNER_IMAGE_PYTHON:-}
+      RUNNER_OUTBOX_DIR: /var/lib/ottv2/outbox
+      RUNNER_WORK_DIR: /var/lib/ottv2/work
+      OTTv2_ENGINE_FACTORY: ottv2.adapter:make_engine
+      OTTv2_BUILD_VERIFIER: ottv2_runner.engine_verifier:make_build_verifier
+      RUNNER_CPUSET_BLUE: "0"
+      RUNNER_CPUSET_RED: "1"
+    volumes:
+      - /var/run/docker.sock:/var/run/docker.sock
+      - build_play_state:/var/lib/ottv2
+    depends_on: [redis, minio, registry]
+
+  match-worker:
+    image: ottv2-worker:local
+    restart: unless-stopped
+    command: ["ottv2-runner-worker", "--queue", "match:tournament", "--queue", "match:scrimmage"]
+    environment: *worker-env
+    volumes:
+      - /var/run/docker.sock:/var/run/docker.sock
+      - match_play_state:/var/lib/ottv2
+    depends_on: [redis, minio, registry]
+
+volumes:
+  registry_play_data:
+  build_play_state:
+  match_play_state:

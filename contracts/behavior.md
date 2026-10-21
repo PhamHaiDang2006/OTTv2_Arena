@@ -1,4 +1,4 @@
-# Hành vi chuẩn v1.0.0
+# Hành vi chuẩn v1.1.0
 
 Đây là quy ước kỹ thuật được chọn cho việc triển khai độc lập. Schema quyết định tên/kiểu trường; tài liệu này quyết định quyền, trạng thái và các ràng buộc nhiều trường. Không coi mock HTTP là implementation của các quy tắc dưới đây.
 
@@ -6,9 +6,9 @@
 
 - HTTP base `/api/v1`, WS `/ws`. JSON UTF-8, UUID dạng string, timestamp UTC Z, duration ms. Danh sách page bắt đầu 1, mặc định 20, tối đa 100; response items/page/page_size/total. Filter tùy chọn trừ tham số được ghi required trong OpenAPI. Sort mặc định timestamp tạo giảm dần, tie id tăng dần; standings sort group label/rank, bracket sort round thứ tự thi đấu/slot_index, queue theo tên. Không tự thêm query `sort`.
 - `x-role=member` chấp nhận member/captain/admin ở mức route, nhưng endpoint `/teams/me` và tài nguyên đội vẫn đòi membership tương ứng. Admin không có đội nhận 404 ở `/teams/me`, không được tạo scrimmage hoặc upload thay đội qua endpoint member. Admin dùng các endpoint admin để xem đội khác.
-- `/matches` và `/games`: người đã đăng nhập xem trận giải; trận scrimmage chỉ hai đội tham gia và admin. Replay có debug nên áp quyền tương tự; source/build-log chỉ đội sở hữu và admin. `/teams/opponents` chỉ đội approved, không locked/disqualified, có bot scrimmage ready, loại đội hiện tại. Backend không lấy actor team từ payload.
+- `/matches` và `/games`: người đã đăng nhập xem trận giải; trận scrimmage chỉ hai đội tham gia và admin. Replay có debug nên áp quyền tương tự; source/build-log chỉ đội sở hữu và admin. `/teams/opponents` chỉ đội pending hoặc approved, không locked/disqualified, có bot scrimmage ready, loại đội hiện tại. Backend không lấy actor team từ payload.
 - JWT 15 phút. Refresh token opaque được lưu hash server-side, xoay sau refresh, thu hồi khi logout; refresh token bị tái sử dụng thì thu hồi family. Cookie production: `ottv2_refresh`, HttpOnly, Secure, SameSite=Strict, Path=/api/v1/auth; tuổi thọ 7 ngày. Dev loopback có thể bỏ Secure trong cấu hình dev rõ ràng.
-- Login/refresh/logout yêu cầu Origin đúng danh sách frontend cấu hình; thiếu/sai Origin bị 403 đối với browser session API. Không dùng CORS wildcard với credentials. Chỉ nhận JSON cho login, không nhận form URL encoded. Refresh/logout dùng cookie, không cần JWT còn hạn. Logout xóa cookie cùng path và thu hồi token; token đã bị thu hồi trả 204 khi cookie có mặt (idempotent), không lộ giá trị token.
+- Register/login/refresh/logout yêu cầu Origin đúng danh sách frontend cấu hình; thiếu/sai Origin bị 403 đối với browser session API. Không dùng CORS wildcard với credentials. Chỉ nhận JSON cho login, không nhận form URL encoded. Refresh/logout dùng cookie, không cần JWT còn hạn. Logout xóa cookie cùng path và thu hồi token; token đã bị thu hồi trả 204 khi cookie có mặt (idempotent), không lộ giá trị token.
 - Frontend giữ access token trong memory, refresh một lần cho 401, gom các refresh đồng thời. Refresh lỗi thì xóa phiên và về login. Không tự retry mutation trừ giữ nguyên Idempotency-Key.
 - Idempotency-Key UUID bắt buộc cho mutation được OpenAPI đánh dấu. Backend lưu actor + method + normalized path + key + hash request + response trong 24h. Cùng key/cùng body trả nguyên status/body, khác body trả 409 IDEMPOTENCY_CONFLICT, đang xử lý trả 409 REQUEST_IN_PROGRESS. Với ZIP hash cả bytes và language. Commit thay đổi và record idempotency cùng transaction. Outbox giao job Redis sau commit, retry delivery giữ job_id.
 - Không ghi token/password/source vào log lỗi; error.code ổn định, message tiếng Việt. Mã chung: INVALID_REQUEST, UNAUTHORIZED, FORBIDDEN, NOT_FOUND, STATE_CONFLICT, IDEMPOTENCY_CONFLICT, REQUEST_IN_PROGRESS, PAYLOAD_TOO_LARGE, RATE_LIMITED, SERVICE_UNAVAILABLE. Nghiệp vụ: SUBMISSION_NOT_READY, SELF_SCRIMMAGE, QUOTA_EXCEEDED, ROUND_NOT_FROZEN, DOWNSTREAM_STARTED, RULESET_UNCONFIRMED. details là map thông tin không bí mật.
@@ -53,7 +53,7 @@ Các thuật toán chia bảng/tiebreak dưới đây dùng profile phát triể
 - Loại trực tiếp tạo ván tiếp theo sau ván trước finished, dừng khi đủ 2/3 thắng. Match blocked nếu một current game hết retry; admin rerun mới cho tiếp tục. Không âm thầm dùng kết quả attempt cũ.
 - Rerun chỉ game đã finished/infra_error, không cho running/queued. Nếu round sau đã frozen/running/finished hoặc giải finished, trả 409 DOWNSTREAM_STARTED. Nếu chưa có downstream, mở lại match/round và tính lại standings từ current attempts. Không xóa lịch sử. Override match cũng áp khóa downstream, bắt buộc reason, audit lưu trước/sau; override là kết quả cặp hành chính, không sửa game/replay.
 - Đóng băng một round là ranh giới khóa kết quả round trước. Tính standings/bracket từ dữ liệu hiện hành trong transaction; phát WS sau commit. Audit mọi mutation admin, kể cả lý do thất bại 409 ở mức vận hành phù hợp.
-- CSV import header `name,slug,captain_email,seed`; kiểm tra toàn bộ trước, có bất kỳ dòng lỗi thì không tạo đội nào, response ImportResult.created=[] và errors chỉ rõ row (header là 1). 201 là request import được xử lý; UI phải kiểm tra errors. Không gửi mật khẩu trong API, C bổ sung quy trình thiết lập tài khoản dev/production trong implementation.
+- CSV import header `name,slug,captain_email,seed`; kiểm tra toàn bộ trước, có bất kỳ dòng lỗi thì không tạo đội nào, response ImportResult.created=[] và errors chỉ rõ row (header là 1). 201 là request import được xử lý; UI phải kiểm tra errors. API quản trị đội/CSV không nhận mật khẩu; tự đăng ký dùng endpoint riêng dưới đây.
 - Announcements draft (published_at=null), publish idempotent và phát event một lần; chỉ sửa draft. Queue pause dừng lấy job mới của queue được chọn, không kill trận đang chạy. Source file path phải nằm trong source ZIP đã validate; không cho file system path tùy ý.
 
 ## WebSocket
@@ -66,3 +66,13 @@ Các thuật toán chia bảng/tiebreak dưới đây dùng profile phát triể
 ## Dữ liệu DB cần triển khai
 
 C sở hữu migration, cần thêm vào phác thảo architecture: rounds, round_snapshots + frozen_bots, worker_jobs (job/lease/status), callback_receipts (hash/token), idempotency_records, outbox, refresh_token_families và match_overrides. Giữ unique (match_id,game_index,attempt); standings lấy current attempt. Schema HTTP không phải schema SQL và không được tự expose cột nhạy cảm.
+
+## Tự đăng ký — bổ sung HTTP contract 1.1.0
+
+- `POST /auth/register` công khai, JSON `{email,password,team_name}`, trả 201 `Auth` và refresh cookie như login. Không cần Idempotency-Key, không tự retry. Nếu mất response, thử đăng nhập bằng thông tin vừa đăng ký.
+- Email hợp lệ tối đa 320 ký tự, lưu lowercase; mật khẩu 8–256 ký tự được hash Argon2id; tên đội 1–100 ký tự sau trim, không chỉ khoảng trắng. Không nhận role, status, team_id hoặc seed từ client.
+- Tạo trong một transaction: user captain, đội pending với slug tự sinh, membership, audit không chứa mật khẩu và refresh session. Email đã tồn tại (kể cả tài khoản chưa đặt mật khẩu) trả 409 STATE_CONFLICT/reason=email_taken; không chiếm tài khoản cũ. Unique index xử lý cả đăng ký đồng thời.
+- Origin bắt buộc theo allowlist. Giới hạn mặc định 5 yêu cầu hợp lệ schema/IP/giờ (`REGISTRATION_RATE_PER_HOUR`); Redis lỗi thì trả 503. Không tin X-Forwarded-For do client tự gửi; cấu hình proxy tin cậy khi triển khai.
+- Đội pending được upload, chọn bot ready và đánh tập với đội pending/approved có bot ready. Locked/disqualified vẫn bị chặn. Bốc thăm giải chỉ chọn đội approved như trước.
+- Đăng ký chưa xác minh email; chưa có quên mật khẩu hoặc gia nhập đội bằng mã mời. Mỗi lần đăng ký tạo đội riêng.
+- Backend và web phải cập nhật cùng contract 1.1.0 (86 definitions, 66 operations, 138 fixtures); engine, job/callback schema_version=1, replay format=1 và luật dev-v1 không đổi.

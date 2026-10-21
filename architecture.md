@@ -259,7 +259,7 @@ Tiền tố `/api/v1`. Xác thực bằng JWT 15 phút + refresh token trong coo
 
 | Nhóm | Endpoint | Quyền |
 | --- | --- | --- |
-| Xác thực | `POST /auth/login`, `POST /auth/refresh`, `POST /auth/logout` | công khai |
+| Xác thực | `POST /auth/register`, `POST /auth/login`, `POST /auth/refresh`, `POST /auth/logout` | công khai |
 | Đội | `GET /teams/me`, `PATCH /teams/me` | thành viên |
 | Nộp bài | `POST /submissions`, `GET /submissions`, `GET /submissions/{id}/build-log` | thành viên |
 | Bot đang dùng | `PUT /teams/me/active-bot` | đội trưởng |
@@ -297,3 +297,5 @@ WebSocket `/ws`: sau khi kết nối, máy khách đăng ký kênh `team:{id}` (
 | ADR-009 | Redis + RQ, không dùng Celery hay Kafka | Đủ cho 20 đội, cả nhóm đã quen Python | Không có lập lịch phức tạp; ưu tiên làm bằng hai hàng đợi tách biệt |
 | ADR-010 | Không có hòa ở cả ván và cặp đấu loại trực tiếp | Theo luật ban tổ chức; số ván lẻ ở vòng loại | Vòng bảng vẫn có hòa 1–1 ở cấp cặp đấu, tính 1 điểm |
 | ADR-011 | Chạy lại tạo bản ghi `games` mới với `attempt + 1` | Giữ dấu vết, không mất kết quả cũ | Mọi truy vấn lấy kết quả phải chọn `attempt` lớn nhất |
+
+Từ contract 1.1.0, đăng ký công khai tạo captain và đội pending; pending được đánh tập, approved mới được bốc thăm giải. Chi tiết tại contracts/behavior.md.

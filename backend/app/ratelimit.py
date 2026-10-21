@@ -12,7 +12,7 @@ from app.queue import get_redis
 log = logging.getLogger('ottv2.ratelimit')
 
 
-def hit(name: str, subject: str, limit: int, window_seconds: int) -> None:
+def hit(name: str, subject: str, limit: int, window_seconds: int, *, fail_closed: bool = False) -> None:
     if limit <= 0:
         return
     window = int(time.time() // window_seconds)
@@ -23,6 +23,8 @@ def hit(name: str, subject: str, limit: int, window_seconds: int) -> None:
         if count == 1:
             client.expire(key, window_seconds + 1)
     except redis.RedisError as exc:
+        if fail_closed:
+            raise ApiError(503, 'SERVICE_UNAVAILABLE') from exc
         log.warning('Rate limiter unavailable (%s); allowing request', exc)
         return
     if count > limit:

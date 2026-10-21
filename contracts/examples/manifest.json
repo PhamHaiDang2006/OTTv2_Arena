@@ -55,6 +55,21 @@
     "valid": true
   },
   {
+    "file": "examples/invalid-register-password.json",
+    "definition": "Register",
+    "valid": false
+  },
+  {
+    "file": "examples/invalid-register-role.json",
+    "definition": "Register",
+    "valid": false
+  },
+  {
+    "file": "examples/invalid-register-team.json",
+    "definition": "Register",
+    "valid": false
+  },
+  {
     "file": "examples/build-building.json",
     "definition": "BuildResult",
     "valid": true
@@ -252,6 +267,16 @@
   },
   {
     "file": "examples/http/login.response.json",
+    "definition": "Auth",
+    "valid": true
+  },
+  {
+    "file": "examples/http/register.request.json",
+    "definition": "Register",
+    "valid": true
+  },
+  {
+    "file": "examples/http/register.response.json",
     "definition": "Auth",
     "valid": true
   },

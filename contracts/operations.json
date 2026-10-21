@@ -35,6 +35,18 @@
   },
   {
     "method": "post",
+    "path": "/auth/register",
+    "operationId": "register",
+    "request": "Register",
+    "response": "Auth",
+    "status": 201,
+    "role": "public",
+    "multipart": false,
+    "request_example": "examples/http/register.request.json",
+    "response_example": "examples/http/register.response.json"
+  },
+  {
+    "method": "post",
     "path": "/auth/refresh",
     "operationId": "refresh",
     "request": null,

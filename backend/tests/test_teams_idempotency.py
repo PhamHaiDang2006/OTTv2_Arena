@@ -36,7 +36,7 @@ def test_opponents_only_eligible_teams(api):
         make_ready_submission(t.id)
     make_ready_submission(no_bot.id, active=())
     slugs = [t['slug'] for t in api.get('/api/v1/teams/opponents', headers=me.member).json()['items']]
-    assert slugs == ['ready']
+    assert set(slugs) == {'ready', 'pending'}
 
 
 def test_idempotency_scope_is_actor_and_path(api):

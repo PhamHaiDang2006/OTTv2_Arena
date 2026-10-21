@@ -18,6 +18,25 @@ Compose config validation checks YAML/interpolation only. It does not prove the 
 
 ## Development services
 
+### Windows: đăng ký và đăng nhập trên web local
+
+Mở Docker Desktop, sau đó từ repo root chạy:
+
+```powershell
+powershell -ExecutionPolicy Bypass -File .\infra\start-local-api.ps1
+```
+
+Script tạo `infra/.env` với secret ngẫu nhiên nếu chưa có (không ghi đè), bật
+PostgreSQL/Redis với volume bền, chạy migration và khởi động API nền tại 127.0.0.1:8000.
+Yêu cầu đã cài backend/.venv theo backend/README.md. Log nằm ở
+`infra/.local-api.error.log`, PID ở `infra/.local-api.pid`; các file này bị gitignore.
+Chạy lại script khi mở máy; nếu API khỏe đang chạy thì dùng lại.
+
+Mở terminal khác, `cd web`, `npm.cmd run dev`, vào http://127.0.0.1:5173/ để đăng ký.
+Không chỉ chạy web: form cần API, PostgreSQL và Redis hoạt động.
+Đây là startup cho API/tài khoản; nộp bot và chạy trận còn cần MinIO, registry,
+scheduler và runner theo tài liệu từng phần. Không dùng database test cho tài khoản thật.
+
 Commands below are run from `D:\Đại học\code\bruh\OTTv2_Arena\infra` in PowerShell, or from the equivalent repository `infra/` directory on Linux/macOS. Copy `.env.example` to `.env` and replace local placeholders. Do not commit `.env`.
 
 ```powershell

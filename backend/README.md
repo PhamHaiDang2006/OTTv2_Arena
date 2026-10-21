@@ -36,7 +36,7 @@ Backend là trung tâm điều phối: xác thực người dùng, giữ dữ li
 
 ## Chạy backend
 
-Triển khai contract **v1.0.0**, profile **dev-v1** (development). Công cụ: Python 3.12 qua [uv](https://docs.astral.sh/uv/) (đã dùng uv 0.13.1), PostgreSQL 16, Redis 7, S3/MinIO. Mọi lệnh chạy từ `backend/`.
+Triển khai contract **v1.1.0**, profile **dev-v1** (development). Công cụ: Python 3.12 qua [uv](https://docs.astral.sh/uv/) (đã dùng uv 0.13.1), PostgreSQL 16, Redis 7, S3/MinIO. Mọi lệnh chạy từ `backend/`.
 
 ```bash
 uv sync                                   # tạo .venv từ uv.lock (Python 3.12)
@@ -57,7 +57,7 @@ uv run uvicorn app.main:app --host 127.0.0.1 --port 8000
 uv run python -m app.cli scheduler        # tiến trình riêng: outbox → RQ/WS, gỡ job queue đang dừng, watchdog lease, freeze theo giờ, similarity
 ```
 
-Tài khoản: API không nhận mật khẩu (behavior.md). Đội trưởng tạo bằng `POST /admin/teams` hoặc import CSV chưa có mật khẩu; đặt bằng `OTTV2_PASSWORD=... uv run python -m app.cli set-password --email ...`. Thêm thành viên: `app.cli add-member --team <slug> --email ...`. Admin: `app.cli create-admin --email ...`.
+Người chơi tự đăng ký qua `POST /api/v1/auth/register` (email, password, team_name), nhận phiên đăng nhập và đội pending để nộp bot/đánh tập. API quản trị đội không nhận mật khẩu. Đội trưởng tạo bằng `POST /admin/teams` hoặc import CSV chưa có mật khẩu; đặt bằng `OTTV2_PASSWORD=... uv run python -m app.cli set-password --email ...`. Thêm thành viên: `app.cli add-member --team <slug> --email ...`. Admin: `app.cli create-admin --email ...`.
 
 ### Test
 
@@ -190,3 +190,9 @@ backend/
 - Kiểm thử tự động cho phân quyền: mọi endpoint thử với 4 vai trò (khách, thành viên đội khác, thành viên, admin).
 - Kiểm thử tự động cho tính bảng xếp hạng và dựng nhánh.
 - Giải giả lập 8 đội chạy từ bốc thăm đến chung kết mà không phải sửa DB bằng tay.
+
+### Đăng ký tài khoản (contract 1.1.0)
+
+Không cần seed tài khoản người chơi. UI P1 có nút Đăng ký. API tạo captain + đội riêng trong một transaction; không cần migration vì dùng bảng/index hiện có. Admin vẫn được tạo bằng CLI. `REGISTRATION_RATE_PER_HOUR=5` mặc định; giới hạn theo IP, Redis lỗi trả 503. Chưa xác minh email/chưa có reset mật khẩu. Mật khẩu request không được phản chiếu trong lỗi schema.
+
+Tái sinh: `node contracts/build.mjs` (Node 24); kiểm tra: `tests/test_registration.py` cùng suite backend. Thay đổi ảnh hưởng consumer web và mock; runner/engine giữ nguyên wire format.

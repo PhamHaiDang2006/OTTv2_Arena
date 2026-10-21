@@ -10,3 +10,6 @@ dist/
 *.log
 .DS_Store
 web/tests/generated/
+infra/.local-api.*
+infra/.local-scheduler.*
+infra/.local-demo.json

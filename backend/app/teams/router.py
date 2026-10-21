@@ -82,10 +82,10 @@ def set_active_bot(request: Request, actor: Actor = Depends(require_captain),
 
 
 def eligible_opponents_query():
-    """Approved, unlocked teams with a ready scrimmage bot (contracts/behavior.md)."""
+    """Pending or approved, unlocked teams with a ready scrimmage bot."""
     ready_bot = exists().where(ActiveBot.team_id == Team.id, ActiveBot.scope == 'scrimmage',
                                ActiveBot.submission_id == Submission.id, Submission.status == 'ready')
-    return select(Team).where(Team.status == 'approved', Team.is_locked.is_(False), ready_bot)
+    return select(Team).where(Team.status.in_(('pending', 'approved')), Team.is_locked.is_(False), ready_bot)
 
 
 @router.get('/teams/opponents')

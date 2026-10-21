@@ -216,6 +216,33 @@
       ],
       "additionalProperties": false
     },
+    "Register": {
+      "type": "object",
+      "properties": {
+        "email": {
+          "type": "string",
+          "format": "email",
+          "maxLength": 320
+        },
+        "password": {
+          "type": "string",
+          "minLength": 8,
+          "maxLength": 256
+        },
+        "team_name": {
+          "type": "string",
+          "minLength": 1,
+          "maxLength": 100,
+          "pattern": "\\S"
+        }
+      },
+      "required": [
+        "email",
+        "password",
+        "team_name"
+      ],
+      "additionalProperties": false
+    },
     "ActiveBot": {
       "type": "object",
       "properties": {
@@ -1817,7 +1844,7 @@
       "type": "object",
       "properties": {
         "contract_version": {
-          "const": "1.0.0"
+          "const": "1.1.0"
         },
         "languages": {
           "type": "array",
@@ -1910,7 +1937,7 @@
           ]
         },
         "contract_version": {
-          "const": "1.0.0"
+          "const": "1.1.0"
         }
       },
       "required": [

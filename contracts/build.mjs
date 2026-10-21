@@ -29,6 +29,7 @@ D.WorkerError=obj({code:text,message:text});
 D.User=obj({id,email:s({format:'email'}),role:en('member','captain','admin'),team_id:nullable(id),is_active:bool});
 D.Auth=obj({access_token:text,token_type:{const:'bearer'},expires_in:{const:900},user:ref('User')});
 D.Login=obj({email:s({format:'email'}),password:s({minLength:1,maxLength:256})});
+D.Register=obj({email:s({format:'email',maxLength:320}),password:s({minLength:8,maxLength:256}),team_name:s({minLength:1,maxLength:100,pattern:'\\S'})});
 D.ActiveBot=obj({team_id:id,scope:en('scrimmage','tournament'),submission_id:id});
 D.SetActiveBot=obj({scope:en('scrimmage','tournament'),submission_id:id});
 D.Team=obj({id,name:s({minLength:1,maxLength:100}),slug:s({pattern:'^[a-z0-9]+(?:-[a-z0-9]+)*$'}),status:en('pending','approved','disqualified'),is_locked:bool,seed:nullable(n(1)),group_id:nullable(id),members:arr(ref('User')),active_bots:arr(ref('ActiveBot'))});
@@ -74,9 +75,9 @@ D.Similarity=obj({submission_a:id,submission_b:id,score:{type:'number',minimum:0
 D.Audit=obj({id,actor_user_id:nullable(id),action:text,target_type:text,target_id:nullable(id),payload:{type:'object',additionalProperties:true},created_at:date});
 D.ImportRequest=obj({csv:s({minLength:1,maxLength:1048576})});
 D.ImportResult=obj({created:arr(ref('TeamPublic')),errors:arr(obj({row:n(1),code:text,message:text}))});
-D.Capabilities=obj({contract_version:{const:'1.0.0'},languages:arr(ref('Language')),max_upload_bytes:{const:1048576},max_files:{const:50},ruleset_id:{const:'dev-v1'},ruleset_status:{const:'development'},tournament_enabled:bool});
+D.Capabilities=obj({contract_version:{const:'1.1.0'},languages:arr(ref('Language')),max_upload_bytes:{const:1048576},max_files:{const:50},ruleset_id:{const:'dev-v1'},ruleset_status:{const:'development'},tournament_enabled:bool});
 D.Docs=obj({rules_markdown:s(),protocol_markdown:s(),starter_kits:arr(obj({language:ref('Language'),engine_version:version,url:s({format:'uri'}),sha256:s({pattern:'^[a-f0-9]{64}$'})}))});
-D.Health=obj({status:en('ok','degraded'),contract_version:{const:'1.0.0'}});
+D.Health=obj({status:en('ok','degraded'),contract_version:{const:'1.1.0'}});
 D.Ack=obj({accepted:{const:true}});
 const player=obj({team:s({pattern:'^[a-z0-9]+(?:-[a-z0-9]+)*$'}),submission_id:id});
 D.Players=obj({BLUE:player,RED:player});
@@ -109,14 +110,14 @@ const wrappers={'build-job':'BuildJob','match-job':'MatchJob','build-result':'Bu
 for(const [file,name] of Object.entries(wrappers))write(`schemas/${file}.schema.json`,{$schema:'https://json-schema.org/draft/2020-12/schema',$ref:`common.schema.json#/$defs/${name}`});
 const apiRef=name=>({$ref:`#/components/schemas/${name}`});
 function apiConvert(x){if(Array.isArray(x))return x.map(apiConvert);if(x&&typeof x==='object')return Object.fromEntries(Object.entries(x).map(([k,v])=>[k,k==='$ref'?v.replace('#/$defs/','#/components/schemas/'):apiConvert(v)]));return x;}
-const api={openapi:'3.1.0',info:{title:'OTTv2 Arena Contract',version:'1.0.0',description:'Development integration baseline; dev-v1 rules are provisional. JSON encoding is valid YAML 1.2. Generated from contracts/build.mjs.'},servers:[{url:'/api/v1'}],security:[{bearerAuth:[]}],paths:{},components:{securitySchemes:{bearerAuth:{type:'http',scheme:'bearer',bearerFormat:'JWT'},workerAuth:{type:'http',scheme:'bearer',description:'Worker credential, never a user JWT'},refreshCookie:{type:'apiKey',in:'cookie',name:'ottv2_refresh'}},schemas:apiConvert(D)}};
+const api={openapi:'3.1.0',info:{title:'OTTv2 Arena Contract',version:'1.1.0',description:'Development integration baseline; dev-v1 rules are provisional. JSON encoding is valid YAML 1.2. Generated from contracts/build.mjs.'},servers:[{url:'/api/v1'}],security:[{bearerAuth:[]}],paths:{},components:{securitySchemes:{bearerAuth:{type:'http',scheme:'bearer',bearerFormat:'JWT'},workerAuth:{type:'http',scheme:'bearer',description:'Worker credential, never a user JWT'},refreshCookie:{type:'apiKey',in:'cookie',name:'ottv2_refresh'}},schemas:apiConvert(D)}};
 const operations=[];
 function op(method,p,operationId,response,{request=null,status=200,role='member',list=false,query={},description='',multipart=false}={}){
  const parameters=[];
  for(const name of [...p.matchAll(/\{([^}]+)\}/g)].map(m=>m[1]))parameters.push({name,in:'path',required:true,schema:id});
  if(list) Object.assign(query,{page:{...n(1),default:1},page_size:{...n(1),maximum:100,default:20}});
  for(const [name,schema] of Object.entries(query))parameters.push({name,in:'query',required:['tournament_id','path'].includes(name),schema});
- const mutation=!['get','head'].includes(method)&&!['login','refresh','logout','buildCallback','gameCallback','workerHeartbeat'].includes(operationId);
+ const mutation=!['get','head'].includes(method)&&!['register','login','refresh','logout','buildCallback','gameCallback','workerHeartbeat'].includes(operationId);
  if(mutation)parameters.push({name:'Idempotency-Key',in:'header',required:true,schema:id,description:'Scoped by actor + method + path; retained 24h. Same key/body returns original status/body, different body returns 409.'});
  const o={operationId,summary:operationId,'x-role':role,description:description||`${role} access. ${list?'Stable ordering: created_at descending (or id if no timestamp), then id ascending. ':''}See contracts/behavior.md for authorization and state transitions.`,parameters,responses:{}};
  if(role==='public')o.security=[];
@@ -131,6 +132,7 @@ function op(method,p,operationId,response,{request=null,status=200,role='member'
 op('get','/health','health','Health',{role:'public'});
 op('get','/capabilities','capabilities','Capabilities',{role:'public'});
 op('post','/auth/login','login','Auth',{request:'Login',role:'public'});
+op('post','/auth/register','register','Auth',{request:'Register',role:'public',status:201});
 op('post','/auth/refresh','refresh','Auth',{role:'refresh'});
 op('post','/auth/logout','logout',null,{status:204,role:'refresh'});
 op('get','/auth/me','currentUser','User');
@@ -209,7 +211,7 @@ const examples={
  WorkerHeartbeat:{worker_id:'match-1',kind:'match',job_id:null,sent_at:now},
  SignedUrl:{url:'http://127.0.0.1:4010/fixtures/replay.json',expires_at:'2099-01-01T00:00:00Z'},
  Error:{error:{code:'INVALID_REQUEST',message:'Dữ liệu không hợp lệ',details:{}},request_id:U(9)},
- Capabilities:{contract_version:'1.0.0',languages:['python','cpp'],max_upload_bytes:1048576,max_files:50,ruleset_id:'dev-v1',ruleset_status:'development',tournament_enabled:false},
+ Capabilities:{contract_version:'1.1.0',languages:['python','cpp'],max_upload_bytes:1048576,max_files:50,ruleset_id:'dev-v1',ruleset_status:'development',tournament_enabled:false},
  Auth:{access_token:'mock-captain-token',token_type:'bearer',expires_in:900,user:null},
  TeamCreate:{name:'Đội A',slug:'doi-a',captain_email:'captain@example.test',seed:1},
  AdminTeamPatch:{status:'approved',reason:'Duyệt đội'},
@@ -245,6 +247,7 @@ function sample(schema,name=''){
  if(schema.pattern){if(schema.pattern.includes('team:'))return `team:${U(2)}`;if(schema.pattern==='^#')return '# debug';if(schema.pattern.includes('{64}'))return 'a'.repeat(64);if(schema.pattern.includes('[BPK'))return initial;if(schema.pattern.includes('[a-i]'))return 'c3d4';if(schema.pattern.includes('[0-9]+'))return '1.0.0';return 'example';}
  return 'example';
 }
+examples.Register={email:'new-captain@example.test',password:'example-password',team_name:'Đội mới'};
 for(const name of Object.keys(D))if(!(name in examples))examples[name]=sample(D[name],name);
 for(const name of Object.keys(D).filter(x=>x.endsWith('Page'))){examples[name]={items:[examples[name.slice(0,-4)]],page:1,page_size:20,total:1};}
 // Useful UI examples override empty collections without claiming tournament execution.
@@ -255,6 +258,9 @@ const cases=[];
 for(const [file,name] of Object.entries(wrappers)){write(`examples/${file}.json`,examples[name]);cases.push({file:`examples/${file}.json`,schema:`schemas/${file}.schema.json`,valid:true});}
 // Status branch fixtures; both positive and negative examples are validated in CI.
 function fixture(file,name,value,valid=true,semantic=null){write(`examples/${file}.json`,value);cases.push({file:`examples/${file}.json`,definition:name,valid,...(semantic?{semantic}:{})});}
+fixture('invalid-register-password','Register',{...examples.Register,password:'short'},false);
+fixture('invalid-register-role','Register',{...examples.Register,role:'admin'},false);
+fixture('invalid-register-team','Register',{...examples.Register,team_name:'   '},false);
 fixture('build-building','BuildResult',{...examples.BuildResult,status:'building',image_tag:null,build_log_key:null});
 fixture('build-failed','BuildResult',{...examples.BuildResult,status:'failed',image_tag:null,error:{code:'COMPILE_ERROR',message:'Compilation failed'}});
 fixture('game-running','GameResultCallback',{...examples.GameResultCallback,status:'running',result:null,replay_key:null,log_key:null,duration_ms:0});
@@ -327,5 +333,5 @@ output('generated/operations.ts','// GENERATED. Use with your shared authenticat
 // Upload is added after the initial schema list, so write common last.
 write('schemas/common.schema.json',{$schema:'https://json-schema.org/draft/2020-12/schema',$defs:D});
 write('openapi.yaml',api);write('operations.json',index);write('examples/manifest.json',cases);
-write('version.json',{contract_version:'1.0.0',schema_version:1,replay_format:1,protocol_version:1,ruleset_id:'dev-v1',ruleset_status:'development'});
+write('version.json',{contract_version:'1.1.0',schema_version:1,replay_format:1,protocol_version:1,ruleset_id:'dev-v1',ruleset_status:'development'});
 console.log(`Generated ${Object.keys(D).length} definitions, ${operations.length} operations, ${cases.length} fixture cases.`);

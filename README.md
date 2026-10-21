@@ -12,7 +12,7 @@ Mẫu giao việc:
 
 ```text
 Đọc AGENTS.md, contracts/README.md và các tài liệu được yêu cầu. Tôi phụ trách <folder>.
-Thực hiện <nhiệm vụ> theo contract v1.0.0, profile dev-v1 và commit <commit>.
+Thực hiện <nhiệm vụ> theo contract v1.1.0, profile dev-v1 và commit <commit>.
 Đối chiếu với <folder liên quan>; không tự đoán quyết định còn mở.
 Bàn giao thay đổi, lệnh kiểm tra đã chạy, kết quả và phụ thuộc còn thiếu.
 ```

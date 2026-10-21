@@ -4,6 +4,7 @@ export interface Operations {
   health: { request: undefined; response: T.Health };
   capabilities: { request: undefined; response: T.Capabilities };
   login: { request: T.Login; response: T.Auth };
+  register: { request: T.Register; response: T.Auth };
   refresh: { request: undefined; response: T.Auth };
   logout: { request: undefined; response: undefined };
   currentUser: { request: undefined; response: T.User };
@@ -82,6 +83,11 @@ export const routes = {
     "method": "POST",
     "path": "/auth/login",
     "status": 200
+  },
+  "register": {
+    "method": "POST",
+    "path": "/auth/register",
+    "status": 201
   },
   "refresh": {
     "method": "POST",

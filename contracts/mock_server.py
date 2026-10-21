@@ -136,7 +136,7 @@ class Handler(BaseHTTPRequestHandler):
             return self.error(int(forced), {401:'UNAUTHORIZED',403:'FORBIDDEN',404:'NOT_FOUND',409:'STATE_CONFLICT',413:'PAYLOAD_TOO_LARGE',422:'INVALID_REQUEST',429:'RATE_LIMITED'}.get(int(forced),'SERVICE_UNAVAILABLE'), 'Forced mock error')
         response = read(operation['response_example']) if operation.get('response_example') else None
         headers = {}
-        if operation['operationId'] in ('login', 'refresh'):
+        if operation['operationId'] in ('register', 'login', 'refresh'):
             headers['Set-Cookie'] = 'ottv2_refresh=mock-refresh; HttpOnly; SameSite=Strict; Path=/api/v1/auth'
         if operation['operationId'] == 'logout':
             headers['Set-Cookie'] = 'ottv2_refresh=; HttpOnly; SameSite=Strict; Path=/api/v1/auth; Max-Age=0'
