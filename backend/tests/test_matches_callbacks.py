@@ -84,7 +84,8 @@ def test_scrimmage_quota_resets_at_saigon_midnight(api):
     with freeze_time('2026-10-17T16:30:00Z'):
         a, b = relogin(a), relogin(b)
         quota = api.get('/api/v1/scrimmages/quota', headers=a.member).json()
-        assert quota == {'limit': 60, 'used': 0, 'remaining': 60, 'resets_at': '2026-10-17T17:00:00.000Z'}
+        assert quota == {'limit': 60, 'used': 0, 'remaining': 60, 'resets_at': '2026-10-17T17:00:00.000Z',
+                         'active': 0, 'active_limit': 2, 'admission': {'accepting': True, 'paused_reason': None}}
         with session_scope() as db:
             for _ in range(60):
                 db.add(Match(stage='scrimmage', team_a_id=a.id, team_b_id=b.id, best_of='two_games', status='finished',

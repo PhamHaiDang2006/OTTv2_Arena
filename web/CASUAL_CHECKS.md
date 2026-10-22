@@ -1,5 +1,7 @@
 # Bàn giao Casual / Arena — 2026-10-22
 
+> Lịch sử của contract 1.2.0. Từ 1.3.0 Casual chạy trên trình duyệt và API `/casual/games` đã bị gỡ; xem mục Casual trong `contracts/behavior.md` và `web/README.md`.
+
 ## Phạm vi
 
 - P1 `/`: chọn Casual hoặc Arena; tổng quan Arena chuyển `/arena`, giữ các route chức năng và P2.

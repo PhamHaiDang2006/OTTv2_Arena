@@ -27,6 +27,8 @@ MESSAGES = {
     'SUBMISSION_NOT_READY': 'Bản nộp chưa sẵn sàng',
     'SELF_SCRIMMAGE': 'Không thể đánh tập với chính đội mình',
     'QUOTA_EXCEEDED': 'Đã hết hạn mức đánh tập hôm nay',
+    'SCRIMMAGE_LIMIT': 'Đội đang có đủ số trận đánh tập chưa xong; hãy chờ một trận kết thúc',
+    'SCRIMMAGE_PAUSED': 'Hệ thống tạm dừng nhận trận đánh tập mới',
     'ROUND_NOT_FROZEN': 'Vòng đấu chưa được đóng băng',
     'DOWNSTREAM_STARTED': 'Vòng sau đã đóng băng hoặc giải đã kết thúc',
     'RULESET_UNCONFIRMED': 'Bộ luật chưa được ban tổ chức xác nhận; chưa thể điều hành giải',

@@ -60,7 +60,6 @@ def create_app() -> FastAPI:
 
     from app.admin.router import router as admin_router
     from app.auth.router import router as auth_router
-    from app.casual import router as casual_router
     from app.internal.router import router as internal_router
     from app.matches.router import router as matches_router
     from app.public.router import router as public_router
@@ -70,7 +69,7 @@ def create_app() -> FastAPI:
     from app.ws.router import router as ws_router
 
     for router in (public_router, auth_router, teams_router, submissions_router, matches_router, tournament_router,
-                   admin_router, internal_router, casual_router):
+                   admin_router, internal_router):
         app.include_router(router, prefix=API_PREFIX)
     app.include_router(ws_router)
     return app

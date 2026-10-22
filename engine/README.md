@@ -150,6 +150,16 @@ engine/
 - 10.000 ván ngẫu nhiên không lỗi và tất định.
 - `ottv2 play` chạy được hai bot mẫu trên máy cá nhân, không cần Docker.
 
-### API công khai cho Casual
+### Outcome công khai và tự luyện (contract 1.3.0)
 
-Từ tích hợp HTTP contract 1.2.0, package export thêm `outcome(board, mover, plies, max_turns=300)` ở `ottv2`. Trả `(winner, reason)` hoặc None, dùng sau mỗi nước hợp lệ; cùng hàm run_game dùng nên thứ tự kết thúc/tiebreak không khác Arena. Backend chỉ gọi API công khai này với Board và INITIAL_FEN, không import implementation nội bộ. Engine version 1.0.0, luật dev-v1 và clock/protocol Arena không đổi. Consumer chịu trách nhiệm lượt, auth và lưu trạng thái; hàm không kiểm tra lịch sử hoặc quyền người chơi.
+Package export `outcome(board, mover, plies, max_turns=300)` ở `ottv2`, trả `(winner, reason)` hoặc None sau mỗi nước hợp lệ; run_game dùng cùng hàm. Từ 1.3.0 backend không gọi hàm này nữa: Casual chạy trên trình duyệt bằng bản TypeScript trong `web/replay-viewer/src/rules.ts`. `scripts/generate_fixtures.py` sinh thêm `fixtures/outcomes.json` (600 ca, đủ GOAL/WIPEOUT/STALEMATE/MOVE_LIMIT) để web kiểm chéo; đổi luật phải sinh lại và sửa bản TypeScript cùng đợt.
+
+Tự luyện trên máy thí sinh:
+
+```sh
+python -m ottv2 practice path/to/my_bot --vs greedy --games 10   # random | greedy | path tới bot khác
+python -m ottv2 play my_bot random --games 4                    # play cũng nhận tên bot mẫu
+python -m ottv2.bot greedy                                      # chạy riêng bot mẫu theo giao thức
+```
+
+Hai bên đổi màu mỗi ván; dòng cuối `Total: <bot> x - y <đối thủ>`. Tên `random`/`greedy` chỉ là bot mẫu khi không có thư mục/file trùng tên. Local runner không phải sandbox. Engine version 1.0.0, luật dev-v1 và clock/protocol không đổi.

@@ -12,7 +12,7 @@ Mẫu giao việc:
 
 ```text
 Đọc AGENTS.md, contracts/README.md và các tài liệu được yêu cầu. Tôi phụ trách <folder>.
-Thực hiện <nhiệm vụ> theo contract v1.2.0, profile dev-v1 và commit <commit>.
+Thực hiện <nhiệm vụ> theo contract v1.3.0, profile dev-v1 và commit <commit>.
 Đối chiếu với <folder liên quan>; không tự đoán quyết định còn mở.
 Bàn giao thay đổi, lệnh kiểm tra đã chạy, kết quả và phụ thuộc còn thiếu.
 ```
@@ -76,9 +76,13 @@ docker compose -f infra/docker-compose.dev.yml up -d   # PostgreSQL, Redis, MinI
 
 Hướng dẫn chi tiết cho từng phần nằm trong README của thư mục tương ứng.
 
-## Casual và Arena (contract 1.2.0)
+## Chế độ chơi và tài nguyên (contract 1.3.0)
 
-P1 `/` là trang chọn chế độ. **Casual** (`/casual`) cho người đã đăng nhập thao tác trực tiếp trên bàn cờ để đấu với máy; chọn Xanh/Đỏ, bot ngẫu nhiên hoặc ưu tiên ăn quân, tiếp tục ván đã lưu và đầu hàng. Không tính giờ, không cần duyệt đội hay nộp code. **Arena** (`/arena`) giữ nộp bot, đánh tập, giải đấu, replay và quản trị; các đường dẫn chức năng cũ không đổi. Chưa có rank, tìm trận hoặc người đấu người.
+P1 `/` là trang chọn chế độ, mỗi chế độ chạy ở một nơi:
+
+- **Casual** (`/casual`, cần đăng nhập): bàn cờ và bot mẫu chạy trong trình duyệt, ván lưu trên trình duyệt; server không chạy ván Casual.
+- **Tự luyện** (`/practice`): bot của bạn đấu bot mẫu hoặc bot khác ngay trên máy bằng `python -m ottv2 practice <bot> --vs greedy`; trang P1 mở replay cục bộ để xem.
+- **Arena** (`/arena`): nộp bot, đánh tập và giải đấu trên máy chủ. Đánh tập chạy trên worker riêng, giới hạn số trận cùng lúc và tạm dừng nhận trận mới khi giải đang có việc; giải chính thức có worker riêng. Các đường dẫn chức năng cũ không đổi.
 
 Trên Windows, bật Docker Desktop rồi chạy từ repo root:
 
@@ -89,4 +93,4 @@ cd web
 npm.cmd run dev
 ```
 
-Mở http://127.0.0.1:5173/ → Casual → đăng nhập/đăng ký → Bắt đầu chơi. Casual chỉ cần API, PostgreSQL và Redis; Arena chạy bot vẫn cần `infra/start-local-play.ps1`. Nếu đang có API cũ trên cổng 8000, dừng tiến trình API đó trước khi chạy lại; migration `0002` thêm bảng Casual, không xóa dữ liệu Arena. Cổng quản trị vẫn dùng `npm.cmd run dev:admin` tại http://127.0.0.1:5174/admin/.
+Mở http://127.0.0.1:5173/ → Casual → đăng nhập/đăng ký → Bắt đầu chơi. Casual chỉ cần API để đăng nhập; Arena chạy bot vẫn cần `infra/start-local-play.ps1`. Nếu đang có API cũ trên cổng 8000, dừng tiến trình API đó trước khi chạy lại; migration `0002` (bảng Casual cũ, nay không dùng) không xóa dữ liệu Arena. Cổng quản trị vẫn dùng `npm.cmd run dev:admin` tại http://127.0.0.1:5174/admin/.

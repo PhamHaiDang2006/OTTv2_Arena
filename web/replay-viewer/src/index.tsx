@@ -4,6 +4,17 @@ import type { Replay } from '../../../contracts/generated/types';
 import { applyMove, parseFen, squareIndex } from './board';
 import { validate } from '../../shared/schema';
 export { applyMove, parseFen, toFen } from './board';
+export {
+  INITIAL_FEN,
+  MAX_TURNS,
+  isLegal,
+  legalMoves,
+  other,
+  outcome,
+  ownerOf,
+  squareName,
+  tiebreak,
+} from './rules';
 const reasons: Record<string, string> = {
   GOAL: 'Chiếm ô mục tiêu',
   WIPEOUT: 'Ăn hết quân đối phương',

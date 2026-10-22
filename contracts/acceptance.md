@@ -11,6 +11,8 @@ Các test hợp đồng đã chạy không thay thế các test dưới đây. C
 | C ↔ D | Tất cả response thật validate OpenAPI; 401 refresh chỉ một lần; 403/404 chéo đội; 409 trạng thái; 429 quota; signed URL hết hạn |
 | C ↔ D admin | Freeze snapshot bất biến; run cùng key không nhân đôi match; rerun bị khóa khi downstream frozen; override lưu audit; CSRF/Origin sai bị chặn |
 | C ↔ D WS | Auth trước team subscribe, token hết hạn, reconnect/refetch, event trùng, public không thấy private data, invalid frame/rate limit |
+| A ↔ D Casual | Luật TypeScript trong trình duyệt khớp positions.json, outcomes.json và replay engine thật từng nước; Casual không gọi API ván |
+| C ↔ D tài nguyên | 503 SCRIMMAGE_PAUSED theo từng lý do, 429 SCRIMMAGE_LIMIT, trận đã nhận không bị hủy; quota/queue trả admission đúng schema |
 | B infra | /admin deep link, /api/v1 và /ws routing, chặn internal API ngoài VPN, gzip/CORS signed URL; migrate từ DB sạch và restore |
 
 ## Luồng smoke thật (cần implementation)

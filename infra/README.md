@@ -74,18 +74,24 @@ Create the `ottv2` bucket and a separate least-privilege S3 account in MinIO at 
 | `docker-compose.vps1.yml` `minio` API | `minio` | 9000 | `VPS1_WG_IP:9000` only | MinIO `/minio/health/ready` | `ottv2_vps1_minio_data` |
 | `docker-compose.vps1.yml` `minio-backup` (opt-in profile) | `minio-backup` → `minio`, external S3 | No listener | No published port | One-shot mirror exit status; source MinIO health dependency | none |
 | `docker-compose.vps2.yml` `registry` | `registry` | 5000 | `127.0.0.1:5000` only | None configured; monitor the registry `/v2/` endpoint | `ottv2_vps2_registry_data` |
-| `docker-compose.vps2.yml` worker services | `build-worker`, `match-worker-*` | Image-defined | No published ports | No Compose healthcheck; monitor app heartbeats/queue via backend | One callback-state volume per worker |
+| `docker-compose.vps2.yml` worker services | `build-worker`, `match-tournament-*`, `match-scrimmage-*` | Image-defined | No published ports | No Compose healthcheck; monitor app heartbeats/queue via backend | One callback-state volume per worker |
 
 VPS1's database, Redis, MinIO, and backend host ports are bound only to its WireGuard address (except internal Docker-only PostgreSQL). Ensure WireGuard is up before starting that Compose stack. VPS2 has no public service port; its registry binds loopback. The registry uses HTTP on loopback and the VPS2 Docker daemon must be configured for that loopback registry. Protect VPS2 accordingly.
 
 ## VPS deployment
 
-VPS2's four match workers assign bot CPU pairs `0/1`, `2/3`, `4/5`, and `6/7`
-through `RUNNER_CPUSET_BLUE`/`RUNNER_CPUSET_RED`. This layout requires host CPU
-IDs 0–7 to be available. On a smaller host, reduce the number of match workers
-and adjust their pairs before deployment; do not run multiple matches on the
-same pair. These assignments isolate match bots from each other, but do not
-reserve CPUs from the build worker or other host processes.
+VPS2 keeps official games and scrimmages on separate workers (contract 1.3.0).
+`match-tournament-1..3` listen only on `match:tournament` and pin bots to CPU
+pairs `0/1`, `2/3`, `4/5`; `match-scrimmage-1` listens only on `match:scrimmage`
+with pair `6/7`, so at most one scrimmage game runs at a time. Pairs are set
+through `RUNNER_CPUSET_BLUE`/`RUNNER_CPUSET_RED` and need host CPU IDs 0–7. On a
+smaller host, drop workers and adjust their pairs before deployment; do not run
+multiple matches on the same pair, and do not point a tournament worker at the
+scrimmage queue. These assignments isolate match bots from each other, but do
+not reserve CPUs from the build worker or other host processes. The backend
+pauses new scrimmages while tournament games are pending (`SCRIMMAGE_*` in
+`vps1.env.example`); see RUNBOOK section 7 before switching a running VPS2 from
+the earlier `match-worker-1..4` services.
 
 Use separate host-specific secret files, not the development `.env.example`: copy `vps1.env.example` to `.env` on VPS1 and `vps2.env.example` to `.env` on VPS2. The VPS2 file contains only Redis/API/worker-scoped S3/registry secrets and the worker image reference—never `DATABASE_URL`, app S3 credentials, MinIO root credentials, or `JWT_SECRET`. Prefer URL-safe alphanumeric passwords, or percent-encode special characters in `DATABASE_URL` and `VPS2_REDIS_URL`. Do not copy secrets into a web build or any `VITE_*` variable.
 
@@ -111,7 +117,7 @@ cp vps2.env.example .env
 chmod 600 .env
 docker compose --env-file .env -f docker-compose.vps2.yml pull
 docker compose --env-file .env -f docker-compose.vps2.yml up -d
-docker compose --env-file .env -f docker-compose.vps2.yml logs -f build-worker match-worker-1 match-worker-2 match-worker-3 match-worker-4
+docker compose --env-file .env -f docker-compose.vps2.yml logs -f build-worker match-tournament-1 match-tournament-2 match-tournament-3 match-scrimmage-1
 ```
 
 See [RUNBOOK.md](RUNBOOK.md) for first-time provisioning, upgrades, backup/restore, monitoring, and incidents.

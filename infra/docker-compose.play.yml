@@ -31,6 +31,7 @@ services:
       - build_play_state:/var/lib/ottv2
     depends_on: [redis, minio, registry]
 
+  # Local play only: one worker serves both match queues. VPS2 keeps tournament and scrimmage workers apart.
   match-worker:
     image: ottv2-worker:local
     restart: unless-stopped
