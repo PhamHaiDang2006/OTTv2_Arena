@@ -34,6 +34,14 @@ ottv2-runner-worker --queue match:tournament --queue match:scrimmage
 ottv2-runner flush-outbox
 ```
 
+From contract 1.3.0 production runs separate pools: tournament workers listen
+only on `match:tournament` and scrimmage workers only on `match:scrimmage`, so
+the scrimmage worker count caps concurrent scrimmage games and official games
+never wait behind a scrimmage (`infra/docker-compose.vps2.yml`). One process may
+still list both queues for local development (`docker-compose.play.yml`); RQ
+then takes tournament jobs first. Set `RUNNER_WORKER_ID` to show the pool in
+the admin worker view. The worker code, job and callback payloads are unchanged.
+
 Public RQ callables are `ottv2_runner.jobs.build_submission(payload)` and
 `ottv2_runner.jobs.run_match(payload)`. CLI validation uses the strict v1 DTO
 shape; contract schemas remain the source of truth. The worker requires these
@@ -220,3 +228,9 @@ runner/
 - Bộ 10 bot phá hoại đều bị chặn, máy chủ không bị ảnh hưởng.
 - Độ lệch đồng hồ dưới 2% qua 100 lần chạy.
 - Tắt đột ngột một worker giữa trận thì trận đó tự chạy lại ở worker khác.
+
+### Cách ly CPU build và giới hạn tài nguyên (2026-10-22)
+
+`RUNNER_CPUSET_BUILD` áp dụng cho cả container compiler và bot chạy thử trong `EngineBuildVerifier`; không lấy CPU của bot Xanh giải. CLI/test cũ chưa cấu hình vẫn fallback CPU 0 để tương thích, **không dùng fallback khi triển khai giải**. Cả Compose VPS2/local đều truyền giá trị rõ ràng; `infra/check_resources.py` từ chối thiếu giá trị hoặc trùng CPU giải. Có thể truyền `build_cpu` vào verifier khi nhúng trong test.
+
+Compiler/smoke vẫn giới hạn 1 CPU, 512 MiB, không thêm swap; container bot trận giữ cùng giới hạn. Giới hạn worker Compose chỉ áp dụng tiến trình điều phối, không tự truyền xuống container con do host Docker daemon tạo. Vì vậy preflight cộng riêng 2×512 MiB cho mỗi match worker và 512 MiB cho compiler/smoke tuần tự. Registry/worker có giới hạn CPU, RAM, PID và cùng nằm trên CPU phụ trợ. Không thay HTTP 1.3.0, job/callback v1 hay luật/clock.

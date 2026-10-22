@@ -127,6 +127,18 @@ Yêu cầu backend + contracts 1.1.0 cùng checkout. Form dùng `register` trong
 
 ## Casual / Arena — 1.2.0
 
+<<<<<<< Updated upstream
 Trang `/` công khai cho chọn chế độ. `/arena` là tổng quan Arena cũ; `/submit`, `/submissions`, `/scrimmage`, `/standings`, `/matches/:id`, `/games/:id` và P2 không đổi. `/casual` yêu cầu đăng nhập, cho chọn màu và bot; `/casual/:id` hiển thị bàn tương tác và lịch sử, lưu ván trên backend. Màu người nằm phía dưới; chọn quân rồi ô gợi ý. Có xác nhận đầu hàng; chưa có rank/matchmaking/PvP. Tài khoản đăng ký hiện tại vẫn có đội pending nhưng Casual không đòi duyệt đội.
+=======
+Giao diện Casual có quân SVG búa/bao/kéo, chuyển động nước đi, dấu nước cuối,
+hiệu ứng ăn quân, trạng thái lượt và bảng kết quả với chơi lại/xem lại/về sảnh.
+Lịch sử và cách chơi có thể thu gọn. Nút sáng/tối ở thanh trên và trang đăng nhập
+lưu lựa chọn trong `ottv2.theme`; âm thanh mặc định tắt, bật bằng nút trong bàn cờ
+và lưu trong `ottv2.sound`. Chế độ giảm chuyển động của hệ điều hành được tôn trọng.
+Hiệu ứng chỉ trình bày: toàn bộ lượt người + máy được lưu trước khi chạy animation;
+xem lại không sửa ván đã lưu. Chi tiết kiểm tra: [UI_POLISH_CHECKS.md](UI_POLISH_CHECKS.md).
+
+Trang `/` công khai cho chọn ba chế độ. `/arena` là tổng quan Arena; `/submit`, `/submissions`, `/scrimmage`, `/standings`, `/matches/:id`, `/games/:id` và P2 không đổi.
+>>>>>>> Stashed changes
 
 `src/casual.tsx` chỉ dùng client/types generated và parseFen của replay-viewer để vẽ; nước hợp lệ/kết quả do API quyết định. UI khóa khi chờ phản hồi, hủy GET đang chạy trước mutation, gửi expected_ply, GET lại khi lỗi và polling 5 giây. Bộ test `tests/casual.test.tsx` kiểm tra chọn chế độ, payload, chọn ô, hướng bàn, khóa bàn và xác nhận kết thúc. Dùng API thật khi chơi; mock fixture chỉ hỗ trợ kiểm thử cấu trúc, không chạy game.

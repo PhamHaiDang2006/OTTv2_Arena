@@ -18,9 +18,16 @@ import {
   Teams,
 } from './admin';
 import './style.css';
+import './game.css';
 import { participantUrl } from './urls';
 import { Login } from './auth-page';
 import { Modes, CasualLobby, CasualPlay } from './casual';
+<<<<<<< Updated upstream
+=======
+import { Practice } from './practice';
+import { initializeTheme, ThemeSwitch } from './preferences';
+initializeTheme();
+>>>>>>> Stashed changes
 declare const __ADMIN__: boolean;
 const admin = __ADMIN__;
 const participantNav = [
@@ -121,7 +128,7 @@ function App() {
             <span className="tag">DEV-v1</span>
           </span>
           <div>
-            {user?.email ?? 'Khách'}{' '}
+            <ThemeSwitch /> {user?.email ?? 'Khách'}{' '}
             {user ? (
               <button
                 onClick={async () => {

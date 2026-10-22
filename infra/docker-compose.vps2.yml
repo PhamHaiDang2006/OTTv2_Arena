@@ -4,6 +4,11 @@ x-worker-common: &worker-common
   image: ${VPS2_WORKER_IMAGE:?Set VPS2_WORKER_IMAGE to an externally built immutable image digest}
   pull_policy: always
   restart: unless-stopped
+  cpuset: ${VPS2_AUX_CPUSET:-6-7}
+  cpus: ${VPS2_WORKER_CPUS:-0.5}
+  mem_limit: ${VPS2_WORKER_MEMORY:-512m}
+  memswap_limit: ${VPS2_WORKER_MEMORY:-512m}
+  pids_limit: 128
   environment: &worker-environment
     REDIS_URL: ${VPS2_REDIS_URL:?Set VPS2_REDIS_URL to VPS1 Redis over WireGuard}
     INTERNAL_API_BASE_URL: ${VPS2_INTERNAL_API_BASE_URL:?Set private VPS1 API base URL}
@@ -15,6 +20,7 @@ x-worker-common: &worker-common
     REGISTRY_URL: ${VPS2_REGISTRY_URL:-127.0.0.1:5000}
     RUNNER_OUTBOX_DIR: /var/lib/ottv2/outbox
     RUNNER_WORK_DIR: /var/lib/ottv2/work
+    RUNNER_CPUSET_BUILD: ${VPS2_BUILD_CPUSET:-6-7}
     RUNNER_IMAGE_PYTHON: ${RUNNER_IMAGE_PYTHON:?Set the pinned Python bot runtime image}
     RUNNER_IMAGE_CPP: ${RUNNER_IMAGE_CPP:?Set the pinned C++ bot runtime image}
     RUNNER_BUILD_IMAGE_CPP: ${RUNNER_BUILD_IMAGE_CPP:?Set the pinned C++ build image}
@@ -33,6 +39,11 @@ x-worker-common: &worker-common
 services:
   registry:
     image: registry:2.8.3
+    cpuset: ${VPS2_AUX_CPUSET:-6-7}
+    cpus: 0.5
+    mem_limit: 256m
+    memswap_limit: 256m
+    pids_limit: 128
     restart: unless-stopped
     ports:
       - "127.0.0.1:5000:5000"
@@ -53,13 +64,18 @@ services:
       # directory must exist at the identical path on the host and in this container.
       - /var/lib/ottv2/work:/var/lib/ottv2/work
 
-  match-worker-1:
+  # Official games own three workers and cores 0-5; they never take a scrimmage job. Scrimmages share one worker
+  # on cores 6-7, so at most one scrimmage game runs at a time; add match-scrimmage-N services to raise that cap.
+  # The state volumes keep their earlier match_worker_N names so callbacks waiting in an outbox survive the
+  # switch; see infra/RUNBOOK.md before upgrading a running deployment.
+  match-tournament-1:
     <<: *worker-common
     command: ["ottv2-runner-worker", "--queue", "match:tournament", "--queue", "match:scrimmage"]
     environment:
       <<: *worker-environment
       WORKER_ROLE: match
       WORKER_CONCURRENCY: "1"
+      RUNNER_WORKER_ID: vps2-tournament-1
       RUNNER_CPUSET_BLUE: "0"
       RUNNER_CPUSET_RED: "1"
     volumes:
@@ -73,6 +89,7 @@ services:
       <<: *worker-environment
       WORKER_ROLE: match
       WORKER_CONCURRENCY: "1"
+      RUNNER_WORKER_ID: vps2-tournament-2
       RUNNER_CPUSET_BLUE: "2"
       RUNNER_CPUSET_RED: "3"
     volumes:
@@ -86,6 +103,7 @@ services:
       <<: *worker-environment
       WORKER_ROLE: match
       WORKER_CONCURRENCY: "1"
+      RUNNER_WORKER_ID: vps2-tournament-3
       RUNNER_CPUSET_BLUE: "4"
       RUNNER_CPUSET_RED: "5"
     volumes:
@@ -99,6 +117,7 @@ services:
       <<: *worker-environment
       WORKER_ROLE: match
       WORKER_CONCURRENCY: "1"
+      RUNNER_WORKER_ID: vps2-scrimmage-1
       RUNNER_CPUSET_BLUE: "6"
       RUNNER_CPUSET_RED: "7"
     volumes:

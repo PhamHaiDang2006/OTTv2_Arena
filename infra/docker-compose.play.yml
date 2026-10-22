@@ -2,6 +2,11 @@
 services:
   registry:
     image: registry:2.8.3
+    cpuset: ${LOCAL_AUX_CPUSET:-2-3}
+    cpus: 0.5
+    mem_limit: 256m
+    memswap_limit: 256m
+    pids_limit: 128
     restart: unless-stopped
     ports: ["127.0.0.1:5000:5000"]
     volumes: ["registry_play_data:/var/lib/registry"]
@@ -9,6 +14,11 @@ services:
   build-worker:
     image: ottv2-worker:local
     restart: unless-stopped
+    cpuset: ${LOCAL_AUX_CPUSET:-2-3}
+    cpus: 0.5
+    mem_limit: 512m
+    memswap_limit: 512m
+    pids_limit: 128
     command: ["ottv2-runner-worker", "--queue", "build"]
     environment: &worker-env
       REDIS_URL: redis://:${REDIS_PASSWORD}@redis:6379/0
@@ -24,24 +34,53 @@ services:
       RUNNER_WORK_DIR: /var/lib/ottv2/work
       OTTv2_ENGINE_FACTORY: ottv2.adapter:make_engine
       OTTv2_BUILD_VERIFIER: ottv2_runner.engine_verifier:make_build_verifier
-      RUNNER_CPUSET_BLUE: "0"
-      RUNNER_CPUSET_RED: "1"
+      RUNNER_CPUSET_BUILD: ${LOCAL_BUILD_CPUSET:-2-3}
     volumes:
       - /var/run/docker.sock:/var/run/docker.sock
       - build_play_state:/var/lib/ottv2
     depends_on: [redis, minio, registry]
 
+  # Local play only: one worker serves both match queues. VPS2 keeps tournament and scrimmage workers apart.
   match-worker:
     image: ottv2-worker:local
     restart: unless-stopped
-    command: ["ottv2-runner-worker", "--queue", "match:tournament", "--queue", "match:scrimmage"]
-    environment: *worker-env
+    cpuset: ${LOCAL_AUX_CPUSET:-2-3}
+    cpus: 0.5
+    mem_limit: 512m
+    memswap_limit: 512m
+    pids_limit: 128
+    command: ["ottv2-runner-worker", "--queue", "match:tournament"]
+    environment:
+      <<: *worker-env
+      RUNNER_WORKER_ID: local-tournament
+      RUNNER_CPUSET_BLUE: ${LOCAL_TOURNAMENT_BLUE:-0}
+      RUNNER_CPUSET_RED: ${LOCAL_TOURNAMENT_RED:-1}
     volumes:
       - /var/run/docker.sock:/var/run/docker.sock
       - match_play_state:/var/lib/ottv2
+    depends_on: [redis, minio, registry]
+
+  match-scrimmage:
+    image: ottv2-worker:local
+    restart: unless-stopped
+    cpuset: ${LOCAL_AUX_CPUSET:-2-3}
+    cpus: 0.5
+    mem_limit: 512m
+    memswap_limit: 512m
+    pids_limit: 128
+    command: ["ottv2-runner-worker", "--queue", "match:scrimmage"]
+    environment:
+      <<: *worker-env
+      RUNNER_WORKER_ID: local-scrimmage
+      RUNNER_CPUSET_BLUE: ${LOCAL_SCRIMMAGE_BLUE:-2}
+      RUNNER_CPUSET_RED: ${LOCAL_SCRIMMAGE_RED:-3}
+    volumes:
+      - /var/run/docker.sock:/var/run/docker.sock
+      - scrimmage_play_state:/var/lib/ottv2
     depends_on: [redis, minio, registry]
 
 volumes:
   registry_play_data:
   build_play_state:
   match_play_state:
+  scrimmage_play_state:

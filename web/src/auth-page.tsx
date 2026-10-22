@@ -1,3 +1,4 @@
+import { ThemeSwitch } from './preferences';
 import React, { useState } from 'react';
 import { useQueryClient } from '@tanstack/react-query';
 import { api, session } from './api';
@@ -23,6 +24,7 @@ export function Login({ initialError, admin = false }: { initialError?: unknown;
         </div>
       </div>
       <section className="card">
+        <ThemeSwitch />
         <span className="eyebrow">{admin ? 'CỔNG QUẢN TRỊ' : 'CỔNG THÍ SINH'}</span>
         <h2>{registering ? 'Tạo tài khoản của bạn' : 'Chào mừng trở lại'}</h2>
         <p className="muted">

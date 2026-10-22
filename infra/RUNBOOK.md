@@ -119,3 +119,11 @@ Check Caddy and backend logs without printing tokens, cookies, signed URLs, sour
 ### Rerun a game
 
 Use the authorized admin API/UI only after verifying the game's current attempt, reason, tournament freeze/downstream state, and relevant logs. The contract creates a new `game_id`/attempt and preserves history; do not enqueue a raw Redis job, edit DB rows, overwrite replay keys, or delete the old result. Confirm whether the round can be reopened before action. Keep the audit record and validate the new current attempt before resuming the round.
+
+### Applying the CPU/RAM isolation update
+
+1. Pause `build`, `match:tournament`, and `match:scrimmage` via P2. Wait until running jobs finish and pending callbacks are delivered. Pausing queues alone does not kill running jobs.
+2. Build the updated runner image outside production Compose, pin its digest, and update the environment from vps2.env.example. Keep all existing state volumes. Local `match-worker` retains its name/volume and switches to tournament-only; the new scrimmage worker gets a new volume.
+3. Run `python infra/check_resources.py --env-file infra/.env -f infra/docker-compose.vps2.yml` from the repository root on the destination Docker host. The default layout needs 8 logical CPUs and a 9.25 GiB budget (12 GiB recommended). Never bypass a failed preflight by overlapping tournament and auxiliary CPU sets.
+4. Recreate workers/registry using Compose, verify worker heartbeats and container CPU/RAM settings, then resume the queues. For local rehearsal, start-local-play.ps1 runs the local preflight and starts both dedicated match workers.
+5. Inspect sibling bot/compiler containers as well as workers: they use the host daemon, so their limits are separate. Build image assembly/pull/push and OS/SMT/disk contention are not eliminated by container CPU pinning. Pause build and scrimmage queues and let in-flight work drain before a timing-sensitive final.

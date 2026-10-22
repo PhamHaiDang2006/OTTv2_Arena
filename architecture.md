@@ -302,6 +302,11 @@ Từ contract 1.1.0, đăng ký công khai tạo captain và đội pending; pen
 
 ## Hai chế độ từ contract 1.2.0
 
-P1 có trang chọn chế độ `/`, Arena dashboard chuyển sang `/arena`; các route Arena khác và P2 giữ nguyên. Casual `/casual` là người đấu bot tích hợp, không đưa mã người chơi vào API. Web gửi nước đi và phiên bản lượt; backend dùng API công khai `ottv2.Board` / `ottv2.outcome` để xác nhận, áp nước người và bot trong một transaction. Không nhân bản luật trong frontend/backend. Bot tin cậy random/greedy chạy đồng bộ, không gọi runner hay hàng đợi.
+P1 `/` chọn chế độ; Arena dashboard ở `/arena`, các route Arena khác và P2 giữ nguyên.
 
-Bảng `casual_games` riêng gồm id, user_id, state JSONB và created_at. Ván thuộc một người dùng, không thuộc team/tournament; không tạo Match, Game Arena, WorkerJob, replay format=1 hoặc điểm giải. Lưu FEN và lịch sử để tiếp tục ván sau khi rời trang. Lock hàng + expected_ply + idempotency ngăn hai tab đi hai nước cùng lượt. Casual chưa có đồng hồ, rank, matchmaking hay PvP; không làm thay đổi clock của Arena.
+- **Casual** (`/casual`, cần đăng nhập): bàn cờ và bot mẫu random/greedy chạy trong trình duyệt bằng bản TypeScript của luật dev-v1 trong `@ottv2/replay-viewer`, kiểm chéo với engine bằng fixture. Ván lưu trong localStorage theo tài khoản; server không nhận nước đi, không chạy bot. Contract 1.2.0 từng có API `/casual/games` và bảng `casual_games`; 1.3.0 gỡ API, giữ bảng không dùng để không mất dữ liệu cũ.
+- **Tự luyện** (`/practice`, công khai): bot của thí sinh đấu bot mẫu hoặc một bot khác trên máy thí sinh bằng `python -m ottv2 practice`, dùng chính engine Python. P1 chỉ hướng dẫn và mở file replay cục bộ để xem; không upload.
+- **Đánh tập giữa các đội**: vẫn chạy trên VPS 2 nhưng trên worker riêng của `match:scrimmage`, số worker là trần số ván cùng lúc. Backend giới hạn số trận chưa xong của mỗi đội và tạm dừng nhận trận mới khi giải có việc, khi tồn đọng đánh tập vượt ngưỡng hoặc khi admin tạm dừng hàng đợi.
+- **Giải chính thức**: worker và lõi CPU riêng chỉ nghe `match:tournament`. Trận đánh tập đã nhận trước lúc tạm dừng chạy hết trên worker đánh tập, không bị hủy và không chiếm worker giải.
+
+Chi tiết lỗi, ngưỡng và trường API ở mục Phân bổ tài nguyên của [contracts/behavior.md](contracts/behavior.md).
