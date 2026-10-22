@@ -1,4 +1,4 @@
-# Hành vi chuẩn v1.1.0
+# Hành vi chuẩn v1.2.0
 
 Đây là quy ước kỹ thuật được chọn cho việc triển khai độc lập. Schema quyết định tên/kiểu trường; tài liệu này quyết định quyền, trạng thái và các ràng buộc nhiều trường. Không coi mock HTTP là implementation của các quy tắc dưới đây.
 
@@ -76,3 +76,12 @@ C sở hữu migration, cần thêm vào phác thảo architecture: rounds, roun
 - Đội pending được upload, chọn bot ready và đánh tập với đội pending/approved có bot ready. Locked/disqualified vẫn bị chặn. Bốc thăm giải chỉ chọn đội approved như trước.
 - Đăng ký chưa xác minh email; chưa có quên mật khẩu hoặc gia nhập đội bằng mã mời. Mỗi lần đăng ký tạo đội riêng.
 - Backend và web phải cập nhật cùng contract 1.1.0 (86 definitions, 66 operations, 138 fixtures); engine, job/callback schema_version=1, replay format=1 và luật dev-v1 không đổi.
+
+## Casual — bổ sung HTTP contract 1.2.0
+
+- `createCasualGame`, `listCasualGames`, `getCasualGame`, `moveCasualGame`, `resignCasualGame` yêu cầu tài khoản active (member/captain/admin), không cần team hoặc team approved. Chỉ chủ ván được đọc/đổi; admin không được đọc ván riêng của người khác, trả 404 để không lộ ID. List chỉ gồm ván của caller, phân trang mặc định 20.
+- Tạo ván chỉ nhận human_side và bot=random|greedy. Bàn standard/dev-v1, Xanh đi trước. Khi người chọn Đỏ, bot đi ngay trong create response. Chỉ bot tích hợp tin cậy, không nhận code từ người chơi. Giới hạn tạo 30 ván/giờ/tài khoản (429).
+- Mỗi phản hồi playing là tới lượt người: backend áp nước người rồi tối đa một nước bot. Kiểm tra nước bằng Board; phân định GOAL → WIPEOUT → STALEMATE → MOVE_LIMIT bằng outcome của engine. Tối đa 300 ply; không đồng hồ. finished có turn=null, legal_moves=[], winner và reason. RESIGNED chỉ thuộc Casual, không thêm vào reason của replay Arena.
+- Tạo/đi/đầu hàng cần Idempotency-Key theo quy tắc chung. moves/resign nhận expected_ply; lock hàng và kiểm tra trạng thái trong cùng transaction. Nếu đã kết thúc hoặc ply cũ: 409 STATE_CONFLICT. Nước không hợp lệ: 422, không đổi state. Gửi lại cùng key/body trả phản hồi đã ghi, không đi thêm. Client gặp lỗi không rõ kết quả cần GET lại trước khi đi tiếp.
+- State lưu trong PostgreSQL qua migration 0002; GET sau reload vẫn cùng ván. Không có WS Casual; UI tải lại mỗi 5 giây để đồng bộ tab. Lịch sử/FEN chỉ server được ghi. Không ảnh hưởng approval, quota scrimmage, bảng xếp hạng hoặc hàng đợi Arena.
+- Các schema/fixture được sinh từ build.mjs; Node 24.21 đã dùng để tái sinh bằng `node contracts/build.mjs`. Giữ job/callback schema_version=1, replay format=1 và engine version 1.0.0.

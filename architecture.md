@@ -299,3 +299,9 @@ WebSocket `/ws`: sau khi kết nối, máy khách đăng ký kênh `team:{id}` (
 | ADR-011 | Chạy lại tạo bản ghi `games` mới với `attempt + 1` | Giữ dấu vết, không mất kết quả cũ | Mọi truy vấn lấy kết quả phải chọn `attempt` lớn nhất |
 
 Từ contract 1.1.0, đăng ký công khai tạo captain và đội pending; pending được đánh tập, approved mới được bốc thăm giải. Chi tiết tại contracts/behavior.md.
+
+## Hai chế độ từ contract 1.2.0
+
+P1 có trang chọn chế độ `/`, Arena dashboard chuyển sang `/arena`; các route Arena khác và P2 giữ nguyên. Casual `/casual` là người đấu bot tích hợp, không đưa mã người chơi vào API. Web gửi nước đi và phiên bản lượt; backend dùng API công khai `ottv2.Board` / `ottv2.outcome` để xác nhận, áp nước người và bot trong một transaction. Không nhân bản luật trong frontend/backend. Bot tin cậy random/greedy chạy đồng bộ, không gọi runner hay hàng đợi.
+
+Bảng `casual_games` riêng gồm id, user_id, state JSONB và created_at. Ván thuộc một người dùng, không thuộc team/tournament; không tạo Match, Game Arena, WorkerJob, replay format=1 hoặc điểm giải. Lưu FEN và lịch sử để tiếp tục ván sau khi rời trang. Lock hàng + expected_ply + idempotency ngăn hai tab đi hai nước cùng lượt. Casual chưa có đồng hồ, rank, matchmaking hay PvP; không làm thay đổi clock của Arena.

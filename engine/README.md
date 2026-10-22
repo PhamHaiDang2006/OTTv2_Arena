@@ -149,3 +149,7 @@ engine/
 - Độ phủ kiểm thử của `rules.py` và `clock.py` đạt 95%.
 - 10.000 ván ngẫu nhiên không lỗi và tất định.
 - `ottv2 play` chạy được hai bot mẫu trên máy cá nhân, không cần Docker.
+
+### API công khai cho Casual
+
+Từ tích hợp HTTP contract 1.2.0, package export thêm `outcome(board, mover, plies, max_turns=300)` ở `ottv2`. Trả `(winner, reason)` hoặc None, dùng sau mỗi nước hợp lệ; cùng hàm run_game dùng nên thứ tự kết thúc/tiebreak không khác Arena. Backend chỉ gọi API công khai này với Board và INITIAL_FEN, không import implementation nội bộ. Engine version 1.0.0, luật dev-v1 và clock/protocol Arena không đổi. Consumer chịu trách nhiệm lượt, auth và lưu trạng thái; hàm không kiểm tra lịch sử hoặc quyền người chơi.

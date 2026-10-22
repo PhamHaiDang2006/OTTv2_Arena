@@ -36,7 +36,7 @@ Backend là trung tâm điều phối: xác thực người dùng, giữ dữ li
 
 ## Chạy backend
 
-Triển khai contract **v1.1.0**, profile **dev-v1** (development). Công cụ: Python 3.12 qua [uv](https://docs.astral.sh/uv/) (đã dùng uv 0.13.1), PostgreSQL 16, Redis 7, S3/MinIO. Mọi lệnh chạy từ `backend/`.
+Triển khai contract **v1.2.0**, profile **dev-v1** (development). Công cụ: Python 3.12 qua [uv](https://docs.astral.sh/uv/) (đã dùng uv 0.13.1), PostgreSQL 16, Redis 7, S3/MinIO. Mọi lệnh chạy từ `backend/`.
 
 ```bash
 uv sync                                   # tạo .venv từ uv.lock (Python 3.12)
@@ -50,7 +50,7 @@ export JWT_SECRET=... WORKER_API_TOKEN=...
 export FRONTEND_ORIGINS=http://localhost:5173,http://localhost:5174
 export COOKIE_SECURE=false                # chỉ dev loopback; production để mặc định true
 
-uv run python -m app.cli migrate          # alembic upgrade head (head hiện tại: 0001)
+uv run python -m app.cli migrate          # alembic upgrade head (head hiện tại: 0002)
 uv run python -m app.cli ensure-bucket    # dev: tạo bucket nếu chưa có
 OTTV2_PASSWORD=... uv run python -m app.cli seed-dev   # admin@example.test + 2 đội approved (doi-a, doi-b)
 uv run uvicorn app.main:app --host 127.0.0.1 --port 8000
@@ -196,3 +196,9 @@ backend/
 Không cần seed tài khoản người chơi. UI P1 có nút Đăng ký. API tạo captain + đội riêng trong một transaction; không cần migration vì dùng bảng/index hiện có. Admin vẫn được tạo bằng CLI. `REGISTRATION_RATE_PER_HOUR=5` mặc định; giới hạn theo IP, Redis lỗi trả 503. Chưa xác minh email/chưa có reset mật khẩu. Mật khẩu request không được phản chiếu trong lỗi schema.
 
 Tái sinh: `node contracts/build.mjs` (Node 24); kiểm tra: `tests/test_registration.py` cùng suite backend. Thay đổi ảnh hưởng consumer web và mock; runner/engine giữ nguyên wire format.
+
+### Casual (contract 1.2.0)
+
+`app/casual.py` cung cấp 5 operation của `/casual/games`, lưu `CasualGame` qua migration `0002`. Cài từ repo đầy đủ bằng `uv sync --project backend --frozen`; uv.lock dùng engine ở `../engine`, image backend phải build từ repo root. Chỉ import API công khai Board/INITIAL_FEN/outcome; không gọi runner hoặc dùng luật tự viết. Phụ thuộc runtime Casual là PostgreSQL + Redis như auth hiện có; không cần S3/worker để chơi.
+
+Mọi tài khoản active được chơi, kể cả chưa có đội hoặc đội pending. Quyền sở hữu, idempotency, row lock, expected_ply và hành vi bot được chốt trong contracts/behavior.md. `tests/test_casual.py` kiểm tra producer với validator thật, quyền riêng tư, hai request cạnh tranh, lưu ván, engine và cách ly dữ liệu Arena. Migrate từ 0001 chỉ thêm bảng/index, giữ tài khoản và trận Arena.

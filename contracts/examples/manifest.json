@@ -55,6 +55,21 @@
     "valid": true
   },
   {
+    "file": "examples/invalid-casual-move.json",
+    "definition": "CasualMove",
+    "valid": false
+  },
+  {
+    "file": "examples/invalid-casual-state.json",
+    "definition": "CasualGame",
+    "valid": false
+  },
+  {
+    "file": "examples/casual-resigned.json",
+    "definition": "CasualGame",
+    "valid": true
+  },
+  {
     "file": "examples/invalid-register-password.json",
     "definition": "Register",
     "valid": false
@@ -288,6 +303,46 @@
   {
     "file": "examples/http/currentUser.response.json",
     "definition": "User",
+    "valid": true
+  },
+  {
+    "file": "examples/http/createCasualGame.request.json",
+    "definition": "CasualCreate",
+    "valid": true
+  },
+  {
+    "file": "examples/http/createCasualGame.response.json",
+    "definition": "CasualGame",
+    "valid": true
+  },
+  {
+    "file": "examples/http/listCasualGames.response.json",
+    "definition": "CasualGamePage",
+    "valid": true
+  },
+  {
+    "file": "examples/http/getCasualGame.response.json",
+    "definition": "CasualGame",
+    "valid": true
+  },
+  {
+    "file": "examples/http/moveCasualGame.request.json",
+    "definition": "CasualMove",
+    "valid": true
+  },
+  {
+    "file": "examples/http/moveCasualGame.response.json",
+    "definition": "CasualGame",
+    "valid": true
+  },
+  {
+    "file": "examples/http/resignCasualGame.request.json",
+    "definition": "CasualResign",
+    "valid": true
+  },
+  {
+    "file": "examples/http/resignCasualGame.response.json",
+    "definition": "CasualGame",
     "valid": true
   },
   {

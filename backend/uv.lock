@@ -483,6 +483,11 @@ wheels = [
 ]
 
 [[package]]
+name = "ottv2"
+version = "1.0.0"
+source = { directory = "../engine" }
+
+[[package]]
 name = "ottv2-backend"
 version = "0.1.0"
 source = { virtual = "." }
@@ -492,6 +497,7 @@ dependencies = [
     { name = "boto3" },
     { name = "fastapi" },
     { name = "jsonschema" },
+    { name = "ottv2" },
     { name = "psycopg", extra = ["binary"] },
     { name = "pydantic-settings" },
     { name = "pyjwt" },
@@ -523,6 +529,7 @@ requires-dist = [
     { name = "boto3", specifier = ">=1.43.114" },
     { name = "fastapi", specifier = ">=0.143.3" },
     { name = "jsonschema", specifier = ">=4.26.0" },
+    { name = "ottv2", directory = "../engine" },
     { name = "psycopg", extras = ["binary"], specifier = ">=3.3.6" },
     { name = "pydantic-settings", specifier = ">=2.16.0" },
     { name = "pyjwt", specifier = ">=2.15.1" },
