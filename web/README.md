@@ -2,7 +2,7 @@
 
 Implementation React 18 + TypeScript cho cổng thí sinh **P1**, cổng quản trị **P2** và package
 `@ottv2/replay-viewer`. Hai bản build dùng chung session, API client, schema validator và UI.
-Contract **1.1.0**, engine **1.0.0**, profile **dev-v1** chưa phải luật giải chính thức.
+Contract **1.2.0**, engine **1.0.0**, profile **dev-v1** chưa phải luật giải chính thức.
 
 ## Chạy
 
@@ -124,3 +124,9 @@ phải mở). Script giữ tài khoản trong database dev bền; chỉ chạy `
 Mở cổng thí sinh → **Chưa có tài khoản? Đăng ký** → nhập tên đội, email, mật khẩu (ít nhất 8 ký tự), nhập lại mật khẩu → **Đăng ký và vào đấu trường**. Hệ thống đăng nhập luôn và tạo đội riêng. Sau khi nộp bot và build thành công, chọn bot đánh tập để thi đấu. Đội chưa được duyệt vẫn được đánh tập; giải chính thức cần admin duyệt. Không có đăng ký admin, xác minh email, quên mật khẩu hoặc mã mời gia nhập đội trong đợt này.
 
 Yêu cầu backend + contracts 1.1.0 cùng checkout. Form dùng `register` trong client generated, không lưu mật khẩu/token vào localStorage. Nếu mất kết nối sau đăng ký, thử đăng nhập bằng tài khoản vừa nhập.
+
+## Casual / Arena — 1.2.0
+
+Trang `/` công khai cho chọn chế độ. `/arena` là tổng quan Arena cũ; `/submit`, `/submissions`, `/scrimmage`, `/standings`, `/matches/:id`, `/games/:id` và P2 không đổi. `/casual` yêu cầu đăng nhập, cho chọn màu và bot; `/casual/:id` hiển thị bàn tương tác và lịch sử, lưu ván trên backend. Màu người nằm phía dưới; chọn quân rồi ô gợi ý. Có xác nhận đầu hàng; chưa có rank/matchmaking/PvP. Tài khoản đăng ký hiện tại vẫn có đội pending nhưng Casual không đòi duyệt đội.
+
+`src/casual.tsx` chỉ dùng client/types generated và parseFen của replay-viewer để vẽ; nước hợp lệ/kết quả do API quyết định. UI khóa khi chờ phản hồi, hủy GET đang chạy trước mutation, gửi expected_ply, GET lại khi lỗi và polling 5 giây. Bộ test `tests/casual.test.tsx` kiểm tra chọn chế độ, payload, chọn ô, hướng bàn, khóa bàn và xác nhận kết thúc. Dùng API thật khi chơi; mock fixture chỉ hỗ trợ kiểm thử cấu trúc, không chạy game.

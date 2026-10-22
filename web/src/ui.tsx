@@ -133,15 +133,17 @@ export function Heading({
   title,
   description,
   children,
+  eyebrow = 'OTT v2 / ARENA',
 }: {
   title: string;
   description?: string;
   children?: ReactNode;
+  eyebrow?: string;
 }) {
   return (
     <header className="page-head">
       <div>
-        <p className="eyebrow">OTT v2 / ARENA</p>
+        <p className="eyebrow">{eyebrow}</p>
         <h1>{title}</h1>
         {description && <p className="muted">{description}</p>}
       </div>
