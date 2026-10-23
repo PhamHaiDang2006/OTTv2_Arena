@@ -1,0 +1,29 @@
+{
+	auto_https off
+}
+
+:80 {
+	encode zstd gzip
+	request_body {
+		max_size 2MB
+	}
+
+	route {
+		@internal path /internal /internal/* /api/v1/internal /api/v1/internal/*
+		respond @internal 404
+
+		@api path /api/v1 /api/v1/*
+		reverse_proxy @api host.docker.internal:8000
+
+		@websocket path /ws
+		reverse_proxy @websocket host.docker.internal:8000
+
+		@admin_root path /admin
+		redir @admin_root /admin/ 308
+
+		@admin path /admin/*
+		reverse_proxy @admin web-p2:8080
+
+		reverse_proxy web-p1:8080
+	}
+}

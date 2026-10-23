@@ -1,0 +1,20 @@
+# Local public-hosting stack for use behind a Cloudflare Tunnel (TLS ends at Cloudflare).
+# API runs on the host at 127.0.0.1:8000; this stack serves the web apps on 127.0.0.1:8088.
+name: ottv2-tunnel
+services:
+  web-p1:
+    image: ottv2-web-p1:local
+    restart: unless-stopped
+  web-p2:
+    image: ottv2-web-p2:local
+    restart: unless-stopped
+  caddy:
+    image: caddy:2.10.0-alpine
+    restart: unless-stopped
+    depends_on: [web-p1, web-p2]
+    ports:
+      - "127.0.0.1:8088:80"
+    extra_hosts:
+      - "host.docker.internal:host-gateway"
+    volumes:
+      - ./Caddyfile.tunnel:/etc/caddy/Caddyfile:ro
