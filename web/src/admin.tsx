@@ -3,7 +3,7 @@ import { Link, useParams, useSearchParams } from 'react-router-dom';
 import Markdown from 'react-markdown';
 import type { AdminTeamPatch, RoundCreate } from '../../contracts/generated/types';
 import { Badge, date, Field, Heading, Load, MutationForm, Pager, Reason, Table, text, useApi } from './ui';
-import { BuildLog, TournamentSelect } from './participant';
+import { BuildLog, TournamentSelect, scrimmagePause } from './participant';
 import { SourceCode } from './source-code';
 export function Teams() {
   const [page, setPage] = useState(1),
@@ -482,6 +482,14 @@ export function QueuePage() {
       <Load query={query}>
         {(data) => (
           <>
+            <section className="card">
+              <h2>Nhận trận đánh tập mới</h2>
+              <p role="status">
+                {data.scrimmage_admission.paused_reason
+                  ? `Đang tạm dừng: ${scrimmagePause[data.scrimmage_admission.paused_reason]} Trận đã nhận vẫn chạy trên worker đánh tập.`
+                  : 'Đang nhận. Worker giải chỉ lấy việc ở match:tournament.'}
+              </p>
+            </section>
             <div className="queue-grid">
               {data.queues.map((queue) => (
                 <section className="card" key={queue.name}>

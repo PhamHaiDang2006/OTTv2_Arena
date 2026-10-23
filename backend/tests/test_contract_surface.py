@@ -21,7 +21,7 @@ def test_no_code_derived_openapi(api):
 
 
 def test_health_and_capabilities(api):
-    assert api.get('/api/v1/health').json() == {'status': 'ok', 'contract_version': '1.2.0'}
+    assert api.get('/api/v1/health').json() == {'status': 'ok', 'contract_version': '1.3.0'}
     caps = api.get('/api/v1/capabilities').json()
     assert caps['languages'] == ['python', 'cpp']
     assert caps['ruleset_status'] == 'development'

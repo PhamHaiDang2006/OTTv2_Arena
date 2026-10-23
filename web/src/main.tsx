@@ -19,15 +19,13 @@ import {
 } from './admin';
 import './style.css';
 import './game.css';
+import './casual-design.css';
 import { participantUrl } from './urls';
 import { Login } from './auth-page';
 import { Modes, CasualLobby, CasualPlay } from './casual';
-<<<<<<< Updated upstream
-=======
 import { Practice } from './practice';
 import { initializeTheme, ThemeSwitch } from './preferences';
 initializeTheme();
->>>>>>> Stashed changes
 declare const __ADMIN__: boolean;
 const admin = __ADMIN__;
 const participantNav = [
@@ -70,8 +68,10 @@ function App() {
       </p>
     );
   const casual = !admin && location.pathname.startsWith('/casual');
+  const practice = !admin && location.pathname === '/practice';
   const modes = !admin && location.pathname === '/';
-  const publicPage = !admin && ['/', '/docs', '/standings', '/bracket'].includes(location.pathname);
+  const publicPage =
+    !admin && ['/', '/docs', '/practice', '/standings', '/bracket'].includes(location.pathname);
   if (!user && !publicPage) return <Login initialError={logoutError} admin={admin} />;
   if (admin && user?.role !== 'admin')
     return (
@@ -84,13 +84,24 @@ function App() {
       </main>
     );
   return (
-    <div className="shell">
+    <div
+      className={`shell ${casual ? 'casual-shell' : ''} ${casual && location.pathname !== '/casual' ? 'in-game' : ''}`}
+    >
       <aside className="sidebar">
         <a className="logo" href={admin ? '/admin/' : '/'}>
-          ◈ OTTv2<span>{admin ? 'ARENA' : casual ? 'CASUAL' : modes ? 'PLAY' : 'ARENA'}</span>
+          ◈ OTTv2
+          <span>{admin ? 'ARENA' : casual ? 'CASUAL' : practice ? 'LOCAL' : modes ? 'PLAY' : 'ARENA'}</span>
         </a>
         <p className="nav-caption">
-          {admin ? 'ĐIỀU HÀNH ARENA' : casual ? 'CASUAL' : modes ? 'CHỌN CHẾ ĐỘ' : 'ARENA'}
+          {admin
+            ? 'ĐIỀU HÀNH ARENA'
+            : casual
+              ? 'CASUAL'
+              : practice
+                ? 'TỰ LUYỆN'
+                : modes
+                  ? 'CHỌN CHẾ ĐỘ'
+                  : 'ARENA'}
         </p>
         <nav>
           {!admin && (
@@ -99,20 +110,23 @@ function App() {
                 Chọn chế độ
               </NavLink>
               <NavLink to="/casual">Casual · Chơi với máy</NavLink>
-              {(casual || modes) && <NavLink to="/arena">Arena · Đấu bot</NavLink>}
+              <NavLink to="/practice">Tự luyện · Trên máy bạn</NavLink>
+              {(casual || practice || modes) && <NavLink to="/arena">Arena · Đấu bot</NavLink>}
             </>
           )}
-          {(admin ? adminNav : casual || modes ? [] : participantNav).map(([path, title], index) => (
-            <NavLink end={path === '/'} key={path} to={path}>
-              <span className="nav-number">{String(index + 1).padStart(2, '0')}</span>
-              {title}
-            </NavLink>
-          ))}
+          {(admin ? adminNav : casual || practice || modes ? [] : participantNav).map(
+            ([path, title], index) => (
+              <NavLink end={path === '/'} key={path} to={path}>
+                <span className="nav-number">{String(index + 1).padStart(2, '0')}</span>
+                {title}
+              </NavLink>
+            ),
+          )}
         </nav>
         <div className="sidebar-foot">
           <span className={`dot ${online ? 'online' : ''}`} />
           {online ? 'Cập nhật trực tiếp' : 'Đang kết nối lại'}
-          <small>Engine 1.0.0 · Contract 1.2.0</small>
+          <small>Engine 1.0.0 · Contract 1.3.0</small>
         </div>
       </aside>
       <div className="workspace">
@@ -121,10 +135,12 @@ function App() {
             {admin
               ? 'Quản trị Arena'
               : casual
-                ? 'Casual · Người đấu máy'
-                : modes
-                  ? 'OTT v2'
-                  : 'Arena · Đấu trường lập trình'}{' '}
+                ? 'Casual · Người đấu máy trên trình duyệt'
+                : practice
+                  ? 'Tự luyện · Chạy trên máy của bạn'
+                  : modes
+                    ? 'OTT v2'
+                    : 'Arena · Đấu trường lập trình'}{' '}
             <span className="tag">DEV-v1</span>
           </span>
           <div>
@@ -173,8 +189,9 @@ function App() {
               <>
                 <Route path="/" element={<Modes />} />
                 <Route path="/arena" element={user && <Home user={user} />} />
-                <Route path="/casual" element={<CasualLobby />} />
-                <Route path="/casual/:id" element={<CasualPlay />} />
+                <Route path="/casual" element={user && <CasualLobby user={user} />} />
+                <Route path="/casual/:id" element={user && <CasualPlay user={user} />} />
+                <Route path="/practice" element={<Practice />} />
                 <Route path="/submit" element={<Upload />} />
                 <Route path="/scrimmage" element={<Scrimmage />} />
                 <Route path="/standings" element={<Standings />} />

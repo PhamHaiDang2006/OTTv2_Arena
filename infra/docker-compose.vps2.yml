@@ -65,61 +65,62 @@ services:
       - /var/lib/ottv2/work:/var/lib/ottv2/work
 
   # Official games own three workers and cores 0-5; they never take a scrimmage job. Scrimmages share one worker
-  # on cores 6-7, so at most one scrimmage game runs at a time; add match-scrimmage-N services to raise that cap.
+  # on auxiliary cores 6-7 with build/compiler/smoke/registry and worker control processes.
+  # At most one scrimmage game runs at a time. These auxiliary workloads may contend with each other.
   # The state volumes keep their earlier match_worker_N names so callbacks waiting in an outbox survive the
   # switch; see infra/RUNBOOK.md before upgrading a running deployment.
   match-tournament-1:
     <<: *worker-common
-    command: ["ottv2-runner-worker", "--queue", "match:tournament", "--queue", "match:scrimmage"]
+    command: ["ottv2-runner-worker", "--queue", "match:tournament"]
     environment:
       <<: *worker-environment
       WORKER_ROLE: match
       WORKER_CONCURRENCY: "1"
       RUNNER_WORKER_ID: vps2-tournament-1
-      RUNNER_CPUSET_BLUE: "0"
-      RUNNER_CPUSET_RED: "1"
+      RUNNER_CPUSET_BLUE: ${VPS2_TOURNAMENT_1_BLUE:-0}
+      RUNNER_CPUSET_RED: ${VPS2_TOURNAMENT_1_RED:-1}
     volumes:
       - /var/run/docker.sock:/var/run/docker.sock
       - match_worker_1_state:/var/lib/ottv2
 
-  match-worker-2:
+  match-tournament-2:
     <<: *worker-common
-    command: ["ottv2-runner-worker", "--queue", "match:tournament", "--queue", "match:scrimmage"]
+    command: ["ottv2-runner-worker", "--queue", "match:tournament"]
     environment:
       <<: *worker-environment
       WORKER_ROLE: match
       WORKER_CONCURRENCY: "1"
       RUNNER_WORKER_ID: vps2-tournament-2
-      RUNNER_CPUSET_BLUE: "2"
-      RUNNER_CPUSET_RED: "3"
+      RUNNER_CPUSET_BLUE: ${VPS2_TOURNAMENT_2_BLUE:-2}
+      RUNNER_CPUSET_RED: ${VPS2_TOURNAMENT_2_RED:-3}
     volumes:
       - /var/run/docker.sock:/var/run/docker.sock
       - match_worker_2_state:/var/lib/ottv2
 
-  match-worker-3:
+  match-tournament-3:
     <<: *worker-common
-    command: ["ottv2-runner-worker", "--queue", "match:tournament", "--queue", "match:scrimmage"]
+    command: ["ottv2-runner-worker", "--queue", "match:tournament"]
     environment:
       <<: *worker-environment
       WORKER_ROLE: match
       WORKER_CONCURRENCY: "1"
       RUNNER_WORKER_ID: vps2-tournament-3
-      RUNNER_CPUSET_BLUE: "4"
-      RUNNER_CPUSET_RED: "5"
+      RUNNER_CPUSET_BLUE: ${VPS2_TOURNAMENT_3_BLUE:-4}
+      RUNNER_CPUSET_RED: ${VPS2_TOURNAMENT_3_RED:-5}
     volumes:
       - /var/run/docker.sock:/var/run/docker.sock
       - match_worker_3_state:/var/lib/ottv2
 
-  match-worker-4:
+  match-scrimmage-1:
     <<: *worker-common
-    command: ["ottv2-runner-worker", "--queue", "match:tournament", "--queue", "match:scrimmage"]
+    command: ["ottv2-runner-worker", "--queue", "match:scrimmage"]
     environment:
       <<: *worker-environment
       WORKER_ROLE: match
       WORKER_CONCURRENCY: "1"
       RUNNER_WORKER_ID: vps2-scrimmage-1
-      RUNNER_CPUSET_BLUE: "6"
-      RUNNER_CPUSET_RED: "7"
+      RUNNER_CPUSET_BLUE: ${VPS2_SCRIMMAGE_BLUE:-6}
+      RUNNER_CPUSET_RED: ${VPS2_SCRIMMAGE_RED:-7}
     volumes:
       - /var/run/docker.sock:/var/run/docker.sock
       - match_worker_4_state:/var/lib/ottv2

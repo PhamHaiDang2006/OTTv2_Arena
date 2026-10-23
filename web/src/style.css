@@ -746,7 +746,7 @@ progress {
 }
 .mode-cards {
   display: grid;
-  grid-template-columns: repeat(2, minmax(0, 1fr));
+  grid-template-columns: repeat(auto-fit, minmax(260px, 1fr));
   gap: 24px;
 }
 .mode-card {
@@ -760,6 +760,10 @@ progress {
 .casual-mode {
   border-top-color: #27795d;
   background: #edf6ed;
+}
+.practice-mode {
+  border-top-color: #3d5f8f;
+  background: #eef2f8;
 }
 .casual-layout {
   display: grid;

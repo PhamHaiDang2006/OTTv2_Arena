@@ -8,11 +8,6 @@ export interface Operations {
   refresh: { request: undefined; response: T.Auth };
   logout: { request: undefined; response: undefined };
   currentUser: { request: undefined; response: T.User };
-  createCasualGame: { request: T.CasualCreate; response: T.CasualGame };
-  listCasualGames: { request: undefined; response: T.CasualGamePage };
-  getCasualGame: { request: undefined; response: T.CasualGame };
-  moveCasualGame: { request: T.CasualMove; response: T.CasualGame };
-  resignCasualGame: { request: T.CasualResign; response: T.CasualGame };
   myTeam: { request: undefined; response: T.Team };
   updateMyTeam: { request: T.TeamPatch; response: T.Team };
   setActiveBot: { request: T.SetActiveBot; response: T.ActiveBot };
@@ -107,31 +102,6 @@ export const routes = {
   "currentUser": {
     "method": "GET",
     "path": "/auth/me",
-    "status": 200
-  },
-  "createCasualGame": {
-    "method": "POST",
-    "path": "/casual/games",
-    "status": 201
-  },
-  "listCasualGames": {
-    "method": "GET",
-    "path": "/casual/games",
-    "status": 200
-  },
-  "getCasualGame": {
-    "method": "GET",
-    "path": "/casual/games/{id}",
-    "status": 200
-  },
-  "moveCasualGame": {
-    "method": "POST",
-    "path": "/casual/games/{id}/moves",
-    "status": 200
-  },
-  "resignCasualGame": {
-    "method": "POST",
-    "path": "/casual/games/{id}/resign",
     "status": 200
   },
   "myTeam": {

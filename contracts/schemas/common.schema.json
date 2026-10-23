@@ -243,246 +243,6 @@
       ],
       "additionalProperties": false
     },
-    "CasualCreate": {
-      "type": "object",
-      "properties": {
-        "human_side": {
-          "$ref": "#/$defs/Side"
-        },
-        "bot": {
-          "type": "string",
-          "enum": [
-            "random",
-            "greedy"
-          ]
-        }
-      },
-      "required": [
-        "human_side",
-        "bot"
-      ],
-      "additionalProperties": false
-    },
-    "CasualMove": {
-      "type": "object",
-      "properties": {
-        "move": {
-          "type": "string",
-          "pattern": "^[a-i][1-9][a-i][1-9]$"
-        },
-        "expected_ply": {
-          "type": "integer",
-          "minimum": 0,
-          "maximum": 300
-        }
-      },
-      "required": [
-        "move",
-        "expected_ply"
-      ],
-      "additionalProperties": false
-    },
-    "CasualResign": {
-      "type": "object",
-      "properties": {
-        "expected_ply": {
-          "type": "integer",
-          "minimum": 0,
-          "maximum": 300
-        }
-      },
-      "required": [
-        "expected_ply"
-      ],
-      "additionalProperties": false
-    },
-    "CasualGame": {
-      "type": "object",
-      "properties": {
-        "id": {
-          "type": "string",
-          "format": "uuid"
-        },
-        "fen": {
-          "type": "string",
-          "pattern": "^[BPKbpk1-9]+(?:/[BPKbpk1-9]+){8}$"
-        },
-        "human_side": {
-          "$ref": "#/$defs/Side"
-        },
-        "bot": {
-          "type": "string",
-          "enum": [
-            "random",
-            "greedy"
-          ]
-        },
-        "status": {
-          "type": "string",
-          "enum": [
-            "playing",
-            "finished"
-          ]
-        },
-        "ply": {
-          "type": "integer",
-          "minimum": 0,
-          "maximum": 300
-        },
-        "turn": {
-          "anyOf": [
-            {
-              "$ref": "#/$defs/Side"
-            },
-            {
-              "type": "null"
-            }
-          ]
-        },
-        "legal_moves": {
-          "type": "array",
-          "items": {
-            "type": "string",
-            "pattern": "^[a-i][1-9][a-i][1-9]$"
-          },
-          "maxItems": 648
-        },
-        "moves": {
-          "type": "array",
-          "items": {
-            "type": "object",
-            "properties": {
-              "side": {
-                "$ref": "#/$defs/Side"
-              },
-              "move": {
-                "type": "string",
-                "pattern": "^[a-i][1-9][a-i][1-9]$"
-              },
-              "capture": {
-                "anyOf": [
-                  {
-                    "type": "string",
-                    "enum": [
-                      "B",
-                      "P",
-                      "K",
-                      "b",
-                      "p",
-                      "k"
-                    ]
-                  },
-                  {
-                    "type": "null"
-                  }
-                ]
-              }
-            },
-            "required": [
-              "side",
-              "move",
-              "capture"
-            ],
-            "additionalProperties": false
-          },
-          "maxItems": 300
-        },
-        "winner": {
-          "anyOf": [
-            {
-              "$ref": "#/$defs/Side"
-            },
-            {
-              "type": "null"
-            }
-          ]
-        },
-        "reason": {
-          "anyOf": [
-            {
-              "type": "string",
-              "enum": [
-                "GOAL",
-                "WIPEOUT",
-                "STALEMATE",
-                "MOVE_LIMIT",
-                "RESIGNED"
-              ]
-            },
-            {
-              "type": "null"
-            }
-          ]
-        },
-        "created_at": {
-          "type": "string",
-          "format": "date-time",
-          "pattern": "Z$"
-        }
-      },
-      "required": [
-        "id",
-        "fen",
-        "human_side",
-        "bot",
-        "status",
-        "ply",
-        "turn",
-        "legal_moves",
-        "moves",
-        "winner",
-        "reason",
-        "created_at"
-      ],
-      "additionalProperties": false,
-      "allOf": [
-        {
-          "if": {
-            "properties": {
-              "status": {
-                "const": "playing"
-              }
-            }
-          },
-          "then": {
-            "properties": {
-              "turn": {
-                "$ref": "#/$defs/Side"
-              },
-              "winner": {
-                "type": "null"
-              },
-              "reason": {
-                "type": "null"
-              }
-            }
-          },
-          "else": {
-            "properties": {
-              "turn": {
-                "type": "null"
-              },
-              "winner": {
-                "$ref": "#/$defs/Side"
-              },
-              "reason": {
-                "type": "string",
-                "enum": [
-                  "GOAL",
-                  "WIPEOUT",
-                  "STALEMATE",
-                  "MOVE_LIMIT",
-                  "RESIGNED"
-                ]
-              },
-              "legal_moves": {
-                "maxItems": 0
-              }
-            }
-          }
-        }
-      ]
-    },
     "ActiveBot": {
       "type": "object",
       "properties": {
@@ -844,6 +604,62 @@
       ],
       "additionalProperties": false
     },
+    "ScrimmagePauseReason": {
+      "type": "string",
+      "enum": [
+        "queue_paused",
+        "tournament_load",
+        "scrimmage_backlog"
+      ]
+    },
+    "ScrimmageAdmission": {
+      "type": "object",
+      "properties": {
+        "accepting": {
+          "type": "boolean"
+        },
+        "paused_reason": {
+          "anyOf": [
+            {
+              "$ref": "#/$defs/ScrimmagePauseReason"
+            },
+            {
+              "type": "null"
+            }
+          ]
+        }
+      },
+      "required": [
+        "accepting",
+        "paused_reason"
+      ],
+      "additionalProperties": false,
+      "allOf": [
+        {
+          "if": {
+            "properties": {
+              "accepting": {
+                "const": true
+              }
+            }
+          },
+          "then": {
+            "properties": {
+              "paused_reason": {
+                "type": "null"
+              }
+            }
+          },
+          "else": {
+            "properties": {
+              "paused_reason": {
+                "$ref": "#/$defs/ScrimmagePauseReason"
+              }
+            }
+          }
+        }
+      ]
+    },
     "Quota": {
       "type": "object",
       "properties": {
@@ -862,13 +678,27 @@
           "type": "string",
           "format": "date-time",
           "pattern": "Z$"
+        },
+        "active": {
+          "type": "integer",
+          "minimum": 0
+        },
+        "active_limit": {
+          "type": "integer",
+          "minimum": 1
+        },
+        "admission": {
+          "$ref": "#/$defs/ScrimmageAdmission"
         }
       },
       "required": [
         "limit",
         "used",
         "remaining",
-        "resets_at"
+        "resets_at",
+        "active",
+        "active_limit",
+        "admission"
       ],
       "additionalProperties": false
     },
@@ -1808,11 +1638,15 @@
           "items": {
             "$ref": "#/$defs/Worker"
           }
+        },
+        "scrimmage_admission": {
+          "$ref": "#/$defs/ScrimmageAdmission"
         }
       },
       "required": [
         "queues",
-        "workers"
+        "workers",
+        "scrimmage_admission"
       ],
       "additionalProperties": false
     },
@@ -2084,7 +1918,7 @@
       "type": "object",
       "properties": {
         "contract_version": {
-          "const": "1.2.0"
+          "const": "1.3.0"
         },
         "languages": {
           "type": "array",
@@ -2177,7 +2011,7 @@
           ]
         },
         "contract_version": {
-          "const": "1.2.0"
+          "const": "1.3.0"
         }
       },
       "required": [
@@ -3406,37 +3240,6 @@
         "kind",
         "job_id",
         "sent_at"
-      ],
-      "additionalProperties": false
-    },
-    "CasualGamePage": {
-      "type": "object",
-      "properties": {
-        "items": {
-          "type": "array",
-          "items": {
-            "$ref": "#/$defs/CasualGame"
-          }
-        },
-        "page": {
-          "type": "integer",
-          "minimum": 1
-        },
-        "page_size": {
-          "type": "integer",
-          "minimum": 1,
-          "maximum": 100
-        },
-        "total": {
-          "type": "integer",
-          "minimum": 0
-        }
-      },
-      "required": [
-        "items",
-        "page",
-        "page_size",
-        "total"
       ],
       "additionalProperties": false
     },

@@ -2,6 +2,70 @@ import { useEffect, useRef, type CSSProperties } from 'react';
 import { applyMove, INITIAL_FEN, parseFen, toFen } from '@ottv2/replay-viewer';
 import type { CasualGame } from './casual-engine';
 
+export function Crest({ kind = 'goal' }: { kind?: 'goal' | 'bot' | 'player' | 'trophy' }) {
+  return (
+    <svg className="crest-icon" viewBox="0 0 64 64" fill="none" aria-hidden="true">
+      {kind === 'bot' ? (
+        <>
+          <path
+            d="M32 9v9M27 9h10M14 25l6-7h24l6 7v25H14zM8 31v12M56 31v12"
+            stroke="currentColor"
+            strokeWidth="3"
+            strokeLinejoin="round"
+          />
+          <rect x="22" y="28" width="6" height="8" rx="3" fill="currentColor" />
+          <rect x="36" y="28" width="6" height="8" rx="3" fill="currentColor" />
+          <path d="M25 43h14" stroke="currentColor" strokeWidth="3" strokeLinecap="round" />
+        </>
+      ) : kind === 'player' ? (
+        <>
+          <circle cx="32" cy="23" r="10" stroke="currentColor" strokeWidth="3" />
+          <path
+            d="M13 52c0-12 7-18 19-18s19 6 19 18M20 52h24"
+            stroke="currentColor"
+            strokeWidth="3"
+            strokeLinecap="round"
+          />
+        </>
+      ) : kind === 'trophy' ? (
+        <>
+          <path
+            d="M20 12h24v17c0 9-5 14-12 14s-12-5-12-14zM20 17H10v8c0 8 6 10 12 10M44 17h10v8c0 8-6 10-12 10M32 43v10M21 55h22"
+            stroke="currentColor"
+            strokeWidth="3"
+            strokeLinejoin="round"
+          />
+          <path d="m32 19 3 6 7 1-5 5 1 7-6-3-6 3 1-7-5-5 7-1z" fill="currentColor" />
+        </>
+      ) : (
+        <>
+          <path d="m32 5 22 12v20L32 59 10 37V17z" stroke="currentColor" strokeWidth="2" />
+          <path d="m32 17 4 9 10 1-8 7 2 11-8-5-8 5 2-11-8-7 10-1z" fill="currentColor" />
+        </>
+      )}
+    </svg>
+  );
+}
+
+export function MiniBoard({ fen }: { fen: string }) {
+  const board = parseFen(fen);
+  return (
+    <div className="mini-board" aria-hidden="true">
+      {Array.from({ length: 81 }, (_, i) => {
+        const p = board[(8 - Math.floor(i / 9)) * 9 + (i % 9)];
+        return (
+          <i
+            key={i}
+            className={`${i % 2 ? 'alternate' : ''} ${p ? (p === p.toUpperCase() ? 'BLUE' : 'RED') : ''}`}
+          >
+            {p && <b />}
+          </i>
+        );
+      })}
+    </div>
+  );
+}
+
 export function PieceIcon({ piece }: { piece: string }) {
   return (
     <svg className="piece-icon" viewBox="0 0 48 48" fill="none" aria-hidden="true" focusable="false">
@@ -107,7 +171,7 @@ export function GameResult({
         </div>
       )}
       <div className="result-emblem" aria-hidden="true">
-        {won ? '✦' : '◇'}
+        <Crest kind={won ? 'trophy' : 'goal'} />
       </div>
       <p className="eyebrow">VÁN ĐẤU HOÀN TẤT</p>
       <h2 id="result-title">{won ? 'Chiến thắng!' : 'Một ván học hỏi'}</h2>

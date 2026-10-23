@@ -3,7 +3,7 @@ import { Link, useParams } from 'react-router-dom';
 import { useQuery } from '@tanstack/react-query';
 import Markdown from 'react-markdown';
 import { ReplayViewer } from '@ottv2/replay-viewer';
-import type { Language, Match, Replay, User } from '../../contracts/generated/types';
+import type { Language, Match, Replay, ScrimmagePauseReason, User } from '../../contracts/generated/types';
 import { api } from './api';
 import { validate } from '../shared/schema';
 import { uploadFetch } from './upload';
@@ -369,12 +369,19 @@ export function MatchList({ matches }: { matches: Match[] }) {
     />
   );
 }
+export const scrimmagePause: Record<ScrimmagePauseReason, string> = {
+  queue_paused: 'Ban tổ chức đang tạm dừng hàng đợi đánh tập.',
+  tournament_load: 'Giải đấu đang chạy nên tạm dừng nhận trận đánh tập mới.',
+  scrimmage_backlog: 'Hàng đợi đánh tập đang đầy, hãy thử lại sau ít phút.',
+};
 export function Scrimmage() {
   const [page, setPage] = useState(1),
     [opponentPage, setOpponentPage] = useState(1);
   const opponents = useApi('listOpponents', { query: { page: opponentPage } }),
-    quota = useApi('scrimmageQuota'),
+    quota = useApi('scrimmageQuota', {}, true, 15000),
     matches = useApi('listScrimmages', { query: { page } }, true, 10000);
+  const q = quota.data;
+  const blocked = !q || !q.remaining || !q.admission.accepting || q.active >= q.active_limit;
   return (
     <>
       <Heading title="Phòng đánh tập" description="Mỗi trận gồm hai ván đổi màu. Kết quả do máy chủ tính." />
@@ -383,13 +390,28 @@ export function Scrimmage() {
           <h2>Chọn đối thủ</h2>
           <Load query={quota}>
             {(q) => (
-              <p>
-                Còn{' '}
-                <strong>
-                  {q.remaining}/{q.limit}
-                </strong>{' '}
-                trận · Đặt lại {date(q.resets_at)}
-              </p>
+              <>
+                <p>
+                  Còn{' '}
+                  <strong>
+                    {q.remaining}/{q.limit}
+                  </strong>{' '}
+                  trận · Đặt lại {date(q.resets_at)}
+                </p>
+                <p>
+                  Đội đang có{' '}
+                  <strong>
+                    {q.active}/{q.active_limit}
+                  </strong>{' '}
+                  trận chờ hoặc đang chạy.
+                  {q.active >= q.active_limit && ' Hãy chờ một trận kết thúc rồi tạo trận mới.'}
+                </p>
+                {q.admission.paused_reason && (
+                  <p className="error" role="status">
+                    {scrimmagePause[q.admission.paused_reason]} Các trận đã tạo vẫn chạy tiếp.
+                  </p>
+                )}
+              </>
             )}
           </Load>
           <Load query={opponents}>
@@ -398,7 +420,7 @@ export function Scrimmage() {
                 <MutationForm
                   title="Bắt đầu đánh tập"
                   op="createScrimmage"
-                  disabled={!data.items.length || !quota.data?.remaining}
+                  disabled={!data.items.length || blocked}
                   body={(f) => ({ opponent_team_id: text(f, 'opponent') })}
                 >
                   <Field label="Đội đối thủ">
@@ -421,6 +443,10 @@ export function Scrimmage() {
           <p>
             Đội trưởng cần chọn bot đánh tập đã build thành công. Hai bot được chụp lại tại thời điểm tạo
             trận.
+          </p>
+          <p>
+            Đánh tập chạy trên nhóm máy riêng, giới hạn số trận cùng lúc; giải chính thức có máy riêng. Muốn
+            thử nhiều lần, hãy <Link to="/practice">tự luyện trên máy của bạn</Link> trước.
           </p>
           <Link to="/submissions">Chọn bot trong lịch sử →</Link>
         </section>

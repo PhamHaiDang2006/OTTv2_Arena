@@ -78,64 +78,6 @@
     "response_example": "examples/http/currentUser.response.json"
   },
   {
-    "method": "post",
-    "path": "/casual/games",
-    "operationId": "createCasualGame",
-    "request": "CasualCreate",
-    "response": "CasualGame",
-    "status": 201,
-    "role": "member",
-    "multipart": false,
-    "request_example": "examples/http/createCasualGame.request.json",
-    "response_example": "examples/http/createCasualGame.response.json"
-  },
-  {
-    "method": "get",
-    "path": "/casual/games",
-    "operationId": "listCasualGames",
-    "request": null,
-    "response": "CasualGamePage",
-    "status": 200,
-    "role": "member",
-    "multipart": false,
-    "response_example": "examples/http/listCasualGames.response.json"
-  },
-  {
-    "method": "get",
-    "path": "/casual/games/{id}",
-    "operationId": "getCasualGame",
-    "request": null,
-    "response": "CasualGame",
-    "status": 200,
-    "role": "member",
-    "multipart": false,
-    "response_example": "examples/http/getCasualGame.response.json"
-  },
-  {
-    "method": "post",
-    "path": "/casual/games/{id}/moves",
-    "operationId": "moveCasualGame",
-    "request": "CasualMove",
-    "response": "CasualGame",
-    "status": 200,
-    "role": "member",
-    "multipart": false,
-    "request_example": "examples/http/moveCasualGame.request.json",
-    "response_example": "examples/http/moveCasualGame.response.json"
-  },
-  {
-    "method": "post",
-    "path": "/casual/games/{id}/resign",
-    "operationId": "resignCasualGame",
-    "request": "CasualResign",
-    "response": "CasualGame",
-    "status": 200,
-    "role": "member",
-    "multipart": false,
-    "request_example": "examples/http/resignCasualGame.request.json",
-    "response_example": "examples/http/resignCasualGame.response.json"
-  },
-  {
     "method": "get",
     "path": "/teams/me",
     "operationId": "myTeam",

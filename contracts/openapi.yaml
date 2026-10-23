@@ -2,7 +2,7 @@
   "openapi": "3.1.0",
   "info": {
     "title": "OTTv2 Arena Contract",
-    "version": "1.2.0",
+    "version": "1.3.0",
     "description": "Development integration baseline; dev-v1 rules are provisional. JSON encoding is valid YAML 1.2. Generated from contracts/build.mjs."
   },
   "servers": [
@@ -33,7 +33,7 @@
                 },
                 "example": {
                   "status": "ok",
-                  "contract_version": "1.2.0"
+                  "contract_version": "1.3.0"
                 }
               }
             }
@@ -158,7 +158,7 @@
                   "$ref": "#/components/schemas/Capabilities"
                 },
                 "example": {
-                  "contract_version": "1.2.0",
+                  "contract_version": "1.3.0",
                   "languages": [
                     "python",
                     "cpp"
@@ -952,820 +952,6 @@
                 "schema": {
                   "$ref": "#/components/schemas/Error"
                 }
-              }
-            }
-          }
-        }
-      }
-    },
-    "/casual/games": {
-      "post": {
-        "operationId": "createCasualGame",
-        "summary": "createCasualGame",
-        "x-role": "member",
-        "description": "member access. See contracts/behavior.md for authorization and state transitions.",
-        "parameters": [
-          {
-            "name": "Idempotency-Key",
-            "in": "header",
-            "required": true,
-            "schema": {
-              "type": "string",
-              "format": "uuid"
-            },
-            "description": "Scoped by actor + method + path; retained 24h. Same key/body returns original status/body, different body returns 409."
-          }
-        ],
-        "responses": {
-          "201": {
-            "description": "Success",
-            "content": {
-              "application/json": {
-                "schema": {
-                  "$ref": "#/components/schemas/CasualGame"
-                },
-                "example": {
-                  "id": "00000020-0000-4000-8000-000000000001",
-                  "fen": "9/pbkpbkpbk/kpbkpbkpb/9/9/9/BPKBPKBPK/KBPKBPKBP/9",
-                  "human_side": "BLUE",
-                  "bot": "random",
-                  "status": "playing",
-                  "ply": 0,
-                  "turn": "BLUE",
-                  "legal_moves": [
-                    "c3d4"
-                  ],
-                  "moves": [],
-                  "winner": null,
-                  "reason": null,
-                  "created_at": "2026-10-15T00:00:00Z"
-                }
-              }
-            }
-          },
-          "400": {
-            "description": "Error; see error.code",
-            "content": {
-              "application/json": {
-                "schema": {
-                  "$ref": "#/components/schemas/Error"
-                }
-              }
-            }
-          },
-          "401": {
-            "description": "Error; see error.code",
-            "content": {
-              "application/json": {
-                "schema": {
-                  "$ref": "#/components/schemas/Error"
-                }
-              }
-            }
-          },
-          "403": {
-            "description": "Error; see error.code",
-            "content": {
-              "application/json": {
-                "schema": {
-                  "$ref": "#/components/schemas/Error"
-                }
-              }
-            }
-          },
-          "404": {
-            "description": "Error; see error.code",
-            "content": {
-              "application/json": {
-                "schema": {
-                  "$ref": "#/components/schemas/Error"
-                }
-              }
-            }
-          },
-          "409": {
-            "description": "Error; see error.code",
-            "content": {
-              "application/json": {
-                "schema": {
-                  "$ref": "#/components/schemas/Error"
-                }
-              }
-            }
-          },
-          "413": {
-            "description": "Error; see error.code",
-            "content": {
-              "application/json": {
-                "schema": {
-                  "$ref": "#/components/schemas/Error"
-                }
-              }
-            }
-          },
-          "422": {
-            "description": "Error; see error.code",
-            "content": {
-              "application/json": {
-                "schema": {
-                  "$ref": "#/components/schemas/Error"
-                }
-              }
-            }
-          },
-          "429": {
-            "description": "Error; see error.code",
-            "content": {
-              "application/json": {
-                "schema": {
-                  "$ref": "#/components/schemas/Error"
-                }
-              }
-            }
-          },
-          "500": {
-            "description": "Error; see error.code",
-            "content": {
-              "application/json": {
-                "schema": {
-                  "$ref": "#/components/schemas/Error"
-                }
-              }
-            }
-          },
-          "503": {
-            "description": "Error; see error.code",
-            "content": {
-              "application/json": {
-                "schema": {
-                  "$ref": "#/components/schemas/Error"
-                }
-              }
-            }
-          }
-        },
-        "requestBody": {
-          "required": true,
-          "content": {
-            "application/json": {
-              "schema": {
-                "$ref": "#/components/schemas/CasualCreate"
-              },
-              "example": {
-                "human_side": "BLUE",
-                "bot": "random"
-              }
-            }
-          }
-        }
-      },
-      "get": {
-        "operationId": "listCasualGames",
-        "summary": "listCasualGames",
-        "x-role": "member",
-        "description": "member access. Stable ordering: created_at descending (or id if no timestamp), then id ascending. See contracts/behavior.md for authorization and state transitions.",
-        "parameters": [
-          {
-            "name": "page",
-            "in": "query",
-            "required": false,
-            "schema": {
-              "type": "integer",
-              "minimum": 1,
-              "default": 1
-            }
-          },
-          {
-            "name": "page_size",
-            "in": "query",
-            "required": false,
-            "schema": {
-              "type": "integer",
-              "minimum": 1,
-              "maximum": 100,
-              "default": 20
-            }
-          }
-        ],
-        "responses": {
-          "200": {
-            "description": "Success",
-            "content": {
-              "application/json": {
-                "schema": {
-                  "$ref": "#/components/schemas/CasualGamePage"
-                },
-                "example": {
-                  "items": [
-                    {
-                      "id": "00000020-0000-4000-8000-000000000001",
-                      "fen": "9/pbkpbkpbk/kpbkpbkpb/9/9/9/BPKBPKBPK/KBPKBPKBP/9",
-                      "human_side": "BLUE",
-                      "bot": "random",
-                      "status": "playing",
-                      "ply": 0,
-                      "turn": "BLUE",
-                      "legal_moves": [
-                        "c3d4"
-                      ],
-                      "moves": [],
-                      "winner": null,
-                      "reason": null,
-                      "created_at": "2026-10-15T00:00:00Z"
-                    }
-                  ],
-                  "page": 1,
-                  "page_size": 20,
-                  "total": 1
-                }
-              }
-            }
-          },
-          "400": {
-            "description": "Error; see error.code",
-            "content": {
-              "application/json": {
-                "schema": {
-                  "$ref": "#/components/schemas/Error"
-                }
-              }
-            }
-          },
-          "401": {
-            "description": "Error; see error.code",
-            "content": {
-              "application/json": {
-                "schema": {
-                  "$ref": "#/components/schemas/Error"
-                }
-              }
-            }
-          },
-          "403": {
-            "description": "Error; see error.code",
-            "content": {
-              "application/json": {
-                "schema": {
-                  "$ref": "#/components/schemas/Error"
-                }
-              }
-            }
-          },
-          "404": {
-            "description": "Error; see error.code",
-            "content": {
-              "application/json": {
-                "schema": {
-                  "$ref": "#/components/schemas/Error"
-                }
-              }
-            }
-          },
-          "409": {
-            "description": "Error; see error.code",
-            "content": {
-              "application/json": {
-                "schema": {
-                  "$ref": "#/components/schemas/Error"
-                }
-              }
-            }
-          },
-          "413": {
-            "description": "Error; see error.code",
-            "content": {
-              "application/json": {
-                "schema": {
-                  "$ref": "#/components/schemas/Error"
-                }
-              }
-            }
-          },
-          "422": {
-            "description": "Error; see error.code",
-            "content": {
-              "application/json": {
-                "schema": {
-                  "$ref": "#/components/schemas/Error"
-                }
-              }
-            }
-          },
-          "429": {
-            "description": "Error; see error.code",
-            "content": {
-              "application/json": {
-                "schema": {
-                  "$ref": "#/components/schemas/Error"
-                }
-              }
-            }
-          },
-          "500": {
-            "description": "Error; see error.code",
-            "content": {
-              "application/json": {
-                "schema": {
-                  "$ref": "#/components/schemas/Error"
-                }
-              }
-            }
-          },
-          "503": {
-            "description": "Error; see error.code",
-            "content": {
-              "application/json": {
-                "schema": {
-                  "$ref": "#/components/schemas/Error"
-                }
-              }
-            }
-          }
-        }
-      }
-    },
-    "/casual/games/{id}": {
-      "get": {
-        "operationId": "getCasualGame",
-        "summary": "getCasualGame",
-        "x-role": "member",
-        "description": "member access. See contracts/behavior.md for authorization and state transitions.",
-        "parameters": [
-          {
-            "name": "id",
-            "in": "path",
-            "required": true,
-            "schema": {
-              "type": "string",
-              "format": "uuid"
-            }
-          }
-        ],
-        "responses": {
-          "200": {
-            "description": "Success",
-            "content": {
-              "application/json": {
-                "schema": {
-                  "$ref": "#/components/schemas/CasualGame"
-                },
-                "example": {
-                  "id": "00000020-0000-4000-8000-000000000001",
-                  "fen": "9/pbkpbkpbk/kpbkpbkpb/9/9/9/BPKBPKBPK/KBPKBPKBP/9",
-                  "human_side": "BLUE",
-                  "bot": "random",
-                  "status": "playing",
-                  "ply": 0,
-                  "turn": "BLUE",
-                  "legal_moves": [
-                    "c3d4"
-                  ],
-                  "moves": [],
-                  "winner": null,
-                  "reason": null,
-                  "created_at": "2026-10-15T00:00:00Z"
-                }
-              }
-            }
-          },
-          "400": {
-            "description": "Error; see error.code",
-            "content": {
-              "application/json": {
-                "schema": {
-                  "$ref": "#/components/schemas/Error"
-                }
-              }
-            }
-          },
-          "401": {
-            "description": "Error; see error.code",
-            "content": {
-              "application/json": {
-                "schema": {
-                  "$ref": "#/components/schemas/Error"
-                }
-              }
-            }
-          },
-          "403": {
-            "description": "Error; see error.code",
-            "content": {
-              "application/json": {
-                "schema": {
-                  "$ref": "#/components/schemas/Error"
-                }
-              }
-            }
-          },
-          "404": {
-            "description": "Error; see error.code",
-            "content": {
-              "application/json": {
-                "schema": {
-                  "$ref": "#/components/schemas/Error"
-                }
-              }
-            }
-          },
-          "409": {
-            "description": "Error; see error.code",
-            "content": {
-              "application/json": {
-                "schema": {
-                  "$ref": "#/components/schemas/Error"
-                }
-              }
-            }
-          },
-          "413": {
-            "description": "Error; see error.code",
-            "content": {
-              "application/json": {
-                "schema": {
-                  "$ref": "#/components/schemas/Error"
-                }
-              }
-            }
-          },
-          "422": {
-            "description": "Error; see error.code",
-            "content": {
-              "application/json": {
-                "schema": {
-                  "$ref": "#/components/schemas/Error"
-                }
-              }
-            }
-          },
-          "429": {
-            "description": "Error; see error.code",
-            "content": {
-              "application/json": {
-                "schema": {
-                  "$ref": "#/components/schemas/Error"
-                }
-              }
-            }
-          },
-          "500": {
-            "description": "Error; see error.code",
-            "content": {
-              "application/json": {
-                "schema": {
-                  "$ref": "#/components/schemas/Error"
-                }
-              }
-            }
-          },
-          "503": {
-            "description": "Error; see error.code",
-            "content": {
-              "application/json": {
-                "schema": {
-                  "$ref": "#/components/schemas/Error"
-                }
-              }
-            }
-          }
-        }
-      }
-    },
-    "/casual/games/{id}/moves": {
-      "post": {
-        "operationId": "moveCasualGame",
-        "summary": "moveCasualGame",
-        "x-role": "member",
-        "description": "member access. See contracts/behavior.md for authorization and state transitions.",
-        "parameters": [
-          {
-            "name": "id",
-            "in": "path",
-            "required": true,
-            "schema": {
-              "type": "string",
-              "format": "uuid"
-            }
-          },
-          {
-            "name": "Idempotency-Key",
-            "in": "header",
-            "required": true,
-            "schema": {
-              "type": "string",
-              "format": "uuid"
-            },
-            "description": "Scoped by actor + method + path; retained 24h. Same key/body returns original status/body, different body returns 409."
-          }
-        ],
-        "responses": {
-          "200": {
-            "description": "Success",
-            "content": {
-              "application/json": {
-                "schema": {
-                  "$ref": "#/components/schemas/CasualGame"
-                },
-                "example": {
-                  "id": "00000020-0000-4000-8000-000000000001",
-                  "fen": "9/pbkpbkpbk/kpbkpbkpb/9/9/9/BPKBPKBPK/KBPKBPKBP/9",
-                  "human_side": "BLUE",
-                  "bot": "random",
-                  "status": "playing",
-                  "ply": 0,
-                  "turn": "BLUE",
-                  "legal_moves": [
-                    "c3d4"
-                  ],
-                  "moves": [],
-                  "winner": null,
-                  "reason": null,
-                  "created_at": "2026-10-15T00:00:00Z"
-                }
-              }
-            }
-          },
-          "400": {
-            "description": "Error; see error.code",
-            "content": {
-              "application/json": {
-                "schema": {
-                  "$ref": "#/components/schemas/Error"
-                }
-              }
-            }
-          },
-          "401": {
-            "description": "Error; see error.code",
-            "content": {
-              "application/json": {
-                "schema": {
-                  "$ref": "#/components/schemas/Error"
-                }
-              }
-            }
-          },
-          "403": {
-            "description": "Error; see error.code",
-            "content": {
-              "application/json": {
-                "schema": {
-                  "$ref": "#/components/schemas/Error"
-                }
-              }
-            }
-          },
-          "404": {
-            "description": "Error; see error.code",
-            "content": {
-              "application/json": {
-                "schema": {
-                  "$ref": "#/components/schemas/Error"
-                }
-              }
-            }
-          },
-          "409": {
-            "description": "Error; see error.code",
-            "content": {
-              "application/json": {
-                "schema": {
-                  "$ref": "#/components/schemas/Error"
-                }
-              }
-            }
-          },
-          "413": {
-            "description": "Error; see error.code",
-            "content": {
-              "application/json": {
-                "schema": {
-                  "$ref": "#/components/schemas/Error"
-                }
-              }
-            }
-          },
-          "422": {
-            "description": "Error; see error.code",
-            "content": {
-              "application/json": {
-                "schema": {
-                  "$ref": "#/components/schemas/Error"
-                }
-              }
-            }
-          },
-          "429": {
-            "description": "Error; see error.code",
-            "content": {
-              "application/json": {
-                "schema": {
-                  "$ref": "#/components/schemas/Error"
-                }
-              }
-            }
-          },
-          "500": {
-            "description": "Error; see error.code",
-            "content": {
-              "application/json": {
-                "schema": {
-                  "$ref": "#/components/schemas/Error"
-                }
-              }
-            }
-          },
-          "503": {
-            "description": "Error; see error.code",
-            "content": {
-              "application/json": {
-                "schema": {
-                  "$ref": "#/components/schemas/Error"
-                }
-              }
-            }
-          }
-        },
-        "requestBody": {
-          "required": true,
-          "content": {
-            "application/json": {
-              "schema": {
-                "$ref": "#/components/schemas/CasualMove"
-              },
-              "example": {
-                "move": "c3d4",
-                "expected_ply": 0
-              }
-            }
-          }
-        }
-      }
-    },
-    "/casual/games/{id}/resign": {
-      "post": {
-        "operationId": "resignCasualGame",
-        "summary": "resignCasualGame",
-        "x-role": "member",
-        "description": "member access. See contracts/behavior.md for authorization and state transitions.",
-        "parameters": [
-          {
-            "name": "id",
-            "in": "path",
-            "required": true,
-            "schema": {
-              "type": "string",
-              "format": "uuid"
-            }
-          },
-          {
-            "name": "Idempotency-Key",
-            "in": "header",
-            "required": true,
-            "schema": {
-              "type": "string",
-              "format": "uuid"
-            },
-            "description": "Scoped by actor + method + path; retained 24h. Same key/body returns original status/body, different body returns 409."
-          }
-        ],
-        "responses": {
-          "200": {
-            "description": "Success",
-            "content": {
-              "application/json": {
-                "schema": {
-                  "$ref": "#/components/schemas/CasualGame"
-                },
-                "example": {
-                  "id": "00000020-0000-4000-8000-000000000001",
-                  "fen": "9/pbkpbkpbk/kpbkpbkpb/9/9/9/BPKBPKBPK/KBPKBPKBP/9",
-                  "human_side": "BLUE",
-                  "bot": "random",
-                  "status": "playing",
-                  "ply": 0,
-                  "turn": "BLUE",
-                  "legal_moves": [
-                    "c3d4"
-                  ],
-                  "moves": [],
-                  "winner": null,
-                  "reason": null,
-                  "created_at": "2026-10-15T00:00:00Z"
-                }
-              }
-            }
-          },
-          "400": {
-            "description": "Error; see error.code",
-            "content": {
-              "application/json": {
-                "schema": {
-                  "$ref": "#/components/schemas/Error"
-                }
-              }
-            }
-          },
-          "401": {
-            "description": "Error; see error.code",
-            "content": {
-              "application/json": {
-                "schema": {
-                  "$ref": "#/components/schemas/Error"
-                }
-              }
-            }
-          },
-          "403": {
-            "description": "Error; see error.code",
-            "content": {
-              "application/json": {
-                "schema": {
-                  "$ref": "#/components/schemas/Error"
-                }
-              }
-            }
-          },
-          "404": {
-            "description": "Error; see error.code",
-            "content": {
-              "application/json": {
-                "schema": {
-                  "$ref": "#/components/schemas/Error"
-                }
-              }
-            }
-          },
-          "409": {
-            "description": "Error; see error.code",
-            "content": {
-              "application/json": {
-                "schema": {
-                  "$ref": "#/components/schemas/Error"
-                }
-              }
-            }
-          },
-          "413": {
-            "description": "Error; see error.code",
-            "content": {
-              "application/json": {
-                "schema": {
-                  "$ref": "#/components/schemas/Error"
-                }
-              }
-            }
-          },
-          "422": {
-            "description": "Error; see error.code",
-            "content": {
-              "application/json": {
-                "schema": {
-                  "$ref": "#/components/schemas/Error"
-                }
-              }
-            }
-          },
-          "429": {
-            "description": "Error; see error.code",
-            "content": {
-              "application/json": {
-                "schema": {
-                  "$ref": "#/components/schemas/Error"
-                }
-              }
-            }
-          },
-          "500": {
-            "description": "Error; see error.code",
-            "content": {
-              "application/json": {
-                "schema": {
-                  "$ref": "#/components/schemas/Error"
-                }
-              }
-            }
-          },
-          "503": {
-            "description": "Error; see error.code",
-            "content": {
-              "application/json": {
-                "schema": {
-                  "$ref": "#/components/schemas/Error"
-                }
-              }
-            }
-          }
-        },
-        "requestBody": {
-          "required": true,
-          "content": {
-            "application/json": {
-              "schema": {
-                "$ref": "#/components/schemas/CasualResign"
-              },
-              "example": {
-                "expected_ply": 0
               }
             }
           }
@@ -3631,7 +2817,13 @@
                   "limit": 60,
                   "used": 1,
                   "remaining": 59,
-                  "resets_at": "2026-10-15T17:00:00Z"
+                  "resets_at": "2026-10-15T17:00:00Z",
+                  "active": 1,
+                  "active_limit": 2,
+                  "admission": {
+                    "accepting": true,
+                    "paused_reason": null
+                  }
                 }
               }
             }
@@ -9417,7 +8609,11 @@
                       "status": "idle",
                       "job_id": null
                     }
-                  ]
+                  ],
+                  "scrimmage_admission": {
+                    "accepting": true,
+                    "paused_reason": null
+                  }
                 }
               }
             }
@@ -9581,7 +8777,11 @@
                       "status": "idle",
                       "job_id": null
                     }
-                  ]
+                  ],
+                  "scrimmage_admission": {
+                    "accepting": true,
+                    "paused_reason": null
+                  }
                 }
               }
             }
@@ -11414,246 +10614,6 @@
         ],
         "additionalProperties": false
       },
-      "CasualCreate": {
-        "type": "object",
-        "properties": {
-          "human_side": {
-            "$ref": "#/components/schemas/Side"
-          },
-          "bot": {
-            "type": "string",
-            "enum": [
-              "random",
-              "greedy"
-            ]
-          }
-        },
-        "required": [
-          "human_side",
-          "bot"
-        ],
-        "additionalProperties": false
-      },
-      "CasualMove": {
-        "type": "object",
-        "properties": {
-          "move": {
-            "type": "string",
-            "pattern": "^[a-i][1-9][a-i][1-9]$"
-          },
-          "expected_ply": {
-            "type": "integer",
-            "minimum": 0,
-            "maximum": 300
-          }
-        },
-        "required": [
-          "move",
-          "expected_ply"
-        ],
-        "additionalProperties": false
-      },
-      "CasualResign": {
-        "type": "object",
-        "properties": {
-          "expected_ply": {
-            "type": "integer",
-            "minimum": 0,
-            "maximum": 300
-          }
-        },
-        "required": [
-          "expected_ply"
-        ],
-        "additionalProperties": false
-      },
-      "CasualGame": {
-        "type": "object",
-        "properties": {
-          "id": {
-            "type": "string",
-            "format": "uuid"
-          },
-          "fen": {
-            "type": "string",
-            "pattern": "^[BPKbpk1-9]+(?:/[BPKbpk1-9]+){8}$"
-          },
-          "human_side": {
-            "$ref": "#/components/schemas/Side"
-          },
-          "bot": {
-            "type": "string",
-            "enum": [
-              "random",
-              "greedy"
-            ]
-          },
-          "status": {
-            "type": "string",
-            "enum": [
-              "playing",
-              "finished"
-            ]
-          },
-          "ply": {
-            "type": "integer",
-            "minimum": 0,
-            "maximum": 300
-          },
-          "turn": {
-            "anyOf": [
-              {
-                "$ref": "#/components/schemas/Side"
-              },
-              {
-                "type": "null"
-              }
-            ]
-          },
-          "legal_moves": {
-            "type": "array",
-            "items": {
-              "type": "string",
-              "pattern": "^[a-i][1-9][a-i][1-9]$"
-            },
-            "maxItems": 648
-          },
-          "moves": {
-            "type": "array",
-            "items": {
-              "type": "object",
-              "properties": {
-                "side": {
-                  "$ref": "#/components/schemas/Side"
-                },
-                "move": {
-                  "type": "string",
-                  "pattern": "^[a-i][1-9][a-i][1-9]$"
-                },
-                "capture": {
-                  "anyOf": [
-                    {
-                      "type": "string",
-                      "enum": [
-                        "B",
-                        "P",
-                        "K",
-                        "b",
-                        "p",
-                        "k"
-                      ]
-                    },
-                    {
-                      "type": "null"
-                    }
-                  ]
-                }
-              },
-              "required": [
-                "side",
-                "move",
-                "capture"
-              ],
-              "additionalProperties": false
-            },
-            "maxItems": 300
-          },
-          "winner": {
-            "anyOf": [
-              {
-                "$ref": "#/components/schemas/Side"
-              },
-              {
-                "type": "null"
-              }
-            ]
-          },
-          "reason": {
-            "anyOf": [
-              {
-                "type": "string",
-                "enum": [
-                  "GOAL",
-                  "WIPEOUT",
-                  "STALEMATE",
-                  "MOVE_LIMIT",
-                  "RESIGNED"
-                ]
-              },
-              {
-                "type": "null"
-              }
-            ]
-          },
-          "created_at": {
-            "type": "string",
-            "format": "date-time",
-            "pattern": "Z$"
-          }
-        },
-        "required": [
-          "id",
-          "fen",
-          "human_side",
-          "bot",
-          "status",
-          "ply",
-          "turn",
-          "legal_moves",
-          "moves",
-          "winner",
-          "reason",
-          "created_at"
-        ],
-        "additionalProperties": false,
-        "allOf": [
-          {
-            "if": {
-              "properties": {
-                "status": {
-                  "const": "playing"
-                }
-              }
-            },
-            "then": {
-              "properties": {
-                "turn": {
-                  "$ref": "#/components/schemas/Side"
-                },
-                "winner": {
-                  "type": "null"
-                },
-                "reason": {
-                  "type": "null"
-                }
-              }
-            },
-            "else": {
-              "properties": {
-                "turn": {
-                  "type": "null"
-                },
-                "winner": {
-                  "$ref": "#/components/schemas/Side"
-                },
-                "reason": {
-                  "type": "string",
-                  "enum": [
-                    "GOAL",
-                    "WIPEOUT",
-                    "STALEMATE",
-                    "MOVE_LIMIT",
-                    "RESIGNED"
-                  ]
-                },
-                "legal_moves": {
-                  "maxItems": 0
-                }
-              }
-            }
-          }
-        ]
-      },
       "ActiveBot": {
         "type": "object",
         "properties": {
@@ -12015,6 +10975,62 @@
         ],
         "additionalProperties": false
       },
+      "ScrimmagePauseReason": {
+        "type": "string",
+        "enum": [
+          "queue_paused",
+          "tournament_load",
+          "scrimmage_backlog"
+        ]
+      },
+      "ScrimmageAdmission": {
+        "type": "object",
+        "properties": {
+          "accepting": {
+            "type": "boolean"
+          },
+          "paused_reason": {
+            "anyOf": [
+              {
+                "$ref": "#/components/schemas/ScrimmagePauseReason"
+              },
+              {
+                "type": "null"
+              }
+            ]
+          }
+        },
+        "required": [
+          "accepting",
+          "paused_reason"
+        ],
+        "additionalProperties": false,
+        "allOf": [
+          {
+            "if": {
+              "properties": {
+                "accepting": {
+                  "const": true
+                }
+              }
+            },
+            "then": {
+              "properties": {
+                "paused_reason": {
+                  "type": "null"
+                }
+              }
+            },
+            "else": {
+              "properties": {
+                "paused_reason": {
+                  "$ref": "#/components/schemas/ScrimmagePauseReason"
+                }
+              }
+            }
+          }
+        ]
+      },
       "Quota": {
         "type": "object",
         "properties": {
@@ -12033,13 +11049,27 @@
             "type": "string",
             "format": "date-time",
             "pattern": "Z$"
+          },
+          "active": {
+            "type": "integer",
+            "minimum": 0
+          },
+          "active_limit": {
+            "type": "integer",
+            "minimum": 1
+          },
+          "admission": {
+            "$ref": "#/components/schemas/ScrimmageAdmission"
           }
         },
         "required": [
           "limit",
           "used",
           "remaining",
-          "resets_at"
+          "resets_at",
+          "active",
+          "active_limit",
+          "admission"
         ],
         "additionalProperties": false
       },
@@ -12979,11 +12009,15 @@
             "items": {
               "$ref": "#/components/schemas/Worker"
             }
+          },
+          "scrimmage_admission": {
+            "$ref": "#/components/schemas/ScrimmageAdmission"
           }
         },
         "required": [
           "queues",
-          "workers"
+          "workers",
+          "scrimmage_admission"
         ],
         "additionalProperties": false
       },
@@ -13255,7 +12289,7 @@
         "type": "object",
         "properties": {
           "contract_version": {
-            "const": "1.2.0"
+            "const": "1.3.0"
           },
           "languages": {
             "type": "array",
@@ -13348,7 +12382,7 @@
             ]
           },
           "contract_version": {
-            "const": "1.2.0"
+            "const": "1.3.0"
           }
         },
         "required": [
@@ -14577,37 +13611,6 @@
           "kind",
           "job_id",
           "sent_at"
-        ],
-        "additionalProperties": false
-      },
-      "CasualGamePage": {
-        "type": "object",
-        "properties": {
-          "items": {
-            "type": "array",
-            "items": {
-              "$ref": "#/components/schemas/CasualGame"
-            }
-          },
-          "page": {
-            "type": "integer",
-            "minimum": 1
-          },
-          "page_size": {
-            "type": "integer",
-            "minimum": 1,
-            "maximum": 100
-          },
-          "total": {
-            "type": "integer",
-            "minimum": 0
-          }
-        },
-        "required": [
-          "items",
-          "page",
-          "page_size",
-          "total"
         ],
         "additionalProperties": false
       },

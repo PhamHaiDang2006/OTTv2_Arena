@@ -36,7 +36,7 @@ Backend là trung tâm điều phối: xác thực người dùng, giữ dữ li
 
 ## Chạy backend
 
-Triển khai contract **v1.2.0**, profile **dev-v1** (development). Công cụ: Python 3.12 qua [uv](https://docs.astral.sh/uv/) (đã dùng uv 0.13.1), PostgreSQL 16, Redis 7, S3/MinIO. Mọi lệnh chạy từ `backend/`.
+Triển khai contract **v1.3.0**, profile **dev-v1** (development). Công cụ: Python 3.12 qua [uv](https://docs.astral.sh/uv/) (đã dùng uv 0.13.1), PostgreSQL 16, Redis 7, S3/MinIO. Mọi lệnh chạy từ `backend/`.
 
 ```bash
 uv sync                                   # tạo .venv từ uv.lock (Python 3.12)
@@ -197,8 +197,8 @@ Không cần seed tài khoản người chơi. UI P1 có nút Đăng ký. API t�
 
 Tái sinh: `node contracts/build.mjs` (Node 24); kiểm tra: `tests/test_registration.py` cùng suite backend. Thay đổi ảnh hưởng consumer web và mock; runner/engine giữ nguyên wire format.
 
-### Casual (contract 1.2.0)
+### Casual và phân bổ tài nguyên (contract 1.3.0)
 
-`app/casual.py` cung cấp 5 operation của `/casual/games`, lưu `CasualGame` qua migration `0002`. Cài từ repo đầy đủ bằng `uv sync --project backend --frozen`; uv.lock dùng engine ở `../engine`, image backend phải build từ repo root. Chỉ import API công khai Board/INITIAL_FEN/outcome; không gọi runner hoặc dùng luật tự viết. Phụ thuộc runtime Casual là PostgreSQL + Redis như auth hiện có; không cần S3/worker để chơi.
+Casual chạy trên trình duyệt: `app/casual.py` và `tests/test_casual.py` đã được gỡ, 5 operation `/casual/games` trả 404. Model `CasualGame` và migration `0002` được giữ để không xóa ván cũ; backend không đọc/ghi bảng này. `ottv2` vẫn trong dependency (test tích hợp runner/engine dùng); runtime backend không import engine nữa. Chuyển nó sang nhóm dev cần chạy `uv lock`, chưa làm trong đợt này.
 
-Mọi tài khoản active được chơi, kể cả chưa có đội hoặc đội pending. Quyền sở hữu, idempotency, row lock, expected_ply và hành vi bot được chốt trong contracts/behavior.md. `tests/test_casual.py` kiểm tra producer với validator thật, quyền riêng tư, hai request cạnh tranh, lưu ván, engine và cách ly dữ liệu Arena. Migrate từ 0001 chỉ thêm bảng/index, giữ tài khoản và trận Arena.
+`app/matches/admission.py` quyết định nhận trận đánh tập mới: 503 `SCRIMMAGE_PAUSED` (`queue_paused`, `tournament_load`, `scrimmage_backlog`) và 429 `SCRIMMAGE_LIMIT`, theo `SCRIMMAGE_MAX_ACTIVE_PER_TEAM` (2), `SCRIMMAGE_MAX_PENDING_GAMES` (12), `SCRIMMAGE_PAUSE_TOURNAMENT_JOBS` (1, 0 là tắt). Trận đã nhận không bị hủy hay chuyển hàng đợi. `/scrimmages/quota` và `/admin/queue` trả trạng thái nhận trận. Kiểm tra: `tests/test_scrimmage_admission.py`.

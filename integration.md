@@ -1,6 +1,6 @@
 # Hợp đồng tích hợp cho bốn người làm bằng AI
 
-Baseline hiện hành **contract v1.2.0** ngày 2026-10-22. Bộ artifact thực tế đã có trong [contracts/README.md](contracts/README.md): OpenAPI, JSON Schema, fixture, type Python/TypeScript, mock HTTP và validator. Engine/backend/worker/web đã có implementation; xem mục bàn giao Casual và README từng phần để chạy.
+Baseline hiện hành **contract v1.3.0** ngày 2026-10-22. Bộ artifact thực tế đã có trong [contracts/README.md](contracts/README.md): OpenAPI, JSON Schema, fixture, type Python/TypeScript, mock HTTP và validator. Engine/backend/worker/web đã có implementation; xem mục bàn giao 1.3.0 và README từng phần để chạy.
 
 ## 1. Nguồn sự thật
 
@@ -89,7 +89,7 @@ AI được dùng dev-v1 cho implementation/test phát triển, phải giữ nh�
 
 Backend + web + contracts phải đi cùng nhau: POST /auth/register trả Auth + cookie, tạo đội pending có quyền đấu tập. Mock đã có operation/fixture. Không thay job/callback, engine hay replay. Tái sinh bằng node contracts/build.mjs; không cần migration.
 
-## Bàn giao Casual 1.2.0 — 2026-10-22
+## Bàn giao Casual 1.2.0 — 2026-10-22 (đã thay bằng 1.3.0)
 
 A cung cấp public `ottv2.outcome` dùng chung quy tắc kết thúc; C sở hữu bảng/migration `0002`, 5 endpoint `/casual/games` và bot tích hợp; D sở hữu màn chọn chế độ, lobby và bàn cờ. Phân công A/B/C/D không đổi. B không cần sửa worker/job; image backend thêm engine từ local path theo uv.lock.
 
@@ -105,3 +105,7 @@ Casual chạy trên trình duyệt, tự luyện chạy trên máy thí sinh, đ
 - **D** (web): Casual dùng luật và bot trong trình duyệt, trang `/practice`, trạng thái nhận trận ở P1 `/scrimmage` và P2 Hàng đợi.
 
 Merge contract + backend + web cùng nhau (web 1.2.0 gọi API Casual đã bị gỡ; backend 1.2.0 không trả trường admission). Engine/kit và infra có thể merge riêng; đổi tên service VPS2 theo RUNBOOK mục 7. HTTP contract 1.3.0 có 88 definitions, 66 operations, 141 fixtures.
+
+### Bổ sung cách ly tài nguyên runner — 2026-10-22
+
+B phụ trách áp cấu hình: bot giải 0–5, mọi worker/registry/compiler/smoke/đấu tập trên CPU phụ trợ 6–7 ở VPS2; local tách worker giải/đấu tập với CPU giải 0–1, phụ trợ 2–3. `RUNNER_CPUSET_BUILD` dùng chung compiler và smoke, tránh ghim cứng CPU 0. Xem infra/README.md và check_resources.py về ngân sách tổng, giới hạn Docker và preflight. Không đổi phân công, HTTP 1.3.0, job/callback v1, replay hay luật dev-v1. Backend và frontend không cần sửa; worker image và Compose cần nâng cùng nhau sau khi drain hàng đợi. CPU pinning không bảo đảm hết ảnh hưởng từ OS, I/O hoặc SMT; không tuyên bố độ lệch thời gian đạt chuẩn nếu chưa benchmark host thực tế.

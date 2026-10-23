@@ -32,7 +32,14 @@ Local runner dùng chính `ottv2.run_game`, không có vòng lặp luật riêng
 python starter-kits/tools/local_runner.py starter-kits/python starter-kits/cpp --games 10 --replay starter-kits/dist/game.json
 ```
 
-Compile C++ theo README con trước. Local runner chạy code với quyền người dùng,
+Tự luyện (contract 1.3.0): bot của bạn đấu bot mẫu hoặc một bot khác trên máy, đổi màu mỗi ván, in tổng kết:
+
+```sh
+python starter-kits/tools/local_runner.py practice starter-kits/python --vs greedy --games 10
+python starter-kits/tools/local_runner.py practice path/to/new_bot --vs path/to/old_bot --games 10
+```
+
+`--vs random|greedy` dùng bot mẫu của gói `ottv2`. Replay ghi vào `practice/replay-N.json`; mở bằng trang Tự luyện của P1 để xem trên trình duyệt. Compile C++ theo README con trước. Local runner chạy code với quyền người dùng,
 chỉ dùng cho bot phát triển đáng tin cậy. Image Python trên runner cần cài sẵn
 ottv2 1.0.0; xem `engine/Dockerfile.bot`. ZIP đã qua giải nén/build/play cục bộ,
 nhưng chưa được upload qua backend và chạy trong Docker ở lượt triển khai này.

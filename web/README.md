@@ -2,7 +2,7 @@
 
 Implementation React 18 + TypeScript cho cổng thí sinh **P1**, cổng quản trị **P2** và package
 `@ottv2/replay-viewer`. Hai bản build dùng chung session, API client, schema validator và UI.
-Contract **1.2.0**, engine **1.0.0**, profile **dev-v1** chưa phải luật giải chính thức.
+Contract **1.3.0**, engine **1.0.0**, profile **dev-v1** chưa phải luật giải chính thức.
 
 ## Chạy
 
@@ -125,11 +125,14 @@ Mở cổng thí sinh → **Chưa có tài khoản? Đăng ký** → nhập tên
 
 Yêu cầu backend + contracts 1.1.0 cùng checkout. Form dùng `register` trong client generated, không lưu mật khẩu/token vào localStorage. Nếu mất kết nối sau đăng ký, thử đăng nhập bằng tài khoản vừa nhập.
 
-## Casual / Arena — 1.2.0
+## Casual, Tự luyện, Arena — 1.3.0
 
-<<<<<<< Updated upstream
-Trang `/` công khai cho chọn chế độ. `/arena` là tổng quan Arena cũ; `/submit`, `/submissions`, `/scrimmage`, `/standings`, `/matches/:id`, `/games/:id` và P2 không đổi. `/casual` yêu cầu đăng nhập, cho chọn màu và bot; `/casual/:id` hiển thị bàn tương tác và lịch sử, lưu ván trên backend. Màu người nằm phía dưới; chọn quân rồi ô gợi ý. Có xác nhận đầu hàng; chưa có rank/matchmaking/PvP. Tài khoản đăng ký hiện tại vẫn có đội pending nhưng Casual không đòi duyệt đội.
-=======
+Thiết kế Casual dùng `src/casual-design.css`, scope `.casual-shell`: nền trắng ngà/sage
+hoặc xanh than, quân huy hiệu SVG, thẻ đối thủ, bàn thu nhỏ trong lịch sử và thanh
+điều hướng ngang khi vào trận. `Crest`/`MiniBoard` ở `casual-presentation.tsx` là
+thành phần trình bày; không thay luật hoặc schema. Ảnh kiểm tra nằm trong
+`evidence/design-*.png`. Bộ đếm quân được dựng từ FEN hiện tại, kể cả lúc xem lại.
+
 Giao diện Casual có quân SVG búa/bao/kéo, chuyển động nước đi, dấu nước cuối,
 hiệu ứng ăn quân, trạng thái lượt và bảng kết quả với chơi lại/xem lại/về sảnh.
 Lịch sử và cách chơi có thể thu gọn. Nút sáng/tối ở thanh trên và trang đăng nhập
@@ -139,6 +142,9 @@ Hiệu ứng chỉ trình bày: toàn bộ lượt người + máy được lưu
 xem lại không sửa ván đã lưu. Chi tiết kiểm tra: [UI_POLISH_CHECKS.md](UI_POLISH_CHECKS.md).
 
 Trang `/` công khai cho chọn ba chế độ. `/arena` là tổng quan Arena; `/submit`, `/submissions`, `/scrimmage`, `/standings`, `/matches/:id`, `/games/:id` và P2 không đổi.
->>>>>>> Stashed changes
 
-`src/casual.tsx` chỉ dùng client/types generated và parseFen của replay-viewer để vẽ; nước hợp lệ/kết quả do API quyết định. UI khóa khi chờ phản hồi, hủy GET đang chạy trước mutation, gửi expected_ply, GET lại khi lỗi và polling 5 giây. Bộ test `tests/casual.test.tsx` kiểm tra chọn chế độ, payload, chọn ô, hướng bàn, khóa bàn và xác nhận kết thúc. Dùng API thật khi chơi; mock fixture chỉ hỗ trợ kiểm thử cấu trúc, không chạy game.
+- `/casual`, `/casual/:id` (cần đăng nhập): `src/casual-engine.ts` tạo ván, áp nước, chạy bot random/greedy và lưu localStorage theo user id (khóa `ottv2.casual.v1:<user_id>`, 50 ván). Luật lấy từ `@ottv2/replay-viewer/src/rules.ts`; không gọi API ván. Đi nước, đầu hàng và tạo ván đọc lại, kiểm tra rồi ghi trong Web Lock cùng tên khóa lưu trữ, nên các tab của một tài khoản lần lượt ghi; tab khác đã đổi ván thì nước đi bị từ chối và bàn được tải lại. Trình duyệt không có Web Locks thì ghi trực tiếp. Nếu trình duyệt không cho lưu, ván vẫn chơi được trong phiên.
+- `/practice` (công khai): hướng dẫn `python -m ottv2 practice` và mở file replay cục bộ bằng FileReader, validate schema Replay rồi phát bằng ReplayViewer; không upload.
+- `/scrimmage`: hiển thị số trận chưa xong của đội và lý do tạm dừng từ `scrimmageQuota`, khóa nút tạo trận khi không nhận. P2 Hàng đợi hiển thị `scrimmage_admission`.
+
+Kiểm tra: `tests/rules.test.ts` (luật TS so với engine: 1000 thế cờ, 600 kết quả, 100 ván thật khi đã chạy `python web/tests/generate_engine_replays.py`), `tests/casual.test.tsx`, `tests/resources.test.tsx`.

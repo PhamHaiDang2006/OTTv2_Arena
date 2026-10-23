@@ -1,12 +1,3 @@
-<<<<<<< Updated upstream
-import { useEffect, useState } from 'react';
-import { Link, useNavigate, useParams } from 'react-router-dom';
-import { useQueryClient } from '@tanstack/react-query';
-import { parseFen } from '@ottv2/replay-viewer';
-import type { CasualGame, Side } from '../../contracts/generated/types';
-import { api } from './api';
-import { ErrorBox, Field, Heading, Load, Pager, useApi } from './ui';
-=======
 import { useCallback, useEffect, useRef, useState, type CSSProperties } from 'react';
 import { Link, useNavigate, useParams } from 'react-router-dom';
 import { applyMove, toFen, parseFen } from '@ottv2/replay-viewer';
@@ -25,9 +16,8 @@ import {
   type CasualGame,
 } from './casual-engine';
 import { ErrorBox, Field, Heading } from './ui';
-import { PieceIcon, GameResult, historyFrame, resultReasons } from './casual-presentation';
+import { PieceIcon, Crest, MiniBoard, GameResult, historyFrame, resultReasons } from './casual-presentation';
 import { useGameSound, useReducedMotion } from './preferences';
->>>>>>> Stashed changes
 
 export function Modes() {
   return (
@@ -35,23 +25,32 @@ export function Modes() {
       <Heading
         eyebrow="OTT v2 / CHỌN CHẾ ĐỘ"
         title="Bạn muốn chơi theo cách nào?"
-        description="Cùng bàn cờ OTTv2, hai cách trải nghiệm."
+        description="Cùng bàn cờ OTTv2, mỗi chế độ chạy ở một nơi khác nhau."
       />
       <div className="mode-cards">
         <section className="card mode-card casual-mode">
-          <span className="eyebrow">CHƠI TRỰC TIẾP</span>
+          <span className="eyebrow">CHẠY TRÊN TRÌNH DUYỆT</span>
           <h2>Casual</h2>
-          <p>Chọn quân, chọn ô và thử chiến thuật với máy. Không cần viết code hay chờ duyệt đội.</p>
-          <p>Đấu với bot mẫu · Không tính giờ · Lưu ván đang chơi</p>
+          <p>Chọn quân, chọn ô và thử chiến thuật với bot mẫu. Bàn cờ và bot chạy ngay trong trình duyệt.</p>
+          <p>Đấu với bot mẫu · Không tính giờ · Lưu ván trên trình duyệt này</p>
           <Link className="button primary" to="/casual">
             Chơi với máy →
           </Link>
         </section>
+        <section className="card mode-card practice-mode">
+          <span className="eyebrow">CHẠY TRÊN MÁY CỦA BẠN</span>
+          <h2>Tự luyện</h2>
+          <p>Cho bot của bạn đấu với bot mẫu hoặc một bot khác có sẵn trên máy, rồi xem replay tại đây.</p>
+          <p>Bộ khởi động · Không cần nộp bài · Không tốn lượt đánh tập</p>
+          <Link className="button" to="/practice">
+            Hướng dẫn tự luyện →
+          </Link>
+        </section>
         <section className="card mode-card">
-          <span className="eyebrow">ĐẤU TRƯỜNG LẬP TRÌNH</span>
+          <span className="eyebrow">ĐẤU TRƯỜNG TRÊN MÁY CHỦ</span>
           <h2>Arena</h2>
-          <p>Đưa thuật toán của bạn vào thi đấu. Nộp bot, đánh tập, tham gia giải và xem replay.</p>
-          <p>Đội thi đấu · Nộp code · Giải đấu</p>
+          <p>Nộp bot, đánh tập với đội khác và thi đấu giải. Giải chính thức có máy chạy riêng.</p>
+          <p>Đội thi đấu · Nộp code · Đánh tập · Giải đấu</p>
           <Link className="button" to="/arena">
             Vào Arena →
           </Link>
@@ -62,89 +61,148 @@ export function Modes() {
 }
 
 const botNames = { random: 'Bot ngẫu nhiên', greedy: 'Bot ưu tiên ăn quân' };
-export function CasualLobby() {
+/** Games of this account in this browser; follows changes made in other tabs. */
+function useCasualGames(userId: string) {
+  const [games, setGames] = useState(() => loadGames(userId));
+  const reload = useCallback(() => setGames(loadGames(userId)), [userId]);
+  useEffect(() => {
+    reload();
+    const onStorage = (event: StorageEvent) => {
+      if (isCasualStorageKey(event.key, userId)) reload();
+    };
+    window.addEventListener('storage', onStorage);
+    return () => window.removeEventListener('storage', onStorage);
+  }, [userId, reload]);
+  return [games, reload] as const;
+}
+export function CasualLobby({ user }: { user: User }) {
   const navigate = useNavigate();
-  const [page, setPage] = useState(1),
-    [busy, setBusy] = useState(false),
-    [error, setError] = useState<unknown>();
-  const games = useApi('listCasualGames', { query: { page, page_size: 20 } });
+  const [games] = useCasualGames(user.id);
+  const [error, setError] = useState<unknown>();
+  const [bot, setBot] = useState<CasualBot>('random');
   return (
-    <>
-      <Heading
-        eyebrow="OTT v2 / CASUAL"
-        title="Casual · Chơi với máy"
-        description="Chơi bằng thao tác trên bàn cờ. Không ảnh hưởng kết quả Arena."
-      />
+    <div className="casual-lobby">
+      <div className="lobby-hero">
+        <Heading
+          eyebrow="OTT v2 / CASUAL"
+          title="Casual · Chơi với máy"
+          description="Một bàn cờ. Vô vàn cách chiến thắng. Chọn đối thủ và tìm nước đi của riêng bạn."
+        />
+        <div className="hero-pieces" aria-hidden="true">
+          {['B', 'P', 'K'].map((p, i) => (
+            <span key={p} className={`hero-piece hero-piece-${i}`}>
+              <PieceIcon piece={p} />
+            </span>
+          ))}
+        </div>
+        <div className="lobby-pills">
+          <span>9 × 9 ô cờ</span>
+          <span>Không áp lực thời gian</span>
+          <span>Chơi ngay trên máy bạn</span>
+        </div>
+      </div>
       <form
-        className="card"
-        onSubmit={async (e) => {
+        className="card lobby-setup"
+        onSubmit={(e) => {
           e.preventDefault();
-          if (busy) return;
           const fields = new FormData(e.currentTarget);
-          setBusy(true);
+          const game = newGame(fields.get('side') as Side, fields.get('bot') as CasualBot);
           setError(undefined);
-          try {
-            const game = await api('createCasualGame', {
-              human_side: fields.get('side') as Side,
-              bot: fields.get('bot') as 'random' | 'greedy',
-            });
-            navigate(`/casual/${game.id}`);
-          } catch (err) {
-            setError(err);
-            void games.refetch();
-          } finally {
-            setBusy(false);
-          }
+          withGamesLock(user.id, () => saveGame(user.id, game))
+            .catch(setError)
+            .finally(() => navigate(`/casual/${game.id}`));
         }}
       >
-        <h2>Bắt đầu một ván</h2>
-        <Field label="Đối thủ">
-          <select name="bot">
-            <option value="random">Bot ngẫu nhiên — làm quen</option>
-            <option value="greedy">Bot ưu tiên ăn quân — thử chiến thuật</option>
-          </select>
-        </Field>
-        <Field label="Màu quân của bạn">
-          <select name="side">
-            <option value="BLUE">Xanh — đi trước</option>
-            <option value="RED">Đỏ — đi sau</option>
-          </select>
-        </Field>
-        <p className="muted">Không tính giờ. Xanh đi trước. Mỗi ván tối đa 300 nước theo luật dev-v1.</p>
-        <button className="primary" disabled={busy}>
-          {busy ? 'Đang tạo ván…' : 'Bắt đầu chơi'}
-        </button>
+        <div className="section-title">
+          <span className="eyebrow">01 / CHỌN THỬ THÁCH</span>
+          <h2>Bắt đầu một ván</h2>
+        </div>
+        <div className="bot-choices" role="group" aria-label="Phong cách đối thủ">
+          {(['random', 'greedy'] as const).map((choice) => (
+            <button
+              key={choice}
+              type="button"
+              className={`bot-choice ${choice === bot ? 'chosen' : ''}`}
+              aria-pressed={choice === bot}
+              onClick={() => setBot(choice)}
+            >
+              <span className={`bot-portrait ${choice}`}>
+                <Crest kind="bot" />
+              </span>
+              <span className="bot-copy">
+                <span className="eyebrow">{choice === 'random' ? 'LÀM QUEN' : 'THỬ CHIẾN THUẬT'}</span>
+                <strong>{botNames[choice]}</strong>
+                <span>
+                  {choice === 'random'
+                    ? 'Những nước đi bất ngờ. Thoải mái khám phá luật chơi.'
+                    : 'Luôn tìm cơ hội ăn quân. Hãy bảo vệ đội hình của bạn.'}
+                </span>
+              </span>
+              <span className="choice-dot" aria-hidden="true">
+                {choice === bot ? '✓' : ''}
+              </span>
+            </button>
+          ))}
+        </div>
+        <div className="setup-controls">
+          <Field label="Đối thủ">
+            <select name="bot" value={bot} onChange={(e) => setBot(e.target.value as CasualBot)}>
+              <option value="random">Bot ngẫu nhiên — làm quen</option>
+              <option value="greedy">Bot ưu tiên ăn quân — thử chiến thuật</option>
+            </select>
+          </Field>
+          <Field label="Màu quân của bạn">
+            <select name="side">
+              <option value="BLUE">Xanh — đi trước</option>
+              <option value="RED">Đỏ — đi sau</option>
+            </select>
+          </Field>
+          <button className="primary">Bắt đầu chơi</button>
+        </div>
+        <p className="setup-footnote">Xanh đi trước · Tối đa 300 nước · Luật phát triển dev-v1</p>
         <ErrorBox error={error} />
       </form>
-      <h2>Ván của bạn</h2>
-      <Load query={games}>
-        {(data) => (
-          <>
-            <div className="casual-history">
-              {data.items.length ? (
-                data.items.map((game) => (
-                  <Link className="card" key={game.id} to={`/casual/${game.id}`}>
-                    <strong>{botNames[game.bot]}</strong>
-                    <span>
-                      {game.status === 'playing'
-                        ? 'Tiếp tục chơi'
-                        : game.winner === game.human_side
-                          ? 'Bạn thắng'
-                          : 'Máy thắng'}{' '}
-                      · {game.ply} nước
-                    </span>
-                    <small>{new Date(game.created_at).toLocaleString('vi-VN')}</small>
-                  </Link>
-                ))
-              ) : (
-                <p>Chưa có ván nào. Chọn đối thủ và bắt đầu nhé.</p>
-              )}
+      <div className="section-title">
+        <span className="eyebrow">02 / HÀNH TRÌNH CỦA BẠN</span>
+        <h2>Ván của bạn</h2>
+      </div>
+      <p className="muted">
+        Lưu {MAX_SAVED_GAMES} ván gần nhất trên trình duyệt này; máy hoặc trình duyệt khác không thấy các ván
+        này.
+      </p>
+      <div className="casual-history">
+        {games.length ? (
+          games.map((game) => (
+            <Link className="card" key={game.id} to={`/casual/${game.id}`}>
+              <MiniBoard fen={game.fen} />
+              <div className="saved-game-info">
+                <strong>{botNames[game.bot]}</strong>
+                <span>
+                  {game.status === 'playing'
+                    ? 'Tiếp tục chơi'
+                    : game.winner === game.human_side
+                      ? 'Bạn thắng'
+                      : 'Máy thắng'}{' '}
+                  · {game.ply} nước
+                </span>
+                <small>{new Date(game.created_at).toLocaleString('vi-VN')}</small>
+              </div>
+              <span className="saved-arrow" aria-hidden="true">
+                ↗
+              </span>
+            </Link>
+          ))
+        ) : (
+          <div className="lobby-empty">
+            <Crest />
+            <div>
+              <strong>Nước đi đầu tiên đang chờ bạn.</strong>
+              <p>Chưa có ván nào. Chọn đối thủ và bắt đầu nhé.</p>
             </div>
-            <Pager page={page} total={data.total} setPage={setPage} />
-          </>
+          </div>
         )}
-      </Load>
-    </>
+      </div>
+    </div>
   );
 }
 
@@ -221,7 +279,7 @@ export function CasualBoard({
               </span>
             ) : (
               <span className="square-mark" aria-hidden="true">
-                {goal ? '☆' : target ? '·' : ''}
+                {goal ? <Crest /> : target ? '·' : ''}
               </span>
             )}
             {animate && last?.slice(2) === square && record?.capture && (
@@ -239,15 +297,8 @@ export function CasualBoard({
   );
 }
 
-export function CasualPlay() {
+export function CasualPlay({ user }: { user: User }) {
   const { id } = useParams<{ id: string }>();
-<<<<<<< Updated upstream
-  const query = useApi('getCasualGame', { path: { id: id! } }, !!id, 5000);
-  const cache = useQueryClient();
-  const [busy, setBusy] = useState(false),
-    [error, setError] = useState<unknown>(),
-    [confirm, setConfirm] = useState(false);
-=======
   const navigate = useNavigate();
   const [games, reload] = useCasualGames(user.id);
   const saved = games.find((g) => g.id === id);
@@ -262,7 +313,6 @@ export function CasualPlay() {
     pending = useRef(false);
   const reduced = useReducedMotion(),
     sound = useGameSound();
->>>>>>> Stashed changes
   useEffect(() => {
     epoch.current++;
     pending.current = false;
@@ -271,26 +321,6 @@ export function CasualPlay() {
     setPhase('');
     setError(undefined);
     setConfirm(false);
-<<<<<<< Updated upstream
-  }, [id]);
-  async function act(game: CasualGame, move?: string) {
-    if (busy) return;
-    setBusy(true);
-    setError(undefined);
-    try {
-      await cache.cancelQueries({ queryKey: ['getCasualGame', { id: game.id }] });
-      const state = move
-        ? await api('moveCasualGame', { move, expected_ply: game.ply }, { path: { id: game.id } })
-        : await api('resignCasualGame', { expected_ply: game.ply }, { path: { id: game.id } });
-      cache.setQueryData(['getCasualGame', { id: game.id }, undefined], state);
-      void cache.invalidateQueries({ queryKey: ['listCasualGames'] });
-    } catch (err) {
-      setError(err);
-      await query.refetch();
-    } finally {
-      setBusy(false);
-      setConfirm(false);
-=======
     setReview(false);
     reload();
     return () => {
@@ -344,7 +374,6 @@ export function CasualPlay() {
         setConfirm(false);
         setPhase('');
       }
->>>>>>> Stashed changes
     }
   }
   async function again() {
@@ -379,13 +408,27 @@ export function CasualPlay() {
         className={`player-strip ${side} ${game!.status === 'playing' && !review && active === side ? 'is-active' : ''}`}
       >
         <span className="player-avatar" aria-hidden="true">
-          {bot ? '⚙' : '♙'}
+          <Crest kind={bot ? 'bot' : 'player'} />
         </span>
         <div>
           <strong>{bot ? botNames[game!.bot] : 'Bạn'}</strong>
           <small>
             {side === 'BLUE' ? 'Quân xanh' : 'Quân đỏ'} · {count} quân
           </small>
+        </div>
+        <div className="piece-inventory" aria-label="Quân còn lại">
+          {['B', 'P', 'K'].map((p) => (
+            <span key={p}>
+              <span className="sr-only">{p === 'B' ? 'Búa' : p === 'P' ? 'Bao' : 'Kéo'}: </span>
+              <PieceIcon piece={p} />
+              <b>
+                {
+                  parseFen(display!.fen).filter((cell) => cell === (side === 'BLUE' ? p : p.toLowerCase()))
+                    .length
+                }
+              </b>
+            </span>
+          ))}
         </div>
         <span className="player-indicator">
           {game!.status === 'playing' && !review && active === side
@@ -409,45 +452,6 @@ export function CasualPlay() {
           </Link>
         </div>
       </Heading>
-<<<<<<< Updated upstream
-      <Load query={query}>
-        {(game) => (
-          <div className="casual-layout">
-            <section className="card">
-              <p className="casual-status" role="status">
-                {game.status === 'finished'
-                  ? `${game.winner === game.human_side ? 'Bạn thắng!' : 'Máy thắng'} · ${reasons[game.reason!]}`
-                  : busy
-                    ? 'Đang xử lý nước đi…'
-                    : 'Đến lượt của bạn'}
-              </p>
-              <CasualBoard game={game} busy={busy} onMove={(move) => void act(game, move)} />
-              <p>
-                Bạn: <strong>{game.human_side === 'BLUE' ? 'Xanh' : 'Đỏ'}</strong> · Máy: {botNames[game.bot]}{' '}
-                · {game.ply}/300 nước
-              </p>
-              <ErrorBox error={error} />
-              {game.status === 'playing' &&
-                (!confirm ? (
-                  <button disabled={busy} onClick={() => setConfirm(true)}>
-                    Đầu hàng
-                  </button>
-                ) : (
-                  <div role="group" aria-label="Xác nhận đầu hàng">
-                    <p>Đầu hàng sẽ kết thúc ván này với phần thắng cho máy.</p>
-                    <button disabled={busy} onClick={() => void act(game)}>
-                      Xác nhận đầu hàng
-                    </button>{' '}
-                    <button disabled={busy} onClick={() => setConfirm(false)}>
-                      Tiếp tục chơi
-                    </button>
-                  </div>
-                ))}
-            </section>
-            <aside className="card">
-              <h2>Cách chơi</h2>
-              <p>● Búa ăn ▲ Kéo · ▲ Kéo ăn ■ Bao · ■ Bao ăn ● Búa.</p>
-=======
       {!game || !display ? (
         <section className="card">
           <p>Không tìm thấy ván này trên trình duyệt. Ván Casual chỉ lưu trên trình duyệt đã tạo ván.</p>
@@ -551,32 +555,11 @@ export function CasualPlay() {
                 ))}
               </div>
               <p>Búa ăn Kéo · Kéo ăn Bao · Bao ăn Búa.</p>
->>>>>>> Stashed changes
               <p>
                 Mỗi lượt đi một ô theo tám hướng. Không đi vào ô có quân mình hoặc quân đối phương mà bạn
                 không ăn được.
               </p>
               <p>Xanh cần chiếm i9; Đỏ cần chiếm a1. Không được đi vào ô mục tiêu của đối thủ.</p>
-<<<<<<< Updated upstream
-              <p>Không tính giờ; có thể rời trang và tiếp tục từ danh sách ván Casual.</p>
-              <h2>Lịch sử nước đi</h2>
-              <ol className="casual-moves">
-                {game.moves.map((move, i) => (
-                  <li key={i}>
-                    <span>{move.side === 'BLUE' ? 'Xanh' : 'Đỏ'}</span>{' '}
-                    <strong>
-                      {move.move.slice(0, 2)} → {move.move.slice(2)}
-                    </strong>
-                    {move.capture ? ' · ăn quân' : ''}
-                  </li>
-                ))}
-              </ol>
-              {!game.moves.length && <p>Hãy đi nước đầu tiên.</p>}
-            </aside>
-          </div>
-        )}
-      </Load>
-=======
               <p>Không tính giờ. Ván được lưu trên trình duyệt này.</p>
             </details>
             <div className="casual-note">
@@ -603,7 +586,6 @@ export function CasualPlay() {
           onLobby={() => navigate('/casual')}
         />
       )}
->>>>>>> Stashed changes
     </>
   );
 }

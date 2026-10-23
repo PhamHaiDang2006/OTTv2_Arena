@@ -49,7 +49,7 @@ Acceptance checks before admitting traffic: inspect all health states; verify pu
 docker compose --env-file .env -f docker-compose.vps1.yml ps
 docker compose --env-file .env -f docker-compose.vps1.yml logs --since=15m caddy backend postgres redis minio
 docker compose --env-file .env -f docker-compose.vps2.yml ps
-docker compose --env-file .env -f docker-compose.vps2.yml logs --since=15m build-worker match-worker-1 match-worker-2 match-worker-3 match-worker-4
+docker compose --env-file .env -f docker-compose.vps2.yml logs --since=15m build-worker match-tournament-1 match-tournament-2 match-tournament-3 match-scrimmage-1
 docker stats --no-stream
 df -h
 wg show
@@ -95,7 +95,7 @@ The one-shot `mc mirror --overwrite` copies the configured source bucket to the 
 1. Review release notes and compatibility; confirm immutable image digests and migration order with backend/runner/web owners. Preserve the old digests.
 2. Run a PostgreSQL backup and confirm offsite storage. Verify MinIO mirror age and VPS1/VPS2 free disk.
 3. Pull the pinned images. Run any one-time backward-compatible database migration using the image owner's confirmed command; never run an unverified guessed migration entrypoint.
-4. Update one host at a time. VPS1 API/web change first only if compatible with the existing worker protocol; then VPS2 workers. Do not restart all four match workers at once during live games unless the backend lease/retry behavior is confirmed.
+4. Update one host at a time. VPS1 API/web change first only if compatible with the existing worker protocol; then VPS2 workers. Do not restart all match workers at once during live games unless the backend lease/retry behavior is confirmed.
 5. Verify health, API/WS, deep links, internal-route isolation, signed URLs, callbacks, queue latency, worker heartbeat, and logs. For a failed release, restore previous image digests. Database rollback is not automatic: follow the migration owner's documented recovery plan and restore into a new DB, not over the live database.
 
 ## 7. Incident procedures
@@ -107,6 +107,14 @@ Confirm `wg show`, host/daemon status, disk and worker logs. Preserve Docker/wor
 ### Disk full
 
 Identify consumers with `df -h`, `docker system df`, and per-volume inspection. Pause new work through the supported backend queue controls if available. Preserve PostgreSQL, MinIO, Caddy certificates, registry and worker callback state. Move/copy verified backups off host before removing only known expired backup archives or unreferenced cache data with an approved scoped command. Never run broad `docker system prune --volumes`, `rm -rf`, or delete a named volume to make space. Resume only after free space and alerts are healthy.
+
+### Tournament load and the scrimmage pool (contract 1.3.0)
+
+VPS2 runs `match-tournament-1..3` (only `match:tournament`, cores 0-5) and `match-scrimmage-1` (only `match:scrimmage`, cores 6-7). The scrimmage worker count is the cap on concurrent scrimmage games; add a `match-scrimmage-N` service with its own cores and state volume to raise it, never by pointing a tournament worker at `match:scrimmage`.
+
+The backend refuses new scrimmages (`503 SCRIMMAGE_PAUSED`) while any tournament game is queued or running (`SCRIMMAGE_PAUSE_TOURNAMENT_JOBS`), while `SCRIMMAGE_MAX_PENDING_GAMES` scrimmage games already wait for a worker, or while an admin has paused `match:scrimmage`. Each team may have `SCRIMMAGE_MAX_ACTIVE_PER_TEAM` unfinished scrimmages (`429 SCRIMMAGE_LIMIT`). P2 → Hàng đợi shows the current state. Scrimmages accepted before the pause are not cancelled: they keep running on the scrimmage worker and never move to tournament workers. To also hold scrimmage games that have not started (for example to free VPS2 memory or disk during a final), pause `match:scrimmage` in P2; running games still finish, waiting ones are taken out of RQ and come back on resume.
+
+Switching an existing deployment from `match-worker-1..4`: pause both match queues in P2, wait until P2 shows no running match job, run `ottv2-runner flush-outbox` in each old worker, then `docker compose --env-file .env -f docker-compose.vps2.yml up -d --remove-orphans`. The new services reuse the `match_worker_N_state` volumes, so a callback still pending is delivered by the new worker. Resume the queues and check heartbeats for the new worker IDs.
 
 ### Queue stuck / callback backlog
 

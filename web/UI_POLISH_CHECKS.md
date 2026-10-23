@@ -1,5 +1,25 @@
 # Casual UI/QOL — 2026-10-22
 
+## Thiết kế bổ sung — 2026-10-23
+
+- `src/casual-design.css`: bảng màu Casual riêng, huy hiệu quân có chiều sâu,
+  khung bàn, navigation ngang trong trận, thẻ bot và bố cục responsive.
+- `casual-presentation.tsx`: Crest SVG (bot/người/mục tiêu/cúp), MiniBoard cho
+  lịch sử; `casual.tsx`: chọn bot bằng thẻ, bộ đếm từng loại quân, sảnh mới.
+- `main.tsx`: gắn scope Casual; `tests/casual.test.tsx`: kiểm tra thẻ chọn bot
+  đồng bộ form và tạo đúng ván. README mô tả các thành phần.
+- Kiểm tra cuối: 127 tests đạt, TypeScript và build P1/P2 đạt, diff --check đạt.
+- Trình duyệt thật: chọn thẻ greedy, bắt đầu ván, d3→d4 + lượt bot, đổi sáng/tối,
+  đầu hàng có xác nhận, bảng kết quả và quay về sảnh hoạt động.
+- Điện thoại: viewport yêu cầu 390×844, clientWidth/scrollWidth cùng 375 px;
+  ảnh `evidence/design-mobile.png`, không tràn ngang; đã reset viewport.
+- Ảnh bàn giao: `evidence/design-lobby-dark.png`, `design-board-dark.png`,
+  `design-board-light.png`, `design-result.png`.
+- Không đổi hợp đồng 1.3.0, luật hay engine. Không cần dependency hoặc migration
+  mới. Các thay đổi khôi phục branch có sẵn được giữ nguyên; chưa commit/push.
+- Không chạy lại backend/runner cho phần thiết kế. Màn thắng vẫn được kiểm tra
+  qua unit test; kiểm tra trình duyệt lần này dùng kết quả đầu hàng.
+
 ## Phạm vi
 
 - `src/casual.tsx`: bàn cờ, trình bày lượt người/máy, bố cục, lịch sử, xem lại và chơi lại.
