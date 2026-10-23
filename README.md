@@ -6,13 +6,13 @@ Mỗi phiên AI đọc [AGENTS.md](AGENTS.md), [architecture.md](architecture.md
 
 Phân công A/B/C/D hiện hành được giữ: A làm engine + viewer; B làm runner + starter kits + infra; C làm backend; D làm P1/P2 và workspace web. Nếu đổi phân công, cập nhật đồng thời các README và lịch trước khi giao việc.
 
-Nền tảng dùng ngay nằm ở [contracts/README.md](contracts/README.md): OpenAPI, JSON Schema, dữ liệu mẫu, type Python/TypeScript, mock HTTP và kiểm tra tự động. `integration.md` là bản đồ tích hợp. Backend/engine/worker/web và Compose bên dưới vẫn cần triển khai. Profile `dev-v1` thống nhất luật tạm để làm thử, chưa phải luật thi đấu chính thức.
+Nền tảng dùng ngay nằm ở [contracts/README.md](contracts/README.md): OpenAPI, JSON Schema, dữ liệu mẫu, type Python/TypeScript, mock HTTP và kiểm tra tự động. `integration.md` là bản đồ tích hợp. Repository hiện đã có backend/engine/worker/web và môi trường Compose; xem hướng dẫn chạy từng phần. Profile `dev-v1` thống nhất luật tạm để làm thử, chưa phải luật thi đấu chính thức.
 
 Mẫu giao việc:
 
 ```text
 Đọc AGENTS.md, contracts/README.md và các tài liệu được yêu cầu. Tôi phụ trách <folder>.
-Thực hiện <nhiệm vụ> theo contract v1.1.0, profile dev-v1 và commit <commit>.
+Thực hiện <nhiệm vụ> theo contract v1.3.0, profile dev-v1 và commit <commit>.
 Đối chiếu với <folder liên quan>; không tự đoán quyết định còn mở.
 Bàn giao thay đổi, lệnh kiểm tra đã chạy, kết quả và phụ thuộc còn thiếu.
 ```
@@ -75,3 +75,22 @@ docker compose -f infra/docker-compose.dev.yml up -d   # PostgreSQL, Redis, MinI
 ```
 
 Hướng dẫn chi tiết cho từng phần nằm trong README của thư mục tương ứng.
+
+## Chế độ chơi và tài nguyên (contract 1.3.0)
+
+P1 `/` là trang chọn chế độ, mỗi chế độ chạy ở một nơi:
+
+- **Casual** (`/casual`, cần đăng nhập): bàn cờ và bot mẫu chạy trong trình duyệt, ván lưu trên trình duyệt; server không chạy ván Casual.
+- **Tự luyện** (`/practice`): bot của bạn đấu bot mẫu hoặc bot khác ngay trên máy bằng `python -m ottv2 practice <bot> --vs greedy`; trang P1 mở replay cục bộ để xem.
+- **Arena** (`/arena`): nộp bot, đánh tập và giải đấu trên máy chủ. Đánh tập chạy trên worker riêng, giới hạn số trận cùng lúc và tạm dừng nhận trận mới khi giải đang có việc; giải chính thức có worker riêng. Các đường dẫn chức năng cũ không đổi.
+
+Trên Windows, bật Docker Desktop rồi chạy từ repo root:
+
+```powershell
+uv sync --project backend --frozen
+powershell -ExecutionPolicy Bypass -File infra/start-local-api.ps1
+cd web
+npm.cmd run dev
+```
+
+Mở http://127.0.0.1:5173/ → Casual → đăng nhập/đăng ký → Bắt đầu chơi. Casual chỉ cần API để đăng nhập; Arena chạy bot vẫn cần `infra/start-local-play.ps1`. Nếu đang có API cũ trên cổng 8000, dừng tiến trình API đó trước khi chạy lại; migration `0002` (bảng Casual cũ, nay không dùng) không xóa dữ liệu Arena. Cổng quản trị vẫn dùng `npm.cmd run dev:admin` tại http://127.0.0.1:5174/admin/.

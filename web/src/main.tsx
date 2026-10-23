@@ -20,10 +20,12 @@ import {
 import './style.css';
 import { participantUrl } from './urls';
 import { Login } from './auth-page';
+import { Modes, CasualLobby, CasualPlay } from './casual';
+import { Practice } from './practice';
 declare const __ADMIN__: boolean;
 const admin = __ADMIN__;
 const participantNav = [
-  ['/', 'Tổng quan'],
+  ['/arena', 'Tổng quan Arena'],
   ['/submit', 'Nộp bot'],
   ['/submissions', 'Bản nộp'],
   ['/scrimmage', 'Đánh tập'],
@@ -61,7 +63,11 @@ function App() {
         Đang khôi phục phiên đăng nhập…
       </p>
     );
-  const publicPage = !admin && ['/docs', '/standings', '/bracket'].includes(location.pathname);
+  const casual = !admin && location.pathname.startsWith('/casual');
+  const practice = !admin && location.pathname === '/practice';
+  const modes = !admin && location.pathname === '/';
+  const publicPage =
+    !admin && ['/', '/docs', '/practice', '/standings', '/bracket'].includes(location.pathname);
   if (!user && !publicPage) return <Login initialError={logoutError} admin={admin} />;
   if (admin && user?.role !== 'admin')
     return (
@@ -77,27 +83,59 @@ function App() {
     <div className="shell">
       <aside className="sidebar">
         <a className="logo" href={admin ? '/admin/' : '/'}>
-          ◈ OTTv2<span>ARENA</span>
+          ◈ OTTv2
+          <span>{admin ? 'ARENA' : casual ? 'CASUAL' : practice ? 'LOCAL' : modes ? 'PLAY' : 'ARENA'}</span>
         </a>
-        <p className="nav-caption">{admin ? 'ĐIỀU HÀNH GIẢI' : 'KHÔNG GIAN THI ĐẤU'}</p>
+        <p className="nav-caption">
+          {admin
+            ? 'ĐIỀU HÀNH ARENA'
+            : casual
+              ? 'CASUAL'
+              : practice
+                ? 'TỰ LUYỆN'
+                : modes
+                  ? 'CHỌN CHẾ ĐỘ'
+                  : 'ARENA'}
+        </p>
         <nav>
-          {(admin ? adminNav : participantNav).map(([path, title], index) => (
-            <NavLink end={path === '/'} key={path} to={path}>
-              <span className="nav-number">{String(index + 1).padStart(2, '0')}</span>
-              {title}
-            </NavLink>
-          ))}
+          {!admin && (
+            <>
+              <NavLink end to="/">
+                Chọn chế độ
+              </NavLink>
+              <NavLink to="/casual">Casual · Chơi với máy</NavLink>
+              <NavLink to="/practice">Tự luyện · Trên máy bạn</NavLink>
+              {(casual || practice || modes) && <NavLink to="/arena">Arena · Đấu bot</NavLink>}
+            </>
+          )}
+          {(admin ? adminNav : casual || practice || modes ? [] : participantNav).map(
+            ([path, title], index) => (
+              <NavLink end={path === '/'} key={path} to={path}>
+                <span className="nav-number">{String(index + 1).padStart(2, '0')}</span>
+                {title}
+              </NavLink>
+            ),
+          )}
         </nav>
         <div className="sidebar-foot">
           <span className={`dot ${online ? 'online' : ''}`} />
           {online ? 'Cập nhật trực tiếp' : 'Đang kết nối lại'}
-          <small>Engine 1.0.0 · Contract 1.1.0</small>
+          <small>Engine 1.0.0 · Contract 1.3.0</small>
         </div>
       </aside>
       <div className="workspace">
         <header className="topbar">
           <span>
-            {admin ? 'Trung tâm quản trị' : 'Cổng thí sinh'} <span className="tag">DEV-v1</span>
+            {admin
+              ? 'Quản trị Arena'
+              : casual
+                ? 'Casual · Người đấu máy trên trình duyệt'
+                : practice
+                  ? 'Tự luyện · Chạy trên máy của bạn'
+                  : modes
+                    ? 'OTT v2'
+                    : 'Arena · Đấu trường lập trình'}{' '}
+            <span className="tag">DEV-v1</span>
           </span>
           <div>
             {user?.email ?? 'Khách'}{' '}
@@ -143,7 +181,11 @@ function App() {
               </>
             ) : (
               <>
-                <Route path="/" element={user && <Home user={user} />} />
+                <Route path="/" element={<Modes />} />
+                <Route path="/arena" element={user && <Home user={user} />} />
+                <Route path="/casual" element={user && <CasualLobby user={user} />} />
+                <Route path="/casual/:id" element={user && <CasualPlay user={user} />} />
+                <Route path="/practice" element={<Practice />} />
                 <Route path="/submit" element={<Upload />} />
                 <Route path="/scrimmage" element={<Scrimmage />} />
                 <Route path="/standings" element={<Standings />} />

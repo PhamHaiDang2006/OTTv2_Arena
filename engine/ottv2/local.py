@@ -7,6 +7,10 @@ import sys
 import time
 
 from .api import BotProtocolError
+from .bot import SAMPLE_BOTS
+
+# Imports the same ottv2 package as this process, whether or not it is installed in the interpreter.
+SAMPLE_BOT_SOURCE = "import sys; sys.path.insert(0, sys.argv[1]); from ottv2.bot import main; main(sys.argv[2:])"
 
 
 class ProcessBot:
@@ -77,6 +81,9 @@ class ProcessBot:
 
 
 def bot_command(path):
+    """A bot directory or entry file, or the name of a sample bot (random, greedy) when no such path exists."""
+    if str(path) in SAMPLE_BOTS and not Path(path).exists():
+        return [sys.executable, "-u", "-c", SAMPLE_BOT_SOURCE, str(Path(__file__).resolve().parents[1]), str(path)]
     path = Path(path).resolve()
     if path.is_dir():
         if (path / "main.py").exists():

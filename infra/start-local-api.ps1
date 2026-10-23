@@ -78,7 +78,7 @@ $healthUrl = 'http://127.0.0.1:8000/api/v1/health'
 $current = $null
 try { $current = Invoke-RestMethod $healthUrl -TimeoutSec 3 } catch {}
 if ($current) {
-    if ($current.status -ne 'ok' -or $current.contract_version -ne '1.1.0') {
+    if ($current.status -ne 'ok' -or $current.contract_version -ne '1.3.0') {
         throw 'An older or unhealthy API is using port 8000. Stop that API before restarting.'
     }
     Write-Host 'API is already healthy. Open http://127.0.0.1:5173/ and register.'
@@ -91,7 +91,7 @@ for ($attempt = 0; $attempt -lt 30; $attempt++) {
     if ($apiProcess.HasExited) { throw "API exited. See $errorPath" }
     try {
         $health = Invoke-RestMethod $healthUrl -TimeoutSec 2
-        if ($health.status -eq 'ok' -and $health.contract_version -eq '1.1.0') {
+        if ($health.status -eq 'ok' -and $health.contract_version -eq '1.3.0') {
             $apiProcess.Id | Set-Content -LiteralPath (Join-Path $PSScriptRoot '.local-api.pid')
             Write-Host 'API ready. Accounts persist in the Docker development database.'
             Write-Host 'Start web separately: cd web; npm.cmd run dev'

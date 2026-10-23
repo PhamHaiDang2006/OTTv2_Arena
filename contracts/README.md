@@ -1,10 +1,12 @@
-# Nền tảng hợp đồng dùng chung — v1.1.0
+# Nền tảng hợp đồng dùng chung — v1.3.0
 
-Phiên bản 1.1.0 bổ sung `POST /auth/register` và cho đội pending đánh tập. Hiện có
-86 definitions, 66 operations và 138 fixture cases. Backend/web phải nâng cùng phiên bản;
-engine/job/callback/replay không đổi. Xem mục Tự đăng ký trong [behavior.md](behavior.md).
+Phiên bản 1.3.0 phân bổ lại tài nguyên: Casual chạy trên trình duyệt (gỡ 5 operation
+`/casual/games` của 1.2.0), tự luyện chạy trên máy thí sinh, đánh tập có giới hạn và
+tạm dừng nhận khi giải tải cao. Hiện có 88 definitions, 66 operations và 141 fixture
+cases. Backend/web phải nâng cùng phiên bản; engine/job/callback/replay không đổi. Xem
+mục Casual và Phân bổ tài nguyên trong [behavior.md](behavior.md).
 
-Bốn AI triển khai cùng một phiên bản trong repository. Bộ này định nghĩa giao tiếp và cung cấp mock/fixture; chưa có backend, engine, sandbox hay giao diện sản phẩm. Profile luật `dev-v1` là đề xuất phát triển, **chưa được ban tổ chức xác nhận**. Có thể làm độc lập và chạy thử; không mở giải chính thức với profile này.
+Bốn AI triển khai cùng một phiên bản trong repository. Bộ này định nghĩa giao tiếp và cung cấp mock/fixture; implementation nằm ở backend, engine, runner và web. Profile luật `dev-v1` là đề xuất phát triển, **chưa được ban tổ chức xác nhận**. Có thể làm độc lập và chạy thử; không mở giải chính thức với profile này.
 
 ## Nguồn sự thật
 
@@ -64,7 +66,7 @@ Mock có `/api/v1/*`, `/openapi.json`, `/fixtures/replay.json`. D cấu hình de
 | C | OpenAPI, DTO, callback/WS, state machine, job fixtures | Backend + migration + enqueue adapter; kiểm tra response thật bằng schema; không tự sinh hợp đồng khác |
 | D | Mock HTTP, generated TS, client helper, viewer props, event fixtures | P1/P2/shared web; dùng viewer stub đúng props đến khi A bàn giao |
 
-Ví dụ prompt: “Đọc AGENTS.md và contracts/README.md, làm folder được giao theo contract v1.1.0 và dev-v1. Dùng fixture/mock cho phụ thuộc chưa có. Không sửa hợp đồng để hợp thức hóa implementation lệch. Chạy validator, kiểm thử phần mình và ghi việc chưa nối thật.”
+Ví dụ prompt: “Đọc AGENTS.md và contracts/README.md, làm folder được giao theo contract v1.3.0 và dev-v1. Dùng fixture/mock cho phụ thuộc chưa có. Không sửa hợp đồng để hợp thức hóa implementation lệch. Chạy validator, kiểm thử phần mình và ghi việc chưa nối thật.”
 
 ## Thay đổi và nghiệm thu
 

@@ -10,7 +10,17 @@ from app import contract
 from app.db import session_scope
 from app.models import Outbox, Team, User
 from app.queue import deliver
-from tests.helpers import PY_BOT, WORKER, make_admin, make_ready_submission, make_team, rq_job_ids, upload, zip_bytes
+from tests.helpers import (
+    PY_BOT,
+    WORKER,
+    make_admin,
+    make_ready_submission,
+    make_team,
+    rq_job_ids,
+    session_origin,
+    upload,
+    zip_bytes,
+)
 
 SESSION_OPS = {'login', 'refresh', 'logout'}  # Origin/cookie rules tested in test_auth.py
 
@@ -48,8 +58,17 @@ def test_role_matrix(api, roles, op):
     method, path, kwargs = _request(op)
     for role, headers in roles.items():
         extra = {'X-Worker-Lease': str(uuid.uuid4())} if op['role'] == 'worker' else {}
-        response = api.request(method, path, headers={**headers, **extra}, **kwargs)
+        request_kwargs = kwargs
+        if op['operationId'] == 'register':
+            # Public registration still requires a trusted browser Origin. Use a new
+            # email per caller so duplicate-account handling cannot mask authorization.
+            extra.update(session_origin())
+            request_kwargs = {**kwargs, 'json': {**kwargs['json'], 'email': f'{role}@registration.example.test'}}
+        response = api.request(method, path, headers={**headers, **extra}, **request_kwargs)
         status = response.status_code
+        if op['operationId'] == 'register':
+            assert status == 201, (role, status, response.text)
+            assert response.json()['user']['role'] == 'captain'
         if role in ALLOWED[op['role']]:
             assert status not in (401, 403) or (role == 'admin' and op['operationId'] in (
                 'createSubmission', 'createScrimmage', 'scrimmageQuota')), (role, status, response.text)

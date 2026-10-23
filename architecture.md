@@ -24,7 +24,7 @@ flowchart TB
     end
     subgraph VPS2[VPS 2 · thi đấu]
         BW[Build worker]
-        MW[Match worker ×4]
+        MW[Match worker: giải ×3, đánh tập ×1]
         REG[(Registry nội bộ)]
         MW --> ENG[Engine OTTv2]
         ENG <-->|stdin/stdout| BX[Bot Xanh · container]
@@ -49,11 +49,11 @@ Hai VPS nối với nhau qua **WireGuard**. Redis, MinIO và API nội bộ ch�
 | --- | --- | --- | --- |
 | Engine | `engine/` | VPS 2, trong match worker | Giữ trạng thái thật của ván, kiểm tra luật, đo đồng hồ, ghi replay |
 | Build worker | `runner/` | VPS 2 | Biên dịch bản nộp thành image, chạy thử một ván với bot ngẫu nhiên |
-| Match worker | `runner/` | VPS 2 | Chạy một trận: khởi động 2 container bot, gọi engine, đẩy kết quả |
+| Match worker | `runner/` | VPS 2 | Chạy một trận: khởi động 2 container bot, gọi engine, đẩy kết quả. Worker giải và worker đánh tập tách riêng |
 | Backend | `backend/` | VPS 1 | Xác thực, phân quyền, quản lý đội, bản nộp, trận đấu, logic giải |
 | P1, P2 | `web/` | VPS 1 (tệp tĩnh) | Giao diện thí sinh và quản trị |
 | Replay viewer | `web/replay-viewer/` | Trình duyệt | Phát lại ván từ tệp replay |
-| Starter kits | `starter-kits/` | Máy thí sinh | Thư viện giao thức, bot mẫu, engine chạy cục bộ |
+| Starter kits | `starter-kits/` | Máy thí sinh | Thư viện giao thức, bot mẫu, engine chạy cục bộ (tự luyện) |
 
 ## 3. Luồng đầu cuối
 
@@ -230,8 +230,8 @@ logs/{game_id}/red.stderr.log
 | Hàng đợi | Nội dung việc | Người xử lý |
 | --- | --- | --- |
 | `build` | `{submission_id, language, source_key}` | Build worker |
-| `match:tournament` | `{game_id, blue_image, red_image, map_id, engine_version}` | Match worker, ưu tiên cao |
-| `match:scrimmage` | như trên | Match worker, chỉ khi `match:tournament` rỗng |
+| `match:tournament` | `{game_id, blue_image, red_image, map_id, engine_version}` | Chỉ worker giải (dành riêng) |
+| `match:scrimmage` | như trên | Chỉ worker đánh tập; số worker là trần số ván chạy cùng lúc |
 
 Việc thất bại vì hạ tầng (`INFRA_ERROR`) được backend tạo attempt mới và đẩy lại tối đa 3 lần sau lần đầu rồi báo quản trị viên. Worker không tự tạo attempt. Gửi lại callback do mất kết nối giữ nguyên job_id/payload, không chạy lại bot. Quy tắc dedup và callback cũ nằm ở integration mục 4.
 
@@ -277,7 +277,7 @@ WebSocket `/ws`: sau khi kết nối, máy khách đăng ký kênh `team:{id}` (
 | Máy | Cấu hình | Dịch vụ |
 | --- | --- | --- |
 | VPS 1 | 2 vCPU, 4 GB RAM, 80 GB SSD | Caddy, web, backend, PostgreSQL, Redis, MinIO |
-| VPS 2 | 8 vCPU, 8 GB RAM, 100 GB SSD | build worker, 4 match worker, registry |
+| VPS 2 | 8 vCPU, 8 GB RAM, 100 GB SSD | build worker, 3 match worker giải, 1 match worker đánh tập, registry |
 
 - Sao lưu PostgreSQL mỗi giờ trong thời gian giải, đồng bộ MinIO ra kho ngoài mỗi ngày.
 - Cảnh báo khi: hàng đợi dài quá 50 việc, tỷ lệ `INFRA_ERROR` quá 2%, đĩa còn dưới 20%, worker không báo nhịp tim quá 5 phút.
@@ -299,3 +299,14 @@ WebSocket `/ws`: sau khi kết nối, máy khách đăng ký kênh `team:{id}` (
 | ADR-011 | Chạy lại tạo bản ghi `games` mới với `attempt + 1` | Giữ dấu vết, không mất kết quả cũ | Mọi truy vấn lấy kết quả phải chọn `attempt` lớn nhất |
 
 Từ contract 1.1.0, đăng ký công khai tạo captain và đội pending; pending được đánh tập, approved mới được bốc thăm giải. Chi tiết tại contracts/behavior.md.
+
+## Chế độ chơi và phân bổ tài nguyên từ contract 1.3.0
+
+P1 `/` chọn chế độ; Arena dashboard ở `/arena`, các route Arena khác và P2 giữ nguyên.
+
+- **Casual** (`/casual`, cần đăng nhập): bàn cờ và bot mẫu random/greedy chạy trong trình duyệt bằng bản TypeScript của luật dev-v1 trong `@ottv2/replay-viewer`, kiểm chéo với engine bằng fixture. Ván lưu trong localStorage theo tài khoản; server không nhận nước đi, không chạy bot. Contract 1.2.0 từng có API `/casual/games` và bảng `casual_games`; 1.3.0 gỡ API, giữ bảng không dùng để không mất dữ liệu cũ.
+- **Tự luyện** (`/practice`, công khai): bot của thí sinh đấu bot mẫu hoặc một bot khác trên máy thí sinh bằng `python -m ottv2 practice`, dùng chính engine Python. P1 chỉ hướng dẫn và mở file replay cục bộ để xem; không upload.
+- **Đánh tập giữa các đội**: vẫn chạy trên VPS 2 nhưng trên worker riêng của `match:scrimmage`, số worker là trần số ván cùng lúc. Backend giới hạn số trận chưa xong của mỗi đội và tạm dừng nhận trận mới khi giải có việc, khi tồn đọng đánh tập vượt ngưỡng hoặc khi admin tạm dừng hàng đợi.
+- **Giải chính thức**: worker và lõi CPU riêng chỉ nghe `match:tournament`. Trận đánh tập đã nhận trước lúc tạm dừng chạy hết trên worker đánh tập, không bị hủy và không chiếm worker giải.
+
+Chi tiết lỗi, ngưỡng và trường API ở mục Phân bổ tài nguyên của [contracts/behavior.md](contracts/behavior.md).

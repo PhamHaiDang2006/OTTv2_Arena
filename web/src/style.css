@@ -744,3 +744,126 @@ progress {
   accent-color: #24583e;
   margin-right: 12px;
 }
+.mode-cards {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(260px, 1fr));
+  gap: 24px;
+}
+.mode-card {
+  padding: 32px;
+  border-top: 5px solid #b27d32;
+}
+.mode-card h2 {
+  font-size: 32px;
+  margin: 12px 0;
+}
+.casual-mode {
+  border-top-color: #27795d;
+  background: #edf6ed;
+}
+.practice-mode {
+  border-top-color: #3d5f8f;
+  background: #eef2f8;
+}
+.casual-layout {
+  display: grid;
+  grid-template-columns: minmax(0, 640px) minmax(220px, 1fr);
+  gap: 24px;
+  align-items: start;
+}
+.casual-board {
+  display: grid;
+  grid-template-columns: repeat(9, minmax(0, 1fr));
+  width: 100%;
+  border: 3px solid #345d4c;
+  border-radius: 10px;
+  overflow: hidden;
+}
+.casual-board .casual-square {
+  position: relative;
+  aspect-ratio: 1;
+  min-width: 0;
+  padding: 0;
+  border: 1px solid #cbd5c7;
+  border-radius: 0;
+  background: #f3f3df;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+.casual-board .dark {
+  background: #d8e2cf;
+}
+.casual-board .casual-square:disabled {
+  opacity: 1;
+  cursor: default;
+}
+.casual-square small {
+  position: absolute;
+  top: 0;
+  left: 3px;
+  font-size: clamp(8px, 1vw, 11px);
+  color: #4b5e50;
+  font-weight: 400;
+}
+.casual-square span {
+  font-size: clamp(18px, 3.5vw, 40px);
+  line-height: 1;
+}
+.casual-board .BLUE {
+  color: #1d64bd;
+}
+.casual-board .RED {
+  color: #b4323c;
+}
+.casual-board .goal {
+  background: #f9e4aa;
+}
+.casual-board .last-move {
+  box-shadow: inset 0 0 0 2px #b09547;
+}
+.casual-board .selected {
+  background: #a5cfbf;
+  box-shadow: inset 0 0 0 3px #135d4f;
+}
+.casual-board .target {
+  background: #b6e5bc;
+  box-shadow: inset 0 0 0 2px #277844;
+  cursor: pointer;
+}
+.casual-square:focus-visible {
+  outline: 3px solid #172e64;
+  outline-offset: -4px;
+  z-index: 1;
+}
+.casual-status {
+  font-size: 18px;
+  font-weight: 700;
+}
+.casual-history {
+  display: grid;
+  gap: 12px;
+}
+.casual-history a {
+  display: flex;
+  flex-wrap: wrap;
+  justify-content: space-between;
+  gap: 12px;
+}
+.casual-moves {
+  max-height: 320px;
+  overflow-y: auto;
+  padding-left: 30px;
+}
+.casual-moves li {
+  padding: 4px;
+}
+@media (max-width: 900px) {
+  .mode-cards,
+  .casual-layout {
+    grid-template-columns: 1fr;
+  }
+  .casual-square span {
+    font-size: clamp(18px, 6vw, 38px);
+  }
+}

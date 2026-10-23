@@ -1,6 +1,6 @@
 # Hợp đồng tích hợp cho bốn người làm bằng AI
 
-Baseline triển khai **contract v1.1.0** ngày 2026-10-15. Bộ artifact thực tế đã có trong [contracts/README.md](contracts/README.md): OpenAPI, JSON Schema, fixture, type Python/TypeScript, mock HTTP và validator. Engine/backend/worker/web sản phẩm chưa được triển khai.
+Baseline hiện hành **contract v1.3.0** ngày 2026-10-22. Bộ artifact thực tế đã có trong [contracts/README.md](contracts/README.md): OpenAPI, JSON Schema, fixture, type Python/TypeScript, mock HTTP và validator. Engine/backend/worker/web đã có implementation; xem mục bàn giao 1.3.0 và README từng phần để chạy.
 
 ## 1. Nguồn sự thật
 
@@ -88,3 +88,20 @@ AI được dùng dev-v1 cho implementation/test phát triển, phải giữ nh�
 ## Cập nhật đăng ký 1.1.0
 
 Backend + web + contracts phải đi cùng nhau: POST /auth/register trả Auth + cookie, tạo đội pending có quyền đấu tập. Mock đã có operation/fixture. Không thay job/callback, engine hay replay. Tái sinh bằng node contracts/build.mjs; không cần migration.
+
+## Bàn giao Casual 1.2.0 — 2026-10-22 (đã thay bằng 1.3.0)
+
+A cung cấp public `ottv2.outcome` dùng chung quy tắc kết thúc; C sở hữu bảng/migration `0002`, 5 endpoint `/casual/games` và bot tích hợp; D sở hữu màn chọn chế độ, lobby và bàn cờ. Phân công A/B/C/D không đổi. B không cần sửa worker/job; image backend thêm engine từ local path theo uv.lock.
+
+Merge contract/build + artifacts, public engine export, backend migration và web cùng nhau. Chạy `uv sync --project backend --frozen` rồi migrate trước khi khởi động API mới. HTTP contract 1.2.0 có 91 definitions, 71 operations, 149 fixtures; engine version 1.0.0, dev-v1, job/callback/replay không đổi. Arena URL chức năng cũ giữ nguyên, dashboard P1 chuyển `/` → `/arena`. Kiểm thử ở backend/tests/test_casual.py và web/tests/casual.test.tsx; cần chạy toàn bộ suite để đối chiếu producer/consumer.
+
+## Bàn giao phân bổ tài nguyên 1.3.0 — 2026-10-22
+
+Casual chạy trên trình duyệt, tự luyện chạy trên máy thí sinh, đánh tập và giải dùng worker riêng. Phân công A/B/C/D không đổi; các phần chạm tới:
+
+- **A** (engine, viewer): `@ottv2/replay-viewer` export luật dev-v1 bằng TypeScript (`legalMoves`, `isLegal`, `outcome`, `tiebreak`; chữ ký trong `contracts/viewer-api.ts`); `engine/fixtures/outcomes.json` sinh từ `generate_fixtures.py`; `python -m ottv2 practice` và bot mẫu `python -m ottv2.bot`. Engine 1.0.0, protocol, clock, replay không đổi.
+- **B** (runner, kit, infra): VPS2 tách `match-tournament-1..3` và `match-scrimmage-1`, giữ tên volume outbox cũ; kit runner chuyển tiếp lệnh `practice`; biến `SCRIMMAGE_*` cho VPS1. Code worker, job, callback không đổi.
+- **C** (backend): gỡ 5 operation Casual, giữ bảng `casual_games`; thêm kiểm soát nhận trận đánh tập (`SCRIMMAGE_PAUSED`, `SCRIMMAGE_LIMIT`) và trạng thái nhận trận trong quota/queue. Không có migration mới.
+- **D** (web): Casual dùng luật và bot trong trình duyệt, trang `/practice`, trạng thái nhận trận ở P1 `/scrimmage` và P2 Hàng đợi.
+
+Merge contract + backend + web cùng nhau (web 1.2.0 gọi API Casual đã bị gỡ; backend 1.2.0 không trả trường admission). Engine/kit và infra có thể merge riêng; đổi tên service VPS2 theo RUNBOOK mục 7. HTTP contract 1.3.0 có 88 definitions, 66 operations, 141 fixtures.

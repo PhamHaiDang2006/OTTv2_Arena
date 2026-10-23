@@ -42,7 +42,10 @@ D.SubmissionAccepted=obj({id,status:{const:'queued'}});
 D.BuildLog=obj({submission_id:id,status:ref('SubmissionStatus'),text:s(),truncated:bool,updated_at:date});
 D.ScrimmageCreate=obj({opponent_team_id:id});
 D.MatchAccepted=obj({match_id:id,status:{const:'queued'}});
-D.Quota=obj({limit:{const:60},used:n(),remaining:n(),resets_at:date});
+D.ScrimmagePauseReason=en('queue_paused','tournament_load','scrimmage_backlog');
+D.ScrimmageAdmission=obj({accepting:bool,paused_reason:nullable(ref('ScrimmagePauseReason'))});
+D.ScrimmageAdmission.allOf=[{if:{properties:{accepting:{const:true}}},then:{properties:{paused_reason:{type:'null'}}},else:{properties:{paused_reason:ref('ScrimmagePauseReason')}}}];
+D.Quota=obj({limit:{const:60},used:n(),remaining:n(),resets_at:date,active:n(),active_limit:n(1),admission:ref('ScrimmageAdmission')});
 D.SignedUrl=obj({url:s({format:'uri'}),expires_at:date});
 D.Result=obj({winner:ref('Side'),reason:ref('Reason'),plies:n()});
 D.Game=obj({id,match_id:id,game_index:n(1),attempt:n(1),is_current:bool,blue_submission_id:id,red_submission_id:id,map_id:{const:'standard'},engine_version:version,ruleset_id:{const:'dev-v1'},status:ref('GameStatus'),result:nullable(ref('Result')),duration_ms:nullable(n()),replay_available:bool});
@@ -66,7 +69,7 @@ D.Override=obj({winner_team_id:nullable(id),score_a:n(),score_b:n(),reason:text}
 D.Standing=obj({group_id:id,team:ref('TeamPublic'),rank:n(1),played:n(),won:n(),drawn:n(),lost:n(),points:n(),game_diff:{type:'integer'},games_won:n(),winning_plies:n()});
 D.BracketSlot=obj({round:en('quarterfinal','semifinal','third_place','final'),slot_index:n(1),source_rule:text,team:nullable(ref('TeamPublic')),match_id:nullable(id)});
 D.Worker=obj({id:text,kind:en('build','match'),last_seen_at:date,status:en('idle','busy','offline'),job_id:nullable(id)});
-D.Queue=obj({queues:arr(obj({name:en('build','match:tournament','match:scrimmage'),paused:bool,queued:n(),running:n(),failed:n()})),workers:arr(ref('Worker'))});
+D.Queue=obj({queues:arr(obj({name:en('build','match:tournament','match:scrimmage'),paused:bool,queued:n(),running:n(),failed:n()})),workers:arr(ref('Worker')),scrimmage_admission:ref('ScrimmageAdmission')});
 D.QueueControl=obj({name:en('build','match:tournament','match:scrimmage'),paused:bool,reason:text});
 D.SourceTree=obj({submission_id:id,files:arr(obj({path:key,size_bytes:n(),language:s()}))});
 D.SourceFile=obj({submission_id:id,path:key,content:s(),truncated:bool});
@@ -75,9 +78,9 @@ D.Similarity=obj({submission_a:id,submission_b:id,score:{type:'number',minimum:0
 D.Audit=obj({id,actor_user_id:nullable(id),action:text,target_type:text,target_id:nullable(id),payload:{type:'object',additionalProperties:true},created_at:date});
 D.ImportRequest=obj({csv:s({minLength:1,maxLength:1048576})});
 D.ImportResult=obj({created:arr(ref('TeamPublic')),errors:arr(obj({row:n(1),code:text,message:text}))});
-D.Capabilities=obj({contract_version:{const:'1.1.0'},languages:arr(ref('Language')),max_upload_bytes:{const:1048576},max_files:{const:50},ruleset_id:{const:'dev-v1'},ruleset_status:{const:'development'},tournament_enabled:bool});
+D.Capabilities=obj({contract_version:{const:'1.3.0'},languages:arr(ref('Language')),max_upload_bytes:{const:1048576},max_files:{const:50},ruleset_id:{const:'dev-v1'},ruleset_status:{const:'development'},tournament_enabled:bool});
 D.Docs=obj({rules_markdown:s(),protocol_markdown:s(),starter_kits:arr(obj({language:ref('Language'),engine_version:version,url:s({format:'uri'}),sha256:s({pattern:'^[a-f0-9]{64}$'})}))});
-D.Health=obj({status:en('ok','degraded'),contract_version:{const:'1.1.0'}});
+D.Health=obj({status:en('ok','degraded'),contract_version:{const:'1.3.0'}});
 D.Ack=obj({accepted:{const:true}});
 const player=obj({team:s({pattern:'^[a-z0-9]+(?:-[a-z0-9]+)*$'}),submission_id:id});
 D.Players=obj({BLUE:player,RED:player});
@@ -110,7 +113,7 @@ const wrappers={'build-job':'BuildJob','match-job':'MatchJob','build-result':'Bu
 for(const [file,name] of Object.entries(wrappers))write(`schemas/${file}.schema.json`,{$schema:'https://json-schema.org/draft/2020-12/schema',$ref:`common.schema.json#/$defs/${name}`});
 const apiRef=name=>({$ref:`#/components/schemas/${name}`});
 function apiConvert(x){if(Array.isArray(x))return x.map(apiConvert);if(x&&typeof x==='object')return Object.fromEntries(Object.entries(x).map(([k,v])=>[k,k==='$ref'?v.replace('#/$defs/','#/components/schemas/'):apiConvert(v)]));return x;}
-const api={openapi:'3.1.0',info:{title:'OTTv2 Arena Contract',version:'1.1.0',description:'Development integration baseline; dev-v1 rules are provisional. JSON encoding is valid YAML 1.2. Generated from contracts/build.mjs.'},servers:[{url:'/api/v1'}],security:[{bearerAuth:[]}],paths:{},components:{securitySchemes:{bearerAuth:{type:'http',scheme:'bearer',bearerFormat:'JWT'},workerAuth:{type:'http',scheme:'bearer',description:'Worker credential, never a user JWT'},refreshCookie:{type:'apiKey',in:'cookie',name:'ottv2_refresh'}},schemas:apiConvert(D)}};
+const api={openapi:'3.1.0',info:{title:'OTTv2 Arena Contract',version:'1.3.0',description:'Development integration baseline; dev-v1 rules are provisional. JSON encoding is valid YAML 1.2. Generated from contracts/build.mjs.'},servers:[{url:'/api/v1'}],security:[{bearerAuth:[]}],paths:{},components:{securitySchemes:{bearerAuth:{type:'http',scheme:'bearer',bearerFormat:'JWT'},workerAuth:{type:'http',scheme:'bearer',description:'Worker credential, never a user JWT'},refreshCookie:{type:'apiKey',in:'cookie',name:'ottv2_refresh'}},schemas:apiConvert(D)}};
 const operations=[];
 function op(method,p,operationId,response,{request=null,status=200,role='member',list=false,query={},description='',multipart=false}={}){
  const parameters=[];
@@ -211,7 +214,7 @@ const examples={
  WorkerHeartbeat:{worker_id:'match-1',kind:'match',job_id:null,sent_at:now},
  SignedUrl:{url:'http://127.0.0.1:4010/fixtures/replay.json',expires_at:'2099-01-01T00:00:00Z'},
  Error:{error:{code:'INVALID_REQUEST',message:'Dữ liệu không hợp lệ',details:{}},request_id:U(9)},
- Capabilities:{contract_version:'1.1.0',languages:['python','cpp'],max_upload_bytes:1048576,max_files:50,ruleset_id:'dev-v1',ruleset_status:'development',tournament_enabled:false},
+ Capabilities:{contract_version:'1.3.0',languages:['python','cpp'],max_upload_bytes:1048576,max_files:50,ruleset_id:'dev-v1',ruleset_status:'development',tournament_enabled:false},
  Auth:{access_token:'mock-captain-token',token_type:'bearer',expires_in:900,user:null},
  TeamCreate:{name:'Đội A',slug:'doi-a',captain_email:'captain@example.test',seed:1},
  AdminTeamPatch:{status:'approved',reason:'Duyệt đội'},
@@ -228,7 +231,7 @@ examples.Team={...examples.TeamPublic,status:'approved',is_locked:false,seed:1,g
 examples.Game={id:U(8),match_id:U(10),game_index:1,attempt:1,is_current:true,blue_submission_id:U(3),red_submission_id:U(4),map_id:'standard',engine_version:'1.0.0',ruleset_id:'dev-v1',status:'finished',result:examples.Result,duration_ms:20,replay_available:true};
 examples.Match={id:U(10),tournament_id:null,round_id:null,stage:'scrimmage',team_a:examples.TeamPublic,team_b:{id:U(11),name:'Đội B',slug:'doi-b'},best_of:'two_games',status:'running',winner_team_id:null,score_a:0,score_b:1,games:[examples.Game]};
 examples.Submission={id:U(3),team_id:U(2),language:'python',status:'ready',sha256:'a'.repeat(64),submitted_at:now,build_error:null};
-examples.Quota={limit:60,used:1,remaining:59,resets_at:'2026-10-15T17:00:00Z'};
+examples.Quota={limit:60,used:1,remaining:59,resets_at:'2026-10-15T17:00:00Z',active:1,active_limit:2,admission:{accepting:true,paused_reason:null}};
 function sample(schema,name=''){
  if(schema.$ref){const name=schema.$ref.split('/').pop();return structuredClone(examples[name]??sample(D[name],name));}
  if('const'in schema)return schema.const;
@@ -251,13 +254,16 @@ examples.Register={email:'new-captain@example.test',password:'example-password',
 for(const name of Object.keys(D))if(!(name in examples))examples[name]=sample(D[name],name);
 for(const name of Object.keys(D).filter(x=>x.endsWith('Page'))){examples[name]={items:[examples[name.slice(0,-4)]],page:1,page_size:20,total:1};}
 // Useful UI examples override empty collections without claiming tournament execution.
-examples.Queue={queues:['build','match:tournament','match:scrimmage'].map(name=>({name,paused:false,queued:0,running:0,failed:0})),workers:[{id:'match-1',kind:'match',last_seen_at:now,status:'idle',job_id:null}]};
+examples.Queue={queues:['build','match:tournament','match:scrimmage'].map(name=>({name,paused:false,queued:0,running:0,failed:0})),workers:[{id:'match-1',kind:'match',last_seen_at:now,status:'idle',job_id:null}],scrimmage_admission:{accepting:true,paused_reason:null}};
 examples.MatchAccepted={match_id:U(10),status:'queued'};examples.SubmissionAccepted={id:U(3),status:'queued'};
 examples.ActiveBot={team_id:U(2),scope:'scrimmage',submission_id:U(3)};
 const cases=[];
 for(const [file,name] of Object.entries(wrappers)){write(`examples/${file}.json`,examples[name]);cases.push({file:`examples/${file}.json`,schema:`schemas/${file}.schema.json`,valid:true});}
 // Status branch fixtures; both positive and negative examples are validated in CI.
 function fixture(file,name,value,valid=true,semantic=null){write(`examples/${file}.json`,value);cases.push({file:`examples/${file}.json`,definition:name,valid,...(semantic?{semantic}:{})});}
+fixture('scrimmage-paused','Quota',{...examples.Quota,admission:{accepting:false,paused_reason:'tournament_load'}});
+fixture('invalid-scrimmage-paused-without-reason','Quota',{...examples.Quota,admission:{accepting:false,paused_reason:null}},false);
+fixture('invalid-scrimmage-accepting-with-reason','Quota',{...examples.Quota,admission:{accepting:true,paused_reason:'scrimmage_backlog'}},false);
 fixture('invalid-register-password','Register',{...examples.Register,password:'short'},false);
 fixture('invalid-register-role','Register',{...examples.Register,role:'admin'},false);
 fixture('invalid-register-team','Register',{...examples.Register,team_name:'   '},false);
@@ -333,5 +339,5 @@ output('generated/operations.ts','// GENERATED. Use with your shared authenticat
 // Upload is added after the initial schema list, so write common last.
 write('schemas/common.schema.json',{$schema:'https://json-schema.org/draft/2020-12/schema',$defs:D});
 write('openapi.yaml',api);write('operations.json',index);write('examples/manifest.json',cases);
-write('version.json',{contract_version:'1.1.0',schema_version:1,replay_format:1,protocol_version:1,ruleset_id:'dev-v1',ruleset_status:'development'});
+write('version.json',{contract_version:'1.3.0',schema_version:1,replay_format:1,protocol_version:1,ruleset_id:'dev-v1',ruleset_status:'development'});
 console.log(`Generated ${Object.keys(D).length} definitions, ${operations.length} operations, ${cases.length} fixture cases.`);

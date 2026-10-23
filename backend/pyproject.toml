@@ -4,6 +4,7 @@ version = "0.1.0"
 description = "OTTv2 Arena backend: REST + WebSocket API, tournament logic, worker callbacks"
 requires-python = ">=3.12,<3.13"
 dependencies = [
+    "ottv2==1.0.0",
     "alembic>=1.20.0",
     "argon2-cffi>=25.1.0",
     "boto3>=1.43.114",
@@ -24,6 +25,9 @@ dependencies = [
 
 [tool.uv]
 package = false
+
+[tool.uv.sources]
+ottv2 = { path = "../engine" }
 
 [dependency-groups]
 dev = [

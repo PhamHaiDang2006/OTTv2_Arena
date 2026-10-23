@@ -14,7 +14,7 @@ from app.config import get_settings
 from app.db import get_db
 from app.deps import Actor, OpInput, contract_input, require_member, require_team
 from app.errors import ApiError, conflict, not_found
-from app.matches import service
+from app.matches import admission, service
 from app.models import ActiveBot, Game, Match, Submission, Team
 from app.queue import commit
 from app.storage import get_storage
@@ -40,6 +40,11 @@ def _quota(db: Session, team_id) -> dict:
             'resets_at': iso(end)}
 
 
+def _quota_body(db: Session, team_id) -> dict:
+    return {**_quota(db, team_id), 'active': admission.active_matches(db, team_id),
+            'active_limit': get_settings().scrimmage_max_active_per_team, 'admission': admission.admission(db)}
+
+
 @router.post('/scrimmages', status_code=202)
 def create_scrimmage(request: Request, actor: Actor = Depends(require_member),
                      inp: OpInput = Depends(contract_input('createScrimmage')), db: Session = Depends(get_db)):
@@ -61,6 +66,7 @@ def create_scrimmage(request: Request, actor: Actor = Depends(require_member),
         raise conflict('SUBMISSION_NOT_READY', 'Đội chưa có bot đánh tập sẵn sàng')
     if _quota(db, team.id)['remaining'] <= 0:
         raise ApiError(429, 'QUOTA_EXCEEDED', details=_quota(db, team.id))
+    admission.ensure_can_create(db, team.id)
     opponent_bot = _ready_scrimmage_bot(db, opponent.id)
     match = Match(stage='scrimmage', team_a_id=team.id, team_b_id=opponent.id, best_of='two_games', status='queued',
                   created_by_team_id=team.id)
@@ -77,7 +83,7 @@ def create_scrimmage(request: Request, actor: Actor = Depends(require_member),
 
 @router.get('/scrimmages/quota')
 def scrimmage_quota(actor: Actor = Depends(require_member), db: Session = Depends(get_db)):
-    return _quota(db, require_team(actor))
+    return _quota_body(db, require_team(actor))
 
 
 @router.get('/scrimmages')

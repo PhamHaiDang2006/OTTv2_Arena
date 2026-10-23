@@ -28,6 +28,10 @@ class Settings(BaseSettings):
     frontend_origins: str = ''
     allow_development_tournaments: bool = False
     ruleset_id: str = 'dev-v1'
+    # Scrimmage admission (contracts/behavior.md, contract 1.3.0); 0 disables the tournament-load pause.
+    scrimmage_max_active_per_team: int = 2
+    scrimmage_max_pending_games: int = 12
+    scrimmage_pause_tournament_jobs: int = 1
 
     # Backend-only settings (not yet in infra/.env.example).
     engine_version: str = '1.0.0'

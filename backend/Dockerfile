@@ -2,6 +2,7 @@ FROM python:3.12-slim-bookworm
 WORKDIR /arena
 RUN pip install --no-cache-dir uv==0.13.1
 COPY backend/pyproject.toml backend/uv.lock backend/.python-version /arena/backend/
+COPY engine /arena/engine
 RUN uv sync --project backend --frozen --no-dev --python /usr/local/bin/python --no-python-downloads
 COPY contracts /arena/contracts
 COPY architecture.md /arena/architecture.md

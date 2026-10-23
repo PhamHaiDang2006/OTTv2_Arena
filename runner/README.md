@@ -30,9 +30,18 @@ docker build -t ottv2-worker:local .
 ottv2-runner validate-build path\to\build-job.json
 ottv2-runner validate-match path\to\match-job.json
 ottv2-runner-worker --queue build
-ottv2-runner-worker --queue match:tournament --queue match:scrimmage
+ottv2-runner-worker --queue match:tournament
+ottv2-runner-worker --queue match:scrimmage
 ottv2-runner flush-outbox
 ```
+
+From contract 1.3.0 production runs separate pools: tournament workers listen
+only on `match:tournament` and scrimmage workers only on `match:scrimmage`, so
+the scrimmage worker count caps concurrent scrimmage games and official games
+never wait behind a scrimmage (`infra/docker-compose.vps2.yml`). One process may
+still list both queues for local development (`docker-compose.play.yml`); RQ
+then takes tournament jobs first. Set `RUNNER_WORKER_ID` to show the pool in
+the admin worker view. The worker code, job and callback payloads are unchanged.
 
 Public RQ callables are `ottv2_runner.jobs.build_submission(payload)` and
 `ottv2_runner.jobs.run_match(payload)`. CLI validation uses the strict v1 DTO

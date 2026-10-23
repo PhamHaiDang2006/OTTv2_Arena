@@ -85,6 +85,16 @@ class User(Base):
     )
 
 
+class CasualGame(Base):
+    """Kept from contract 1.2.0 so saved games are not deleted. Since 1.3.0 Casual runs in the browser and the
+    backend neither reads nor writes this table."""
+    __tablename__ = 'casual_games'
+    id: Mapped[uuid.UUID] = _id()
+    user_id: Mapped[uuid.UUID] = mapped_column(ForeignKey('users.id'), nullable=False, index=True)
+    state: Mapped[dict] = mapped_column(JSONB, nullable=False)
+    created_at: Mapped[datetime] = _now()
+
+
 class Team(Base):
     __tablename__ = 'teams'
     id: Mapped[uuid.UUID] = _id()

@@ -1,4 +1,4 @@
-# Hành vi chuẩn v1.1.0
+# Hành vi chuẩn v1.3.0
 
 Đây là quy ước kỹ thuật được chọn cho việc triển khai độc lập. Schema quyết định tên/kiểu trường; tài liệu này quyết định quyền, trạng thái và các ràng buộc nhiều trường. Không coi mock HTTP là implementation của các quy tắc dưới đây.
 
@@ -11,14 +11,14 @@
 - Register/login/refresh/logout yêu cầu Origin đúng danh sách frontend cấu hình; thiếu/sai Origin bị 403 đối với browser session API. Không dùng CORS wildcard với credentials. Chỉ nhận JSON cho login, không nhận form URL encoded. Refresh/logout dùng cookie, không cần JWT còn hạn. Logout xóa cookie cùng path và thu hồi token; token đã bị thu hồi trả 204 khi cookie có mặt (idempotent), không lộ giá trị token.
 - Frontend giữ access token trong memory, refresh một lần cho 401, gom các refresh đồng thời. Refresh lỗi thì xóa phiên và về login. Không tự retry mutation trừ giữ nguyên Idempotency-Key.
 - Idempotency-Key UUID bắt buộc cho mutation được OpenAPI đánh dấu. Backend lưu actor + method + normalized path + key + hash request + response trong 24h. Cùng key/cùng body trả nguyên status/body, khác body trả 409 IDEMPOTENCY_CONFLICT, đang xử lý trả 409 REQUEST_IN_PROGRESS. Với ZIP hash cả bytes và language. Commit thay đổi và record idempotency cùng transaction. Outbox giao job Redis sau commit, retry delivery giữ job_id.
-- Không ghi token/password/source vào log lỗi; error.code ổn định, message tiếng Việt. Mã chung: INVALID_REQUEST, UNAUTHORIZED, FORBIDDEN, NOT_FOUND, STATE_CONFLICT, IDEMPOTENCY_CONFLICT, REQUEST_IN_PROGRESS, PAYLOAD_TOO_LARGE, RATE_LIMITED, SERVICE_UNAVAILABLE. Nghiệp vụ: SUBMISSION_NOT_READY, SELF_SCRIMMAGE, QUOTA_EXCEEDED, ROUND_NOT_FROZEN, DOWNSTREAM_STARTED, RULESET_UNCONFIRMED. details là map thông tin không bí mật.
+- Không ghi token/password/source vào log lỗi; error.code ổn định, message tiếng Việt. Mã chung: INVALID_REQUEST, UNAUTHORIZED, FORBIDDEN, NOT_FOUND, STATE_CONFLICT, IDEMPOTENCY_CONFLICT, REQUEST_IN_PROGRESS, PAYLOAD_TOO_LARGE, RATE_LIMITED, SERVICE_UNAVAILABLE. Nghiệp vụ: SUBMISSION_NOT_READY, SELF_SCRIMMAGE, QUOTA_EXCEEDED, SCRIMMAGE_LIMIT, SCRIMMAGE_PAUSED, ROUND_NOT_FROZEN, DOWNSTREAM_STARTED, RULESET_UNCONFIRMED. details là map thông tin không bí mật.
 
 ## Submission, build và giới hạn
 
 - queued → building → ready/failed, hoặc queued → failed. Không sửa source/language/hash/image sau terminal; nộp mới tạo submission_id mới. Active bot chỉ ready thuộc đội; team locked/disqualified không nộp/đánh tập.
 - Upload ZIP <= 1 MiB, <= 50 file, tổng giải nén <= 5 MiB, mỗi file <= 1 MiB. Cấm absolute path, `..`, symlink, archive lồng, file nhị phân và đường dẫn trùng sau normalize. Allowlist source UTF-8/extensions do bảng build dưới đây quy định; không thực thi script build người dùng cung cấp.
 - Build tối đa 60s, smoke game tối đa 150s, không network, log build <= 1 MiB. Build lỗi bot/protocol/compiler là failed. Build lỗi hạ tầng cũng failed với error.code INFRA_ERROR, không tự sửa submission terminal; người dùng có thể nộp lại. Retry tự động ba lần chỉ áp game infra_error.
-- `POST /scrimmages` tạo cặp 2 ván đổi màu và chụp hai active bot tại thời điểm request. Không tự đấu. Hạn mức 60 cặp/ngày/đội tạo, reset 00:00 Asia/Saigon; duplicate idempotency không trừ lần hai. 429 QUOTA_EXCEEDED khi hết; response quota resets_at vẫn UTC.
+- `POST /scrimmages` tạo cặp 2 ván đổi màu và chụp hai active bot tại thời điểm request. Không tự đấu. Hạn mức 60 cặp/ngày/đội tạo, reset 00:00 Asia/Saigon; duplicate idempotency không trừ lần hai. 429 QUOTA_EXCEEDED khi hết; response quota resets_at vẫn UTC. Từ 1.3.0 còn có giới hạn trận chưa xong của đội và tạm dừng nhận khi tải cao, xem mục Phân bổ tài nguyên.
 
 | language | File chính ở gốc ZIP | Compile / run | Nền bắt buộc |
 | --- | --- | --- | --- |
@@ -76,3 +76,25 @@ C sở hữu migration, cần thêm vào phác thảo architecture: rounds, roun
 - Đội pending được upload, chọn bot ready và đánh tập với đội pending/approved có bot ready. Locked/disqualified vẫn bị chặn. Bốc thăm giải chỉ chọn đội approved như trước.
 - Đăng ký chưa xác minh email; chưa có quên mật khẩu hoặc gia nhập đội bằng mã mời. Mỗi lần đăng ký tạo đội riêng.
 - Backend và web phải cập nhật cùng contract 1.1.0 (86 definitions, 66 operations, 138 fixtures); engine, job/callback schema_version=1, replay format=1 và luật dev-v1 không đổi.
+
+## Casual — chạy trên trình duyệt từ contract 1.3.0
+
+- Contract 1.2.0 có 5 operation `/casual/games` chạy luật và bot trên backend. Contract 1.3.0 **gỡ cả 5 operation**: backend trả 404 cho các đường dẫn này, không còn import engine khi chạy. Bảng `casual_games` (migration 0002) được giữ nguyên để không xóa ván cũ; không code nào đọc/ghi bảng. Muốn xóa bảng cần quyết định riêng và migration mới.
+- Bàn cờ, luật dev-v1 (nước hợp lệ, thứ tự GOAL → WIPEOUT → STALEMATE → MOVE_LIMIT, tiebreak RULE-05) và bot mẫu random/greedy chạy trong trình duyệt. Luật nằm ở `@ottv2/replay-viewer` (`legalMoves`, `isLegal`, `outcome`, `tiebreak`, chữ ký trong viewer-api.ts), kiểm chéo với engine qua `engine/fixtures/positions.json`, `engine/fixtures/outcomes.json` và replay engine thật. Đổi luật phải đổi engine, bản TypeScript và fixture cùng đợt.
+- Vẫn bắt đăng nhập để vào Casual, nhưng không gửi nước đi lên server. Ván lưu trong localStorage của trình duyệt theo user id (50 ván gần nhất); trình duyệt hoặc máy khác không thấy. Hai tab cùng ván: tab đi nước giữ Web Lock của tài khoản, đọc lại ply/trạng thái đã lưu và từ chối nếu tab kia đã đổi, không ghi đè. Không đồng hồ, tối đa 300 ply, RESIGNED chỉ thuộc Casual. Kết quả Casual không phải nguồn tin cậy và không ảnh hưởng Arena.
+
+## Phân bổ tài nguyên — contract 1.3.0
+
+| Chế độ | Chạy ở | Tài nguyên server |
+| --- | --- | --- |
+| Casual | Trình duyệt | Chỉ xác thực, không lưu ván |
+| Tự luyện | Máy thí sinh: `python -m ottv2 practice <bot> --vs random\|greedy\|<bot khác>` | Không; P1 `/practice` chỉ hướng dẫn và mở replay cục bộ trong trình duyệt |
+| Đánh tập | Worker riêng của `match:scrimmage` | Giới hạn số ván đồng thời bằng số worker đánh tập |
+| Giải chính thức | Worker riêng của `match:tournament` | Không bao giờ chạy job đánh tập |
+
+- Worker giải chỉ nghe `match:tournament`; worker đánh tập chỉ nghe `match:scrimmage`. Số worker đánh tập là trần số ván đánh tập chạy cùng lúc. Một tiến trình nghe cả hai hàng đợi chỉ dùng cho môi trường dev. Job, callback, lease và attempt không đổi.
+- `POST /scrimmages` kiểm tra theo thứ tự hiện có (đội, đối thủ, bot, hạn mức ngày), rồi: 503 `SCRIMMAGE_PAUSED` với `details.reason` và header `Retry-After` khi hệ thống tạm dừng nhận; 429 `SCRIMMAGE_LIMIT` với `details.active/active_limit` khi đội đã có `SCRIMMAGE_MAX_ACTIVE_PER_TEAM` (mặc định 2) trận do mình tạo ở trạng thái queued/running. Trận blocked không giữ chỗ. Yêu cầu bị từ chối không trừ hạn mức ngày.
+- Lý do tạm dừng, xét theo thứ tự: `queue_paused` khi admin tạm dừng `match:scrimmage`; `tournament_load` khi số job `match:tournament` queued/running ≥ `SCRIMMAGE_PAUSE_TOURNAMENT_JOBS` (mặc định 1, 0 là tắt); `scrimmage_backlog` khi số job `match:scrimmage` queued (chưa worker nào nhận) ≥ `SCRIMMAGE_MAX_PENDING_GAMES` (mặc định 12). Ngưỡng tồn đọng là ngưỡng mềm: hai đội được nhận cùng lúc có thể vượt một chút.
+- Trận đánh tập đã nhận trước khi tạm dừng không bị hủy, không tạo attempt mới, không chuyển sang worker giải và không trừ hạn mức lần nữa; ván đang chạy chạy hết, ván đang chờ vẫn chạy trên worker đánh tập. Muốn giữ cả ván chưa chạy, admin tạm dừng `match:scrimmage` như trước (ván đang chạy vẫn chạy hết, ván chờ được rút khỏi RQ và trả lại khi tiếp tục).
+- `GET /scrimmages/quota` trả thêm `active`, `active_limit` và `admission {accepting, paused_reason}`; `GET/PUT /admin/queue` trả `scrimmage_admission` cùng dạng. `accepting=true` khi và chỉ khi `paused_reason=null`. P1 khóa nút tạo trận và giải thích lý do; P2 hiển thị trạng thái nhận trận.
+- 1.3.0: 88 definitions, 66 operations, 141 fixture cases. Engine 1.0.0, job/callback schema_version=1, replay format=1 và dev-v1 không đổi.

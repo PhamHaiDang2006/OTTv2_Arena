@@ -149,3 +149,17 @@ engine/
 - Độ phủ kiểm thử của `rules.py` và `clock.py` đạt 95%.
 - 10.000 ván ngẫu nhiên không lỗi và tất định.
 - `ottv2 play` chạy được hai bot mẫu trên máy cá nhân, không cần Docker.
+
+### Outcome công khai và tự luyện (contract 1.3.0)
+
+Package export `outcome(board, mover, plies, max_turns=300)` ở `ottv2`, trả `(winner, reason)` hoặc None sau mỗi nước hợp lệ; run_game dùng cùng hàm. Từ 1.3.0 backend không gọi hàm này nữa: Casual chạy trên trình duyệt bằng bản TypeScript trong `web/replay-viewer/src/rules.ts`. `scripts/generate_fixtures.py` sinh thêm `fixtures/outcomes.json` (600 ca, đủ GOAL/WIPEOUT/STALEMATE/MOVE_LIMIT) để web kiểm chéo; đổi luật phải sinh lại và sửa bản TypeScript cùng đợt.
+
+Tự luyện trên máy thí sinh:
+
+```sh
+python -m ottv2 practice path/to/my_bot --vs greedy --games 10   # random | greedy | path tới bot khác
+python -m ottv2 play my_bot random --games 4                    # play cũng nhận tên bot mẫu
+python -m ottv2.bot greedy                                      # chạy riêng bot mẫu theo giao thức
+```
+
+Hai bên đổi màu mỗi ván; dòng cuối `Total: <bot> x - y <đối thủ>`. Tên `random`/`greedy` chỉ là bot mẫu khi không có thư mục/file trùng tên. Local runner không phải sandbox. Engine version 1.0.0, luật dev-v1 và clock/protocol không đổi.

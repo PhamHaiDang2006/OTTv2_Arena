@@ -15,7 +15,7 @@ from referencing import Registry, Resource
 
 from app.config import get_settings
 
-CONTRACT_VERSION = '1.1.0'
+CONTRACT_VERSION = '1.3.0'
 SCHEMA_VERSION = 1
 RULESET_STATUS = 'development'
 MAP_ID = 'standard'

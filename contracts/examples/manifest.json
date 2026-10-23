@@ -55,6 +55,21 @@
     "valid": true
   },
   {
+    "file": "examples/scrimmage-paused.json",
+    "definition": "Quota",
+    "valid": true
+  },
+  {
+    "file": "examples/invalid-scrimmage-paused-without-reason.json",
+    "definition": "Quota",
+    "valid": false
+  },
+  {
+    "file": "examples/invalid-scrimmage-accepting-with-reason.json",
+    "definition": "Quota",
+    "valid": false
+  },
+  {
     "file": "examples/invalid-register-password.json",
     "definition": "Register",
     "valid": false

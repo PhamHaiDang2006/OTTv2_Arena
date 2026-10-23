@@ -17,6 +17,7 @@ from app.audit import audit, audit_separately
 from app.db import get_db
 from app.deps import Actor, OpInput, contract_input, require_admin
 from app.errors import conflict, not_found
+from app.matches import admission
 from app.matches import service as match_service
 from app.models import (
     QUEUES,
@@ -327,7 +328,8 @@ def queue_body(db: Session) -> dict:
                        'running': count(name, WorkerJob.status == 'running'),
                        'failed': count(name, WorkerJob.outcome == 'infra_error', WorkerJob.finished_at >= since)})
     workers = db.scalars(select(WorkerStatus).order_by(WorkerStatus.id))
-    return {'queues': queues, 'workers': [ser.worker(w) for w in workers]}
+    return {'queues': queues, 'workers': [ser.worker(w) for w in workers],
+            'scrimmage_admission': admission.admission(db)}
 
 
 @router.get('/admin/queue')

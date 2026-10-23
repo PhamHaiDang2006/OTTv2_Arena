@@ -2,5 +2,11 @@
   "limit": 60,
   "used": 1,
   "remaining": 59,
-  "resets_at": "2026-10-15T17:00:00Z"
+  "resets_at": "2026-10-15T17:00:00Z",
+  "active": 1,
+  "active_limit": 2,
+  "admission": {
+    "accepting": true,
+    "paused_reason": null
+  }
 }

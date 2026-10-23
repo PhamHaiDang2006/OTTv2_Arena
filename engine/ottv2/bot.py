@@ -3,6 +3,8 @@ import random
 import sys
 from .board import Board, GOAL, index
 
+SAMPLE_BOTS = ("random", "greedy")
+
 
 def debug(text):
     for line in str(text).splitlines():
@@ -51,3 +53,18 @@ def serve(select, name="PythonStarter"):
             return
         else:
             raise ValueError("Unexpected protocol command")
+
+
+def main(argv=None):
+    """Sample bot for local practice: python -m ottv2.bot random|greedy [--seed N]."""
+    import argparse
+    parser = argparse.ArgumentParser(description="OTTv2 sample bot, development rules dev-v1")
+    parser.add_argument("strategy", choices=SAMPLE_BOTS)
+    parser.add_argument("--seed", type=int, default=1)
+    args = parser.parse_args(argv)
+    rng = random.Random(args.seed)
+    serve(lambda board, side, remaining_ms: choose(board, side, args.strategy, rng), "Sample-" + args.strategy)
+
+
+if __name__ == "__main__":
+    main()
