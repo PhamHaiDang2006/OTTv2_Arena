@@ -20,6 +20,8 @@ services:
       S3_BUCKET: ${S3_BUCKET:-ottv2}
       REGISTRY_URL: 127.0.0.1:5000
       RUNNER_IMAGE_PYTHON: ${RUNNER_IMAGE_PYTHON:-}
+      RUNNER_IMAGE_CPP: ${RUNNER_IMAGE_CPP:-}
+      RUNNER_BUILD_IMAGE_CPP: ${RUNNER_BUILD_IMAGE_CPP:-}
       RUNNER_OUTBOX_DIR: /var/lib/ottv2/outbox
       RUNNER_WORK_DIR: /var/lib/ottv2/work
       OTTv2_ENGINE_FACTORY: ottv2.adapter:make_engine
