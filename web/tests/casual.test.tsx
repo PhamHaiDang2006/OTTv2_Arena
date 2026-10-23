@@ -12,7 +12,7 @@ import {
   updateGame,
   type CasualGame,
 } from '../src/casual-engine';
-import { legalMoves, parseFen } from '../replay-viewer/src';
+import { legalMoves, parseFen, toFen, applyMove, outcome } from '../replay-viewer/src';
 import type { User } from '../../contracts/generated/types';
 
 const user: User = {
@@ -108,6 +108,63 @@ it('greedy takes an immediate win', () => {
   expect(botMove(nearGoal, seeded(3))).toBe('h8i9');
 });
 
+it.each(['BLUE', 'RED'] as const)(
+  'hard defends an immediate goal threat as %s instead of taking distant material',
+  (side) => {
+    const board = parseFen('9/9/7kp/6B2/9/9/B8/1k7/9');
+    const position =
+      side === 'BLUE'
+        ? board
+        : [...board]
+            .reverse()
+            .map((p) =>
+              p ? ((p === p.toUpperCase() ? p.toLowerCase() : p.toUpperCase()) as typeof p) : null,
+            );
+    const state: CasualGame = {
+      ...game,
+      bot: 'hard',
+      turn: side,
+      fen: toFen(position),
+      legal_moves: legalMoves(position, side),
+    };
+    expect(botMove({ ...state, bot: 'greedy' }, seeded())).toBe(side === 'BLUE' ? 'g6h7' : 'c4b3');
+    const move = botMove(state, seeded());
+    expect(move).toBe(side === 'BLUE' ? 'a3b2' : 'i7h8');
+    const next = applyMove(position, move);
+    const enemy = side === 'BLUE' ? 'RED' : 'BLUE';
+    expect(
+      legalMoves(next, enemy).some((reply) => outcome(applyMove(next, reply), enemy, 2, 300)?.[0] === enemy),
+    ).toBe(false);
+  },
+);
+
+it('hard takes a win immediately and respects the move limit', () => {
+  const fen = '9/k6B1/9/9/9/9/9/9/9';
+  const state: CasualGame = {
+    ...game,
+    bot: 'hard',
+    fen,
+    ply: 299,
+    legal_moves: legalMoves(parseFen(fen), 'BLUE'),
+  };
+  const move = botMove(state, seeded());
+  expect(outcome(applyMove(parseFen(fen), move), 'BLUE', 300, 300)?.[0]).toBe('BLUE');
+});
+
+it('preserves old bot settings and hard games in browser storage without network requests', () => {
+  const fetch = vi.fn();
+  vi.stubGlobal('fetch', fetch);
+  for (const bot of ['random', 'greedy', 'hard'] as const) {
+    const current = newGame('RED', bot, seeded());
+    expect(current.turn).toBe('RED');
+    expect(current.ply).toBe(1);
+    saveGame(user.id, current);
+    expect(loadGames(user.id).find((g) => g.id === current.id)).toEqual(current);
+  }
+  expect(loadGames(user.id)).toHaveLength(3);
+  expect(fetch).not.toHaveBeenCalled();
+});
+
 it('saves games per account and plays a full game to a result', () => {
   let current = newGame('BLUE', 'random', seeded(11));
   saveGame(user.id, current);
@@ -133,23 +190,30 @@ it('ignores corrupted storage', () => {
   expect(loadGames(user.id)).toEqual([game]);
 });
 
-it('creates with the selected bot and side then opens the game', async () => {
-  render(
-    <MemoryRouter initialEntries={['/casual']}>
-      <Routes>
-        <Route path="/casual" element={<CasualLobby user={user} />} />
-        <Route path="/casual/:id" element={<p>Opened game</p>} />
-      </Routes>
-    </MemoryRouter>,
-  );
-  fireEvent.click(screen.getByRole('button', { name: /THỬ CHIẾN THUẬT Bot ưu tiên ăn quân/ }));
-  expect((screen.getByLabelText('Đối thủ') as HTMLSelectElement).value).toBe('greedy');
-  fireEvent.change(screen.getByLabelText('Màu quân của bạn'), { target: { value: 'RED' } });
-  fireEvent.click(screen.getByText('Bắt đầu chơi'));
-  await screen.findByText('Opened game');
-  const [saved] = loadGames(user.id);
-  expect([saved.bot, saved.human_side, saved.ply]).toEqual(['greedy', 'RED', 1]);
-});
+it.each(['greedy', 'hard'] as const)(
+  'creates with the selected %s bot and side then opens the game',
+  async (bot) => {
+    render(
+      <MemoryRouter initialEntries={['/casual']}>
+        <Routes>
+          <Route path="/casual" element={<CasualLobby user={user} />} />
+          <Route path="/casual/:id" element={<p>Opened game</p>} />
+        </Routes>
+      </MemoryRouter>,
+    );
+    fireEvent.click(
+      screen.getByRole('button', {
+        name: bot === 'greedy' ? /THỬ CHIẾN THUẬT Bot ưu tiên ăn quân/ : /THỬ THÁCH Bot chiến thuật/,
+      }),
+    );
+    expect((screen.getByLabelText('Đối thủ') as HTMLSelectElement).value).toBe(bot);
+    fireEvent.change(screen.getByLabelText('Màu quân của bạn'), { target: { value: 'RED' } });
+    fireEvent.click(screen.getByText('Bắt đầu chơi'));
+    await screen.findByText('Opened game');
+    const [saved] = loadGames(user.id);
+    expect([saved.bot, saved.human_side, saved.ply]).toEqual([bot, 'RED', 1]);
+  },
+);
 
 it('confirms resignation and stores the result', async () => {
   saveGame(user.id, game);

@@ -46,7 +46,7 @@ export function Modes() {
             Hướng dẫn tự luyện →
           </Link>
         </section>
-        <section className="card mode-card">
+        <section className="card mode-card arena-mode">
           <span className="eyebrow">ĐẤU TRƯỜNG TRÊN MÁY CHỦ</span>
           <h2>Arena</h2>
           <p>Nộp bot, đánh tập với đội khác và thi đấu giải. Giải chính thức có máy chạy riêng.</p>
@@ -60,7 +60,17 @@ export function Modes() {
   );
 }
 
-const botNames = { random: 'Bot ngẫu nhiên', greedy: 'Bot ưu tiên ăn quân' };
+const botNames = {
+  random: 'Bot ngẫu nhiên · Dễ',
+  greedy: 'Bot ưu tiên ăn quân · Trung bình',
+  hard: 'Bot chiến thuật · Khó',
+};
+const botLevels = { random: 'LÀM QUEN', greedy: 'THỬ CHIẾN THUẬT', hard: 'THỬ THÁCH' };
+const botDescriptions = {
+  random: 'Chọn nước ngẫu nhiên. Thoải mái khám phá luật chơi.',
+  greedy: 'Ưu tiên thắng ngay, ăn quân và tiến đến đích.',
+  hard: 'Tính cả nước đáp trả của bạn, tránh mất quân và bảo vệ đích.',
+};
 /** Games of this account in this browser; follows changes made in other tabs. */
 function useCasualGames(userId: string) {
   const [games, setGames] = useState(() => loadGames(userId));
@@ -118,7 +128,7 @@ export function CasualLobby({ user }: { user: User }) {
           <h2>Bắt đầu một ván</h2>
         </div>
         <div className="bot-choices" role="group" aria-label="Phong cách đối thủ">
-          {(['random', 'greedy'] as const).map((choice) => (
+          {(['random', 'greedy', 'hard'] as const).map((choice) => (
             <button
               key={choice}
               type="button"
@@ -130,13 +140,9 @@ export function CasualLobby({ user }: { user: User }) {
                 <Crest kind="bot" />
               </span>
               <span className="bot-copy">
-                <span className="eyebrow">{choice === 'random' ? 'LÀM QUEN' : 'THỬ CHIẾN THUẬT'}</span>
+                <span className="eyebrow">{botLevels[choice]}</span>
                 <strong>{botNames[choice]}</strong>
-                <span>
-                  {choice === 'random'
-                    ? 'Những nước đi bất ngờ. Thoải mái khám phá luật chơi.'
-                    : 'Luôn tìm cơ hội ăn quân. Hãy bảo vệ đội hình của bạn.'}
-                </span>
+                <span>{botDescriptions[choice]}</span>
               </span>
               <span className="choice-dot" aria-hidden="true">
                 {choice === bot ? '✓' : ''}
@@ -147,8 +153,11 @@ export function CasualLobby({ user }: { user: User }) {
         <div className="setup-controls">
           <Field label="Đối thủ">
             <select name="bot" value={bot} onChange={(e) => setBot(e.target.value as CasualBot)}>
-              <option value="random">Bot ngẫu nhiên — làm quen</option>
-              <option value="greedy">Bot ưu tiên ăn quân — thử chiến thuật</option>
+              {(['random', 'greedy', 'hard'] as const).map((choice) => (
+                <option key={choice} value={choice}>
+                  {botNames[choice]}
+                </option>
+              ))}
             </select>
           </Field>
           <Field label="Màu quân của bạn">

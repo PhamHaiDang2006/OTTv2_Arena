@@ -20,6 +20,7 @@ import {
 import './style.css';
 import './game.css';
 import './casual-design.css';
+import './identity.css';
 import { participantUrl } from './urls';
 import { Login } from './auth-page';
 import { Modes, CasualLobby, CasualPlay } from './casual';
@@ -85,7 +86,7 @@ function App() {
     );
   return (
     <div
-      className={`shell ${casual ? 'casual-shell' : ''} ${casual && location.pathname !== '/casual' ? 'in-game' : ''}`}
+      className={`shell ${casual ? 'casual-shell' : practice ? 'practice-shell' : modes ? 'modes-shell' : 'arena-shell'} ${casual && location.pathname !== '/casual' ? 'in-game' : ''}`}
     >
       <aside className="sidebar">
         <a className="logo" href={admin ? '/admin/' : '/'}>

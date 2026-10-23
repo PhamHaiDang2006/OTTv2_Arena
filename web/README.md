@@ -117,6 +117,12 @@ Xem [CHECKS.md](CHECKS.md) cho kết quả kiểm thử thực tế và các bư
 
 ## Đăng ký người chơi
 
+`src/identity.css` sở hữu giao diện auth và màu chế độ: auth xanh slate,
+Tự luyện tím chàm (`practice-shell`), Arena hổ phách (`arena-shell`). Các thẻ
+chọn chế độ dùng cùng bảng màu. Token sáng/tối áp dụng cho cả khung, form,
+placeholder, autofill và thông báo lỗi; tránh thêm nền trắng cố định vào auth.
+`auth-page.tsx` giữ nguyên API/quy tắc đăng ký và không cho tự đăng ký admin.
+
 Nếu web báo không thực hiện được yêu cầu, kiểm tra API đã chạy: từ repo root dùng
 `powershell -ExecutionPolicy Bypass -File .\infra\start-local-api.ps1` (Docker Desktop
 phải mở). Script giữ tài khoản trong database dev bền; chỉ chạy `npm run dev` chưa đủ.
@@ -148,3 +154,14 @@ Trang `/` công khai cho chọn ba chế độ. `/arena` là tổng quan Arena; 
 - `/scrimmage`: hiển thị số trận chưa xong của đội và lý do tạm dừng từ `scrimmageQuota`, khóa nút tạo trận khi không nhận. P2 Hàng đợi hiển thị `scrimmage_admission`.
 
 Kiểm tra: `tests/rules.test.ts` (luật TS so với engine: 1000 thế cờ, 600 kết quả, 100 ván thật khi đã chạy `python web/tests/generate_engine_replays.py`), `tests/casual.test.tsx`, `tests/resources.test.tsx`.
+
+Casual có ba độ khó: Dễ (`random`) chọn nước ngẫu nhiên; Trung bình (`greedy`)
+ưu tiên thắng ngay, ăn quân rồi tiến đến đích; Khó (`hard`) tìm kiếm hai ply
+(nước bot và nước đáp trả), chấm quân số, cân bằng loại quân và khoảng cách đến đích.
+Khó xét mọi nước đáp trả, cắt nhánh khi không thể tốt hơn lựa chọn hiện có;
+đây là bot chiến thuật ngắn hạn, không phải mức sức mạnh Elo được kiểm chứng.
+Tất cả chạy trên client; không đổi HTTP/schema contract 1.3.0 hay cần merge backend.
+Khóa lưu ván giữ nguyên: ván random/greedy cũ vẫn mở được, hard được lưu cùng định dạng;
+chơi lại giữ nguyên độ khó và màu quân. Không sửa generated artifacts.
+Kiểm thử trong `tests/casual.test.tsx` bao gồm chặn đích ở cả hai màu,
+giới hạn nước, chọn độ khó trên UI và đọc lại ván cũ/mới mà không gọi mạng.

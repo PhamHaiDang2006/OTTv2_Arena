@@ -11,7 +11,7 @@ import {
 import type { Piece, Side } from '../../contracts/viewer-api';
 // Casual runs entirely in the browser (contract 1.3.0): rules from @ottv2/replay-viewer, sample bots here,
 // games saved per account in this browser's localStorage. Nothing is sent to the server.
-export type CasualBot = 'random' | 'greedy';
+export type CasualBot = 'random' | 'greedy' | 'hard';
 export type CasualReason = 'GOAL' | 'WIPEOUT' | 'STALEMATE' | 'MOVE_LIMIT' | 'RESIGNED';
 export interface CasualGame {
   id: string;
@@ -54,6 +54,55 @@ export function botMove(game: CasualGame, random: Random = Math.random): string 
   if (game.bot === 'random') return moves[0];
   const board = parseFen(game.fen),
     goal = side === 'BLUE' ? 80 : 0;
+  if (game.bot === 'hard') {
+    // Two plies: consider every opponent reply, pruning replies once a move cannot beat best.
+    // No beam truncation: even a quiet goal threat must be considered.
+    const evaluate = (position: ReturnType<typeof parseFen>) => {
+      let value = 0;
+      const closest = { BLUE: 9, RED: 9 };
+      const counts = { BLUE: [0, 0, 0], RED: [0, 0, 0] };
+      position.forEach((piece, index) => {
+        if (!piece) return;
+        const owner: Side = piece === piece.toUpperCase() ? 'BLUE' : 'RED';
+        const target = owner === 'BLUE' ? 80 : 0;
+        const distance = Math.max(
+          Math.abs((index % 9) - (target % 9)),
+          Math.abs(Math.floor(index / 9) - Math.floor(target / 9)),
+        );
+        closest[owner] = Math.min(closest[owner], distance);
+        counts[owner]['BPK'.indexOf(piece.toUpperCase())]++;
+        value += (owner === side ? 1 : -1) * (100 + (8 - distance) * 2);
+      });
+      return (
+        value +
+        12 * (closest[other(side)] - closest[side]) +
+        20 * (Math.min(...counts[side]) - Math.min(...counts[other(side)]))
+      );
+    };
+    let best = moves[0],
+      bestValue = -Infinity;
+    for (const move of moves) {
+      const next = applyMove(board, move);
+      const result = outcome(next, side, game.ply + 1, MAX_TURNS);
+      let value: number;
+      if (result) value = result[0] === side ? 100000 : -100000;
+      else {
+        value = Infinity;
+        for (const reply of legalMoves(next, other(side))) {
+          const after = applyMove(next, reply);
+          const end = outcome(after, other(side), game.ply + 2, MAX_TURNS);
+          value = Math.min(value, end ? (end[0] === side ? 100000 : -100000) : evaluate(after));
+          if (value <= bestValue) break;
+        }
+      }
+      if (value > bestValue) {
+        best = move;
+        bestValue = value;
+      }
+      if (bestValue === 100000) break;
+    }
+    return best;
+  }
   const score = (move: string) => {
     const target = (Number(move[3]) - 1) * 9 + move.charCodeAt(2) - 97;
     const result = outcome(applyMove(board, move), side, game.ply + 1, MAX_TURNS);
@@ -124,7 +173,7 @@ function isGame(value: unknown): value is CasualGame {
       typeof game?.id === 'string' &&
       typeof game.created_at === 'string' &&
       ['BLUE', 'RED'].includes(game.human_side) &&
-      ['random', 'greedy'].includes(game.bot) &&
+      ['random', 'greedy', 'hard'].includes(game.bot) &&
       ['playing', 'finished'].includes(game.status) &&
       Number.isInteger(game.ply) &&
       Array.isArray(game.moves) &&
