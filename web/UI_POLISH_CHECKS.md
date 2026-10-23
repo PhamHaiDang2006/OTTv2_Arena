@@ -1,5 +1,16 @@
 # Casual UI/QOL — 2026-10-22
 
+## Sửa test CI chờ khóa — 2026-10-23
+
+`tests/casual.test.tsx` dùng fake timers và React `act` trong test chờ Web Lock:
+5 giây giả lập chưa được cấp khóa vẫn không đi quân; sau cấp khóa lưu 2 ply nhưng
+bàn vẫn khóa trong animation; chạy hết timer mới cho tương tác. Tránh timeout
+1 giây mặc định bị sát thời gian animation 560 + 280 ms trên CI. Cleanup luôn
+khôi phục real timers. Không thay code game hoặc hợp đồng 1.3.0.
+
+Xác minh local: `npm.cmd test` đạt 127/127 tests (11 files),
+`npm.cmd run typecheck` đạt. Chưa chạy lại GitHub Actions; chưa commit/push.
+
 ## Thiết kế bổ sung — 2026-10-23
 
 - `src/casual-design.css`: bảng màu Casual riêng, huy hiệu quân có chiều sâu,
