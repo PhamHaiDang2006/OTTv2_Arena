@@ -127,6 +127,20 @@ Yêu cầu backend + contracts 1.1.0 cùng checkout. Form dùng `register` trong
 
 ## Casual, Tự luyện, Arena — 1.3.0
 
+Thiết kế Casual dùng `src/casual-design.css`, scope `.casual-shell`: nền trắng ngà/sage
+hoặc xanh than, quân huy hiệu SVG, thẻ đối thủ, bàn thu nhỏ trong lịch sử và thanh
+điều hướng ngang khi vào trận. `Crest`/`MiniBoard` ở `casual-presentation.tsx` là
+thành phần trình bày; không thay luật hoặc schema. Ảnh kiểm tra nằm trong
+`evidence/design-*.png`. Bộ đếm quân được dựng từ FEN hiện tại, kể cả lúc xem lại.
+
+Giao diện Casual có quân SVG búa/bao/kéo, chuyển động nước đi, dấu nước cuối,
+hiệu ứng ăn quân, trạng thái lượt và bảng kết quả với chơi lại/xem lại/về sảnh.
+Lịch sử và cách chơi có thể thu gọn. Nút sáng/tối ở thanh trên và trang đăng nhập
+lưu lựa chọn trong `ottv2.theme`; âm thanh mặc định tắt, bật bằng nút trong bàn cờ
+và lưu trong `ottv2.sound`. Chế độ giảm chuyển động của hệ điều hành được tôn trọng.
+Hiệu ứng chỉ trình bày: toàn bộ lượt người + máy được lưu trước khi chạy animation;
+xem lại không sửa ván đã lưu. Chi tiết kiểm tra: [UI_POLISH_CHECKS.md](UI_POLISH_CHECKS.md).
+
 Trang `/` công khai cho chọn ba chế độ. `/arena` là tổng quan Arena; `/submit`, `/submissions`, `/scrimmage`, `/standings`, `/matches/:id`, `/games/:id` và P2 không đổi.
 
 - `/casual`, `/casual/:id` (cần đăng nhập): `src/casual-engine.ts` tạo ván, áp nước, chạy bot random/greedy và lưu localStorage theo user id (khóa `ottv2.casual.v1:<user_id>`, 50 ván). Luật lấy từ `@ottv2/replay-viewer/src/rules.ts`; không gọi API ván. Đi nước, đầu hàng và tạo ván đọc lại, kiểm tra rồi ghi trong Web Lock cùng tên khóa lưu trữ, nên các tab của một tài khoản lần lượt ghi; tab khác đã đổi ván thì nước đi bị từ chối và bàn được tải lại. Trình duyệt không có Web Locks thì ghi trực tiếp. Nếu trình duyệt không cho lưu, ván vẫn chơi được trong phiên.

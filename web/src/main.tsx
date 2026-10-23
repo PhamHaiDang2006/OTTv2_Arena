@@ -18,10 +18,14 @@ import {
   Teams,
 } from './admin';
 import './style.css';
+import './game.css';
+import './casual-design.css';
 import { participantUrl } from './urls';
 import { Login } from './auth-page';
 import { Modes, CasualLobby, CasualPlay } from './casual';
 import { Practice } from './practice';
+import { initializeTheme, ThemeSwitch } from './preferences';
+initializeTheme();
 declare const __ADMIN__: boolean;
 const admin = __ADMIN__;
 const participantNav = [
@@ -80,7 +84,9 @@ function App() {
       </main>
     );
   return (
-    <div className="shell">
+    <div
+      className={`shell ${casual ? 'casual-shell' : ''} ${casual && location.pathname !== '/casual' ? 'in-game' : ''}`}
+    >
       <aside className="sidebar">
         <a className="logo" href={admin ? '/admin/' : '/'}>
           ◈ OTTv2
@@ -138,7 +144,7 @@ function App() {
             <span className="tag">DEV-v1</span>
           </span>
           <div>
-            {user?.email ?? 'Khách'}{' '}
+            <ThemeSwitch /> {user?.email ?? 'Khách'}{' '}
             {user ? (
               <button
                 onClick={async () => {

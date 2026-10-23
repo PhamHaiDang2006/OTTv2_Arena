@@ -1,5 +1,5 @@
 import { afterEach, beforeEach, expect, it, vi } from 'vitest';
-import { cleanup, fireEvent, render, screen, waitFor } from '@testing-library/react';
+import { act, cleanup, fireEvent, render, screen, waitFor } from '@testing-library/react';
 import { MemoryRouter, Route, Routes } from 'react-router-dom';
 import { CasualBoard, CasualLobby, CasualPlay, Modes } from '../src/casual';
 import {
@@ -45,6 +45,7 @@ function stubLocks() {
 beforeEach(() => localStorage.clear());
 afterEach(() => {
   cleanup();
+  vi.useRealTimers();
   vi.unstubAllGlobals();
   delete (navigator as { locks?: unknown }).locks;
 });
@@ -141,7 +142,8 @@ it('creates with the selected bot and side then opens the game', async () => {
       </Routes>
     </MemoryRouter>,
   );
-  fireEvent.change(screen.getByLabelText('Đối thủ'), { target: { value: 'greedy' } });
+  fireEvent.click(screen.getByRole('button', { name: /THỬ CHIẾN THUẬT Bot ưu tiên ăn quân/ }));
+  expect((screen.getByLabelText('Đối thủ') as HTMLSelectElement).value).toBe('greedy');
   fireEvent.change(screen.getByLabelText('Màu quân của bạn'), { target: { value: 'RED' } });
   fireEvent.click(screen.getByText('Bắt đầu chơi'));
   await screen.findByText('Opened game');
@@ -196,6 +198,7 @@ it('re-reads the game under the cross-tab lock instead of overwriting a move mad
 });
 
 it('keeps the board disabled until the lock is granted', async () => {
+  vi.useFakeTimers();
   saveGame(user.id, game);
   const locks = stubLocks();
   render(
@@ -205,13 +208,27 @@ it('keeps the board disabled until the lock is granted', async () => {
       </Routes>
     </MemoryRouter>,
   );
-  fireEvent.click(await screen.findByRole('button', { name: /^c3:/ }));
+  fireEvent.click(screen.getByRole('button', { name: /^c3:/ }));
   fireEvent.click(screen.getByRole('button', { name: /^d4:/ }));
   const squares = () => screen.getAllByRole('button', { name: /^[a-i][1-9]:/ }) as HTMLButtonElement[];
   expect(squares().every((square) => square.disabled)).toBe(true);
-  await locks.grant();
-  await waitFor(() => expect(squares().some((square) => !square.disabled)).toBe(true));
+  // Time alone must never release the board while another tab owns the lock.
+  await act(async () => {
+    await vi.advanceTimersByTimeAsync(5000);
+  });
+  expect(squares().every((square) => square.disabled)).toBe(true);
+  expect(loadGames(user.id)[0].ply).toBe(0);
+  await act(async () => {
+    await locks.grant();
+  });
   expect(loadGames(user.id)[0].ply).toBe(2);
+  // Saving finishes before the human/bot animations; interaction stays locked.
+  expect(squares().every((square) => square.disabled)).toBe(true);
+  await act(async () => {
+    await vi.runAllTimersAsync();
+  });
+  expect(squares().some((square) => !square.disabled)).toBe(true);
+  expect(screen.getByRole('status').textContent).toBe('Đến lượt của bạn');
 });
 
 it('says when a game is not stored in this browser', () => {

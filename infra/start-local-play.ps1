@@ -2,6 +2,8 @@ param([switch]$SkipBuild)
 $ErrorActionPreference = 'Stop'
 . (Join-Path $PSScriptRoot 'start-local-api.ps1')
 $composeFiles = @('--env-file', $envPath, '-f', (Join-Path $PSScriptRoot 'docker-compose.dev.yml'), '-f', (Join-Path $PSScriptRoot 'docker-compose.play.yml'))
+& $pythonPath (Join-Path $PSScriptRoot 'check_resources.py') --env-file $envPath -f (Join-Path $PSScriptRoot 'docker-compose.dev.yml') -f (Join-Path $PSScriptRoot 'docker-compose.play.yml')
+if ($LASTEXITCODE -ne 0) { throw 'Resource layout invalid; adjust LOCAL_* CPU settings or Docker CPU/RAM allocation first.' }
 & docker compose @composeFiles up -d --build --wait minio registry
 if ($LASTEXITCODE -ne 0) { throw 'Storage/registry startup failed.' }
 if (-not $SkipBuild) {
@@ -22,7 +24,7 @@ try {
     & $pythonPath -m app.cli ensure-bucket
     if ($LASTEXITCODE -ne 0) { throw 'Bucket creation failed.' }
 } finally { Pop-Location }
-& docker compose @composeFiles up -d build-worker match-worker
+& docker compose @composeFiles up -d build-worker match-worker match-scrimmage
 if ($LASTEXITCODE -ne 0) { throw 'Worker startup failed.' }
 
 $schedulerPidPath = Join-Path $PSScriptRoot '.local-scheduler.pid'

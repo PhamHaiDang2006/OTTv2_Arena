@@ -202,6 +202,7 @@ class DockerSandbox:
                 mem_limit="512m",
                 memswap_limit="512m",
                 nano_cpus=1_000_000_000,
+                cpuset_cpus=os.environ.get("RUNNER_CPUSET_BUILD", "0"),
                 pids_limit=16,
                 read_only=True,
                 tmpfs={"/tmp": "rw,noexec,nosuid,nodev,size=64m"},

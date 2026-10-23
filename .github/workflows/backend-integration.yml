@@ -43,3 +43,4 @@ jobs:
         working-directory: backend
       - run: backend/.venv/bin/python -m unittest discover -s engine/tests -v
       - run: backend/.venv/bin/python -m unittest discover -s runner/tests -v
+      - run: backend/.venv/bin/python -m unittest discover -s infra/tests -v

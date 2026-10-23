@@ -105,3 +105,7 @@ Casual chạy trên trình duyệt, tự luyện chạy trên máy thí sinh, đ
 - **D** (web): Casual dùng luật và bot trong trình duyệt, trang `/practice`, trạng thái nhận trận ở P1 `/scrimmage` và P2 Hàng đợi.
 
 Merge contract + backend + web cùng nhau (web 1.2.0 gọi API Casual đã bị gỡ; backend 1.2.0 không trả trường admission). Engine/kit và infra có thể merge riêng; đổi tên service VPS2 theo RUNBOOK mục 7. HTTP contract 1.3.0 có 88 definitions, 66 operations, 141 fixtures.
+
+### Bổ sung cách ly tài nguyên runner — 2026-10-22
+
+B phụ trách áp cấu hình: bot giải 0–5, mọi worker/registry/compiler/smoke/đấu tập trên CPU phụ trợ 6–7 ở VPS2; local tách worker giải/đấu tập với CPU giải 0–1, phụ trợ 2–3. `RUNNER_CPUSET_BUILD` dùng chung compiler và smoke, tránh ghim cứng CPU 0. Xem infra/README.md và check_resources.py về ngân sách tổng, giới hạn Docker và preflight. Không đổi phân công, HTTP 1.3.0, job/callback v1, replay hay luật dev-v1. Backend và frontend không cần sửa; worker image và Compose cần nâng cùng nhau sau khi drain hàng đợi. CPU pinning không bảo đảm hết ảnh hưởng từ OS, I/O hoặc SMT; không tuyên bố độ lệch thời gian đạt chuẩn nếu chưa benchmark host thực tế.

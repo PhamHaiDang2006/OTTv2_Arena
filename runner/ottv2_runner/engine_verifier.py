@@ -1,5 +1,6 @@
 """Smoke-build verifier using the public ottv2 engine, not devkit's stand-in."""
 import asyncio
+import os
 import random
 import time
 
@@ -33,11 +34,12 @@ class ReferenceBot:
 
 
 class EngineBuildVerifier:
-    def __init__(self, sandbox=None):
+    def __init__(self, sandbox=None, build_cpu=None):
         if sandbox is None:
             from .sandbox import DockerSandbox
             sandbox = DockerSandbox()
         self.sandbox = sandbox
+        self.build_cpu = build_cpu or os.environ.get("RUNNER_CPUSET_BUILD", "0")
 
     def verify(self, image, job, timeout_seconds=150):
         if job["engine_version"] != "1.0.0":
@@ -46,7 +48,7 @@ class EngineBuildVerifier:
                             initial_fen=INITIAL_FEN, seed=1,
                             players={"BLUE": {"team": "candidate", "submission_id": job["submission_id"]},
                                      "RED": {"team": "reference", "submission_id": "00000000-0000-4000-8000-000000000001"}})
-        bot = self.sandbox.start_bot(image, "0")
+        bot = self.sandbox.start_bot(image, self.build_cpu)
         async def smoke():
             try:
                 return await asyncio.wait_for(run_game(bot, ReferenceBot(), config), timeout_seconds)

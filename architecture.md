@@ -310,3 +310,7 @@ P1 `/` chọn chế độ; Arena dashboard ở `/arena`, các route Arena khác 
 - **Giải chính thức**: worker và lõi CPU riêng chỉ nghe `match:tournament`. Trận đánh tập đã nhận trước lúc tạm dừng chạy hết trên worker đánh tập, không bị hủy và không chiếm worker giải.
 
 Chi tiết lỗi, ngưỡng và trường API ở mục Phân bổ tài nguyên của [contracts/behavior.md](contracts/behavior.md).
+
+### Bổ sung cách ly tài nguyên runner — 2026-10-22
+
+B phụ trách áp cấu hình: bot giải 0–5, mọi worker/registry/compiler/smoke/đấu tập trên CPU phụ trợ 6–7 ở VPS2; local tách worker giải/đấu tập với CPU giải 0–1, phụ trợ 2–3. `RUNNER_CPUSET_BUILD` dùng chung compiler và smoke, tránh ghim cứng CPU 0. Xem infra/README.md và check_resources.py về ngân sách tổng, giới hạn Docker và preflight. Không đổi phân công, HTTP 1.3.0, job/callback v1, replay hay luật dev-v1. Backend và frontend không cần sửa; worker image và Compose cần nâng cùng nhau sau khi drain hàng đợi. CPU pinning không bảo đảm hết ảnh hưởng từ OS, I/O hoặc SMT; không tuyên bố độ lệch thời gian đạt chuẩn nếu chưa benchmark host thực tế.

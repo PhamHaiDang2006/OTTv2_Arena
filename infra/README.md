@@ -158,3 +158,21 @@ docker compose --env-file vps2.env.example -f docker-compose.vps2.yml config --q
 ```
 
 These checks require Docker Compose v2 and validate Compose parsing/interpolation only. Starting the services, production networking, application behavior, migrations, TLS, API/WS routing, signed URL browser access, backup synchronization, restore, and security controls require live dependencies and the missing product images; they are not claimed as tested by this folder.
+
+## Ngân sách tài nguyên runner và kiểm tra trước khi chạy
+
+Cấu hình VPS2 mặc định: bot giải dùng CPU 0–5 (3 ván đồng thời). CPU 6–7 dành cho compiler, smoke bot, registry, tiến trình worker và bot đấu tập (1 ván). Các việc phụ trợ chia sẻ CPU với nhau, không chạy trên CPU logic dành cho bot giải. Mỗi worker: tối đa 0.5 CPU, 512 MiB RAM, 128 PID; registry 0.5 CPU, 256 MiB, 128 PID. Compiler và mỗi bot vẫn có giới hạn riêng 1 CPU/512 MiB/16 PID, không thêm swap.
+
+Ngân sách VPS2: 5 worker ×512 MiB + 8 bot ×512 MiB + compiler/smoke tối đa 512 MiB + registry 256 MiB + dự phòng 2048 MiB = **9.25 GiB**. Nên cấp ít nhất 12 GiB và 8 CPU logic. Các biến `VPS2_*` trong vps2.env.example cho đổi CPU và giới hạn worker; nếu giảm số worker thì phải sửa cấu hình service tương ứng rồi kiểm tra lại. Không tăng giới hạn CPU/RAM của bot riêng lẻ vì có thể đổi điều kiện thi đấu.
+
+Từ repo root, trước `docker compose up`:
+
+```sh
+python infra/check_resources.py --env-file infra/.env -f infra/docker-compose.vps2.yml
+```
+
+Script đọc cấu hình đã nội suy và Docker host trong bộ nhớ (không in secret); từ chối worker nhận cả hai hàng đợi, CPU giải trùng nhau/trùng phụ trợ, CPU không tồn tại, thiếu giới hạn hoặc RAM không đủ. `--reserve-mib` có thể tăng từ mức tối thiểu 2048 theo dịch vụ host. Kiểm tra đạt không phải kết quả benchmark: Docker daemon, tác vụ đóng gói/pull/push image, đĩa, kernel và CPU vật lý dùng SMT vẫn có thể gây nhiễu. Không tự sửa affinity hệ điều hành. Với trận quan trọng, tạm dừng hàng đợi build và đấu tập, đợi việc đang chạy kết thúc; dùng CPU vật lý riêng hoặc host riêng nếu cần độ ổn định cao hơn.
+
+Local Compose giữ tên `match-worker`/volume cũ nhưng chỉ nhận giải; thêm `match-scrimmage` và volume riêng. CPU 0–1 cho bot giải, CPU 2–3 phụ trợ; ngân sách 6.25 GiB gồm dự phòng 2 GiB cho Docker/OS và dịch vụ local, nên cấp 8 GiB trở lên. `start-local-play.ps1` gọi preflight trước khi bật worker. Có thể tăng dự phòng khi chạy nhiều dịch vụ trên máy; không giảm ngân sách bằng cách cho CPU phụ trợ trùng CPU giải.
+
+Sau cập nhật code cần build lại worker image (local chạy script không có `-SkipBuild`, VPS dùng digest mới). Không áp dụng giữa ván: xem quy trình drain trong RUNBOOK. Bản sửa không tự khởi động lại worker đang chạy.
