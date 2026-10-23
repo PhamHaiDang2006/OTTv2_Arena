@@ -24,6 +24,7 @@ import './identity.css';
 import { participantUrl } from './urls';
 import { Login } from './auth-page';
 import { Modes, CasualLobby, CasualPlay } from './casual';
+import { SpecialLobby, SpecialPlay } from './special';
 import { Practice } from './practice';
 import { initializeTheme, ThemeSwitch } from './preferences';
 initializeTheme();
@@ -69,6 +70,7 @@ function App() {
       </p>
     );
   const casual = !admin && location.pathname.startsWith('/casual');
+  const special = !admin && location.pathname.startsWith('/special');
   const practice = !admin && location.pathname === '/practice';
   const modes = !admin && location.pathname === '/';
   const publicPage =
@@ -86,23 +88,37 @@ function App() {
     );
   return (
     <div
-      className={`shell ${casual ? 'casual-shell' : practice ? 'practice-shell' : modes ? 'modes-shell' : 'arena-shell'} ${casual && location.pathname !== '/casual' ? 'in-game' : ''}`}
+      className={`shell ${casual || special ? 'casual-shell' : practice ? 'practice-shell' : modes ? 'modes-shell' : 'arena-shell'} ${(casual && location.pathname !== '/casual') || (special && location.pathname !== '/special') ? 'in-game' : ''}`}
     >
       <aside className="sidebar">
         <a className="logo" href={admin ? '/admin/' : '/'}>
           ◈ OTTv2
-          <span>{admin ? 'ARENA' : casual ? 'CASUAL' : practice ? 'LOCAL' : modes ? 'PLAY' : 'ARENA'}</span>
+          <span>
+            {admin
+              ? 'ARENA'
+              : special
+                ? 'SPECIAL'
+                : casual
+                  ? 'CASUAL'
+                  : practice
+                    ? 'LOCAL'
+                    : modes
+                      ? 'PLAY'
+                      : 'ARENA'}
+          </span>
         </a>
         <p className="nav-caption">
           {admin
             ? 'ĐIỀU HÀNH ARENA'
-            : casual
-              ? 'CASUAL'
-              : practice
-                ? 'TỰ LUYỆN'
-                : modes
-                  ? 'CHỌN CHẾ ĐỘ'
-                  : 'ARENA'}
+            : special
+              ? 'BẢN ĐỒ ĐẶC BIỆT'
+              : casual
+                ? 'CASUAL'
+                : practice
+                  ? 'TỰ LUYỆN'
+                  : modes
+                    ? 'CHỌN CHẾ ĐỘ'
+                    : 'ARENA'}
         </p>
         <nav>
           {!admin && (
@@ -111,11 +127,12 @@ function App() {
                 Chọn chế độ
               </NavLink>
               <NavLink to="/casual">Casual · Chơi với máy</NavLink>
+              <NavLink to="/special">Bản đồ đặc biệt</NavLink>
               <NavLink to="/practice">Tự luyện · Trên máy bạn</NavLink>
-              {(casual || practice || modes) && <NavLink to="/arena">Arena · Đấu bot</NavLink>}
+              {(casual || special || practice || modes) && <NavLink to="/arena">Arena · Đấu bot</NavLink>}
             </>
           )}
-          {(admin ? adminNav : casual || practice || modes ? [] : participantNav).map(
+          {(admin ? adminNav : casual || special || practice || modes ? [] : participantNav).map(
             ([path, title], index) => (
               <NavLink end={path === '/'} key={path} to={path}>
                 <span className="nav-number">{String(index + 1).padStart(2, '0')}</span>
@@ -135,14 +152,16 @@ function App() {
           <span>
             {admin
               ? 'Quản trị Arena'
-              : casual
-                ? 'Casual · Người đấu máy trên trình duyệt'
-                : practice
-                  ? 'Tự luyện · Chạy trên máy của bạn'
-                  : modes
-                    ? 'OTT v2'
-                    : 'Arena · Đấu trường lập trình'}{' '}
-            <span className="tag">DEV-v1</span>
+              : special
+                ? 'Bản đồ đặc biệt · Hexagon & Vành khuyên'
+                : casual
+                  ? 'Casual · Người đấu máy trên trình duyệt'
+                  : practice
+                    ? 'Tự luyện · Chạy trên máy của bạn'
+                    : modes
+                      ? 'OTT v2'
+                      : 'Arena · Đấu trường lập trình'}{' '}
+            <span className="tag">{special ? 'SPECIAL-v1' : 'DEV-v1'}</span>
           </span>
           <div>
             <ThemeSwitch /> {user?.email ?? 'Khách'}{' '}
@@ -167,10 +186,16 @@ function App() {
         </header>
         <main>
           <div className="development">
-            Luật phát triển dev-v1 ·{' '}
-            {caps.data?.tournament_enabled
-              ? 'Môi trường thử nghiệm giải đấu'
-              : 'Chưa dùng cho giải đấu chính thức'}
+            {special ? (
+              'Bản đồ thử nghiệm special-v1 · Tách biệt Casual và Arena'
+            ) : (
+              <>
+                Luật phát triển dev-v1 ·{' '}
+                {caps.data?.tournament_enabled
+                  ? 'Môi trường thử nghiệm giải đấu'
+                  : 'Chưa dùng cho giải đấu chính thức'}
+              </>
+            )}
           </div>
           <ErrorBox error={logoutError} />
           <Routes>
@@ -192,6 +217,8 @@ function App() {
                 <Route path="/arena" element={user && <Home user={user} />} />
                 <Route path="/casual" element={user && <CasualLobby user={user} />} />
                 <Route path="/casual/:id" element={user && <CasualPlay user={user} />} />
+                <Route path="/special" element={user && <SpecialLobby user={user} />} />
+                <Route path="/special/:id" element={user && <SpecialPlay user={user} />} />
                 <Route path="/practice" element={<Practice />} />
                 <Route path="/submit" element={<Upload />} />
                 <Route path="/scrimmage" element={<Scrimmage />} />

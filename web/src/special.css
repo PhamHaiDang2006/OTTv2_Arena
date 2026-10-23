@@ -1,0 +1,327 @@
+.special-page {
+  max-width: 1180px;
+  margin: auto;
+}
+.special-maps {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 20px;
+  margin-bottom: 24px;
+}
+.special-map {
+  text-align: left;
+  cursor: pointer;
+  border: 2px solid var(--line);
+}
+.special-map.active {
+  border-color: var(--accent);
+  box-shadow: 0 0 0 2px var(--accent);
+}
+.special-map > strong {
+  display: block;
+  font-size: 1.5rem;
+  margin-top: 12px;
+}
+.special-map > span {
+  display: block;
+  margin-top: 6px;
+  color: var(--muted);
+}
+.special-board {
+  position: relative;
+  aspect-ratio: 1;
+  width: 100%;
+  max-width: 660px;
+  margin: auto;
+}
+.special-board .hex-cell {
+  position: absolute;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: 10.2%;
+  height: 8.8%;
+  transform: translate(-50%, -50%);
+  clip-path: polygon(25% 0, 75% 0, 100% 50%, 75% 100%, 25% 100%, 0 50%);
+  border: 0;
+  border-radius: 0;
+  padding: 0;
+  margin: 0;
+  background: #e8d9b6;
+  color: #253c43;
+}
+.special-board .tone-1 {
+  background: #c6b38d;
+}
+.special-board .tone-2 {
+  background: #d9c7a1;
+}
+.special-board .hex-cell.last {
+  background: #e4bd6d;
+}
+.special-board .hex-cell.target {
+  background: #a2d9c3;
+}
+.special-board .hex-cell.selected,
+.special-board button.hex-cell:focus-visible {
+  background: #68bfa5;
+  outline: none;
+  box-shadow: inset 0 0 0 5px #23665b;
+}
+.hex-token {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: 62%;
+  height: 68%;
+  border-radius: 50%;
+  border: 2px solid currentColor;
+  background: #fffdf5;
+  z-index: 1;
+}
+.hex-token.BLUE {
+  color: #126bba;
+}
+.hex-token.RED {
+  color: #bf3434;
+}
+.hex-token .piece-icon {
+  width: 75%;
+  height: 75%;
+  --piece-detail: #fffdf5;
+}
+.hex-goal {
+  position: absolute;
+  width: 45%;
+  height: 55%;
+  font-size: clamp(14px, 2.5vw, 28px);
+  color: #5b4323;
+}
+.special-board .hex-goal.BLUE {
+  color: #126bba;
+}
+.special-board .hex-goal.RED {
+  color: #bf3434;
+}
+:root[data-theme='dark'] .special-board .hex-goal.BLUE {
+  color: #9ecbff;
+}
+:root[data-theme='dark'] .special-board .hex-goal.RED {
+  color: #ffac9f;
+}
+.hex-target {
+  position: absolute;
+  right: 12%;
+  bottom: 8%;
+  font-size: 22px;
+  color: #124d40;
+  z-index: 2;
+}
+.special-controls {
+  display: flex;
+  gap: 20px;
+  align-items: end;
+  flex-wrap: wrap;
+}
+.special-controls label {
+  flex: 1;
+  min-width: 160px;
+}
+.special-controls select {
+  display: block;
+  width: 100%;
+  margin-top: 8px;
+}
+.special-rules {
+  margin-top: 16px;
+}
+.special-rules summary {
+  font-weight: 700;
+  cursor: pointer;
+}
+.special-history {
+  display: grid;
+  gap: 12px;
+}
+.special-history a {
+  color: var(--ink);
+  text-decoration: none;
+}
+.special-history span {
+  display: block;
+  color: var(--muted);
+  margin-top: 8px;
+}
+.special-match {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) 300px;
+  gap: 24px;
+  align-items: start;
+}
+.special-player {
+  font-weight: 700;
+  padding: 12px;
+  background: var(--surface-soft);
+  border-radius: 8px;
+}
+.special-status {
+  text-align: center;
+  min-height: 1.5em;
+}
+.special-tools {
+  display: grid;
+  gap: 16px;
+}
+.special-tools input[type='range'] {
+  display: block;
+  width: 100%;
+}
+.special-moves {
+  max-height: 190px;
+  overflow-y: auto;
+  padding-left: 24px;
+}
+.special-moves button {
+  width: 100%;
+  text-align: left;
+  margin-bottom: 4px;
+}
+.special-moves [aria-current='step'] {
+  outline: 2px solid var(--accent);
+}
+:root[data-theme='dark'] .special-board .hex-cell {
+  background: #435a66;
+}
+:root[data-theme='dark'] .special-board .tone-1 {
+  background: #304752;
+}
+:root[data-theme='dark'] .special-board .tone-2 {
+  background: #536b73;
+}
+:root[data-theme='dark'] .special-board .hex-cell.last {
+  background: #85734a;
+}
+:root[data-theme='dark'] .special-board .hex-cell.target {
+  background: #46917c;
+}
+:root[data-theme='dark'] .special-board .hex-cell.selected {
+  background: #8acdb5;
+}
+:root[data-theme='dark'] .hex-goal {
+  color: #ffe0a1;
+}
+@media (max-width: 1000px) {
+  .special-match {
+    grid-template-columns: 1fr;
+  }
+}
+@media (max-width: 600px) {
+  .special-maps {
+    grid-template-columns: 1fr;
+  }
+  .special-board-panel {
+    padding: 8px;
+  }
+  .hex-token {
+    border-width: 1px;
+  }
+}
+.circular-board {
+  display: block;
+  width: 100%;
+  max-width: 660px;
+  margin: auto;
+  aspect-ratio: 1;
+}
+.ring-rim {
+  fill: #8e744e;
+}
+.ring-tile {
+  fill: #f3e8d1;
+  stroke: #897956;
+  stroke-width: 0.7;
+}
+.ring-cell.alternate .ring-tile {
+  fill: #485b60;
+}
+.ring-cell[role='button'] {
+  cursor: pointer;
+}
+.ring-cell.last .ring-tile {
+  fill: #c8a867;
+}
+.ring-cell.target .ring-tile {
+  fill: #87c7aa;
+}
+.ring-cell.selected .ring-tile,
+.ring-cell:focus-visible .ring-tile {
+  fill: #62b6a1;
+  stroke: #173e35;
+  stroke-width: 3;
+}
+.ring-cell:focus {
+  outline: none;
+}
+.ring-piece {
+  --piece-detail: #fffdf5;
+  pointer-events: none;
+}
+.ring-piece circle {
+  fill: #fffdf5;
+  stroke: currentColor;
+  stroke-width: 1.4;
+}
+.ring-piece.BLUE,
+.ring-flag.BLUE {
+  color: #1765ae;
+}
+.ring-piece.RED,
+.ring-flag.RED {
+  color: #b83131;
+}
+.ring-flag {
+  fill: currentColor;
+  stroke: #fffdf5;
+  stroke-width: 0.7;
+  pointer-events: none;
+}
+.ring-dot {
+  fill: #144c39;
+  stroke: white;
+  stroke-width: 1;
+  pointer-events: none;
+}
+.ring-center {
+  fill: var(--surface, #fffdf5);
+  stroke: #8e744e;
+  stroke-width: 2;
+  pointer-events: none;
+}
+.ring-center-label {
+  fill: var(--ink, #283c3c);
+  font-size: 22px;
+  font-weight: 700;
+  pointer-events: none;
+}
+.ring-center-small {
+  fill: var(--muted, #667777);
+  font-size: 9px;
+  letter-spacing: 2px;
+  pointer-events: none;
+}
+:root[data-theme='dark'] .ring-tile {
+  fill: #809599;
+  stroke: #293e45;
+}
+:root[data-theme='dark'] .ring-cell.alternate .ring-tile {
+  fill: #2d424b;
+}
+:root[data-theme='dark'] .ring-cell.last .ring-tile {
+  fill: #9b8556;
+}
+:root[data-theme='dark'] .ring-cell.target .ring-tile {
+  fill: #529e85;
+}
+:root[data-theme='dark'] .ring-cell.selected .ring-tile {
+  fill: #8dd5bc;
+}

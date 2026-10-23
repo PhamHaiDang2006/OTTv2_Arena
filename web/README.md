@@ -165,3 +165,38 @@ Khóa lưu ván giữ nguyên: ván random/greedy cũ vẫn mở được, hard 
 chơi lại giữ nguyên độ khó và màu quân. Không sửa generated artifacts.
 Kiểm thử trong `tests/casual.test.tsx` bao gồm chặn đích ở cả hai màu,
 giới hạn nước, chọn độ khó trên UI và đọc lại ván cũ/mới mà không gọi mạng.
+
+## Bản đồ đặc biệt — special-v1
+
+Chế độ riêng `/special`, `/special/:id`, cần đăng nhập, nằm ngoài Casual và Arena.
+Chọn Hexagon (91 ô axial q,r bán kính 5, 6 hướng kề cạnh) hoặc Vành khuyên
+(`circular`: 4 vòng × 24 ô hình quạt = 96 ô). Vành khuyên dùng q=sector 0..23,
+r=vòng 0..3 từ trong ra ngoài: đi một ô theo vòng, theo bán kính hoặc chéo (8 hướng).
+Sector 23 và 0 kề nhau; không nối vòng trong với vòng ngoài, không xuyên tâm.
+Mỗi phe 12 quân, 4 mỗi loại, vị trí xuất phát đối xứng qua tâm; Xanh đi trước.
+Giữ búa ăn kéo, kéo ăn bao, bao ăn búa. Đích Hexagon: Xanh `(0,-5)`, Đỏ `(0,5)`;
+đích Vành khuyên: Xanh `(0,3)`, Đỏ `(12,3)`;
+không đi vào đích đối phương. Thứ tự kết thúc: về đích, ăn hết quân, đối phương
+hết nước đi, 300 ply. Tiebreak: loại quân ít nhất, tổng quân, khoảng cách ngắn nhất
+trên đồ thị đến đích (bỏ qua quân cản), Đỏ nếu vẫn hòa. Không có King of the Hill.
+
+Luật và dữ liệu local thuộc `src/special-engine.ts`; giao diện `src/special.tsx`
+và `src/special.css`; `src/circular-board.tsx` vẽ các ô hình quạt bằng SVG.
+Ba độ khó random/greedy/hard, hard xét hai ply.
+Map id cũ `ring` (hex khoét 7 ô, 84 ô) chỉ để đọc/chơi tiếp ván đã lưu và rematch,
+không còn trong lựa chọn tạo ván mới. Không tự chuyển lịch sử cũ sang hình học mới.
+Lưu riêng từng ván trong `ottv2.special.v1:<user_id>:<game_id>`, version `special-v1`;
+đọc lại kiểm tra toàn bộ lịch sử hợp lệ. Ghi dùng Web Lock và so sánh bản cũ để
+không ghi đè ván tab khác. Không có Web Lock thì kiểm tra/ghi đồng bộ trong tab,
+không bảo đảm loại trừ tuyệt đối giữa nhiều tab. Lỗi lưu được báo, không chuyển
+trang hoặc cập nhật bàn như thể đã lưu thành công. Xem lại không sửa lịch sử;
+chơi lại giữ map, màu và độ khó. Dữ liệu chỉ ở trình duyệt hiện tại, không đồng bộ.
+
+HTTP/WS/Replay contract 1.3.0, engine Python, runner, starter kits và Arena không
+thay đổi; không xuất ván đặc biệt thành Replay/FEN Arena. Không cần merge producer
+backend mới. Nếu cần online hoặc export replay sau này phải định nghĩa hợp đồng
+version mới riêng, không đưa tọa độ hex vào schema bàn 9×9 hiện tại.
+
+Kiểm tra: `npm test` (bao gồm `tests/special.test.tsx`), `npm run build`.
+Thử cân bằng với người chơi và đo hiệu năng bot Khó trên điện thoại yếu vẫn cần
+thực hiện trước khi coi hai map là chế độ thi đấu chính thức.

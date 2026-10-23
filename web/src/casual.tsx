@@ -37,6 +37,15 @@ export function Modes() {
             Chơi với máy →
           </Link>
         </section>
+        <section className="card mode-card casual-mode">
+          <span className="eyebrow">KHÁM PHÁ BẢN ĐỒ</span>
+          <h2>Bản đồ đặc biệt</h2>
+          <p>Hexagon sáu hướng và Vành khuyên đồng tâm: bố cục mới, vẫn búa–bao–kéo.</p>
+          <p>Đấu máy · Lưu trên trình duyệt · Luật thử nghiệm riêng</p>
+          <Link className="button" to="/special">
+            Khám phá bản đồ →
+          </Link>
+        </section>
         <section className="card mode-card practice-mode">
           <span className="eyebrow">CHẠY TRÊN MÁY CỦA BẠN</span>
           <h2>Tự luyện</h2>
