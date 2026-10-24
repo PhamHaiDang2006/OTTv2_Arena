@@ -27,6 +27,7 @@ import { Login } from './auth-page';
 import { Modes, CasualLobby, CasualPlay } from './casual';
 import { SpecialLobby, SpecialPlay } from './special';
 import { Practice } from './practice';
+import { RoomPage, RoomsLobby } from './rooms';
 import { initializeTheme, ThemeSwitch } from './preferences';
 initializeTheme();
 declare const __ADMIN__: boolean;
@@ -70,7 +71,8 @@ function App() {
         Đang khôi phục phiên đăng nhập…
       </p>
     );
-  const casual = !admin && location.pathname.startsWith('/casual');
+  const roomMode = !admin && location.pathname.startsWith('/rooms');
+  const casual = !admin && (location.pathname.startsWith('/casual') || roomMode);
   const special = !admin && location.pathname.startsWith('/special');
   const practice = !admin && location.pathname === '/practice';
   const modes = !admin && location.pathname === '/';
@@ -129,6 +131,7 @@ function App() {
               </NavLink>
               <NavLink to="/casual">Casual · Chơi với máy</NavLink>
               <NavLink to="/special">Bản đồ đặc biệt</NavLink>
+              <NavLink to="/rooms">Chơi với bạn · Hai người</NavLink>
               <NavLink to="/practice">Tự luyện · Trên máy bạn</NavLink>
               {(casual || special || practice || modes) && <NavLink to="/arena">Arena · Đấu bot</NavLink>}
             </>
@@ -156,7 +159,9 @@ function App() {
               : special
                 ? 'Bản đồ đặc biệt · Hexagon & Annulus'
                 : casual
-                  ? 'Casual · Người đấu máy trên trình duyệt'
+                  ? roomMode
+                    ? 'Chơi với bạn · Phòng hai người'
+                    : 'Casual · Người đấu máy trên trình duyệt'
                   : practice
                     ? 'Tự luyện · Chạy trên máy của bạn'
                     : modes
@@ -216,6 +221,8 @@ function App() {
               <>
                 <Route path="/" element={<Modes />} />
                 <Route path="/arena" element={user && <Home user={user} />} />
+                <Route path="/rooms" element={user && <RoomsLobby user={user} />} />
+                <Route path="/rooms/:id" element={user && <RoomPage user={user} />} />
                 <Route path="/casual" element={user && <CasualLobby user={user} />} />
                 <Route path="/casual/:id" element={user && <CasualPlay user={user} />} />
                 <Route path="/special" element={user && <SpecialLobby user={user} />} />

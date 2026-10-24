@@ -126,6 +126,9 @@ export function CasualLobby({ user }: { user: User }) {
   const [bot, setBot] = useState<CasualBot>('random');
   return (
     <div className="casual-lobby">
+      <Link className="primary" to="/rooms">
+        Chơi với bạn · Tạo / vào phòng
+      </Link>
       <div className="lobby-hero">
         <Heading
           eyebrow="OTT v2 / CASUAL"

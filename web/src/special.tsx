@@ -152,6 +152,9 @@ export function SpecialLobby({ user }: { user: User }) {
   }, [user.id]);
   return (
     <div className="special-page">
+      <Link className="primary" to="/rooms">
+        Chơi với bạn · Tạo / vào phòng
+      </Link>
       <Heading
         eyebrow="OTT v2 / KHÁM PHÁ"
         title="Bản đồ đặc biệt"

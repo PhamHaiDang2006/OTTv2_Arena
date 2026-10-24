@@ -1,0 +1,86 @@
+.room-forms,
+.room-layout {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 24px;
+}
+.room-forms label,
+.room-invite label {
+  display: grid;
+  gap: 8px;
+  flex: 1;
+  min-width: 0;
+}
+.room-forms input,
+.room-forms select,
+.room-invite input {
+  width: 100%;
+  padding: 12px;
+  box-sizing: border-box;
+}
+.room-list {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(240px, 1fr));
+  gap: 12px;
+}
+.room-list a {
+  display: grid;
+  gap: 10px;
+  text-decoration: none;
+}
+.room-toolbar,
+.room-invite,
+.room-player {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  gap: 16px;
+  flex-wrap: wrap;
+}
+.room-invite {
+  margin: 20px 0;
+}
+.room-layout {
+  grid-template-columns: minmax(0, 760px) minmax(230px, 1fr);
+  align-items: start;
+}
+.room-table {
+  min-width: 0;
+}
+.room-player {
+  padding: 14px 20px;
+  border-radius: 12px;
+  border: 1px solid currentColor;
+}
+.room-player.BLUE {
+  color: var(--blue, #558dc4);
+}
+.room-player.RED {
+  color: var(--red, #df7f74);
+}
+.room-turn {
+  text-align: center;
+  font-size: 1.25rem;
+  font-weight: 700;
+}
+.room-controls {
+  display: grid;
+  gap: 14px;
+}
+.room-controls h2,
+.room-controls p {
+  margin: 0;
+}
+.room-history {
+  max-height: 320px;
+  overflow: auto;
+}
+@media (max-width: 850px) {
+  .room-forms,
+  .room-layout {
+    grid-template-columns: 1fr;
+  }
+  .room-toolbar {
+    font-size: 0.85rem;
+  }
+}
