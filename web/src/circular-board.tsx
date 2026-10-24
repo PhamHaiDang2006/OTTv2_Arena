@@ -29,7 +29,7 @@ export function CircularBoard({
       className="circular-board"
       viewBox="0 0 480 480"
       role={onCell ? 'group' : 'img'}
-      aria-label="Bàn Vành khuyên"
+      aria-label="Bàn Annulus"
     >
       <circle className="ring-rim" cx="240" cy="240" r="224" />
       {cells('circular').map((c) => {
@@ -90,7 +90,7 @@ export function CircularBoard({
         OTT v2
       </text>
       <text className="ring-center-small" x="240" y="258" textAnchor="middle">
-        VÀNH KHUYÊN
+        ANNULUS
       </text>
     </svg>
   );

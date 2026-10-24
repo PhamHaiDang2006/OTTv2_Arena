@@ -189,10 +189,10 @@ it('exposes a separate mode and creates the chosen ring map with a bot opening',
       </Routes>
     </MemoryRouter>,
   );
-  fireEvent.click(screen.getByRole('button', { name: /Vành khuyên 96 ô/ }));
+  fireEvent.click(screen.getByRole('button', { name: /Annulus 96 ô/ }));
   fireEvent.change(screen.getByLabelText('Màu quân'), { target: { value: 'RED' } });
-  fireEvent.change(screen.getByLabelText('Độ khó'), { target: { value: 'hard' } });
-  fireEvent.click(screen.getByRole('button', { name: 'Chơi Vành khuyên' }));
+  fireEvent.click(screen.getByRole('button', { name: 'Khó Đấu trí' }));
+  fireEvent.click(screen.getByRole('button', { name: 'Chơi Annulus' }));
   await screen.findByText('Lượt của bạn · Chọn quân rồi chọn ô sáng');
   expect(listSpecial(user.id)[0]).toMatchObject({ map: 'circular', human: 'RED', bot: 'hard' });
   expect(listSpecial(user.id)[0].moves).toHaveLength(1);

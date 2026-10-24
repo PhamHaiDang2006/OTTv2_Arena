@@ -10,6 +10,7 @@ import { uploadFetch } from './upload';
 import { Countdown } from './countdown';
 import { adminUrl } from './urls';
 import { Badge, date, ErrorBox, Field, Heading, Load, MutationForm, Pager, Table, text, useApi } from './ui';
+import { Crest } from './casual-presentation';
 export function Home({ user }: { user: User }) {
   const team = useApi('myTeam', {}, !!user.team_id),
     matches = useApi('listScrimmages', { query: { page_size: 5 } }, !!user.team_id);
@@ -58,7 +59,7 @@ export function Home({ user }: { user: User }) {
           )}
         </div>
         <div className="hero-art" aria-hidden="true">
-          ●<br />■ ▲
+          <Crest kind="trophy" />
         </div>
       </div>
       <div className="two-col">

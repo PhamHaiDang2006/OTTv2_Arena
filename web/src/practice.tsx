@@ -4,6 +4,7 @@ import { ReplayViewer } from '@ottv2/replay-viewer';
 import type { Replay } from '../../contracts/generated/types';
 import { validate } from '../shared/schema';
 import { ErrorBox, Heading } from './ui';
+import { Crest } from './casual-presentation';
 
 const MAX_REPLAY_BYTES = 5 * 1024 * 1024;
 const readText = (file: File) =>
@@ -19,11 +20,16 @@ export function Practice() {
     [error, setError] = useState<unknown>();
   return (
     <>
-      <Heading
-        eyebrow="OTT v2 / TỰ LUYỆN"
-        title="Tự luyện · Chạy trên máy của bạn"
-        description="Cho bot của bạn đấu bot mẫu hoặc một bot khác có sẵn trên máy. Không tốn lượt đánh tập trên máy chủ."
-      />
+      <div className="training-intro">
+        <div className="training-emblem" aria-hidden="true">
+          <Crest kind="bot" />
+        </div>
+        <Heading
+          eyebrow="OTT v2 / TỰ LUYỆN"
+          title="Tự luyện · Chạy trên máy của bạn"
+          description="Cho bot của bạn đấu bot mẫu hoặc một bot khác có sẵn trên máy. Không tốn lượt đánh tập trên máy chủ."
+        />
+      </div>
       <div className="two-col">
         <section className="card">
           <h2>1. Chuẩn bị</h2>

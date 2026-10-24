@@ -21,6 +21,7 @@ import './style.css';
 import './game.css';
 import './casual-design.css';
 import './identity.css';
+import './tabletop.css';
 import { participantUrl } from './urls';
 import { Login } from './auth-page';
 import { Modes, CasualLobby, CasualPlay } from './casual';
@@ -88,7 +89,7 @@ function App() {
     );
   return (
     <div
-      className={`shell ${casual || special ? 'casual-shell' : practice ? 'practice-shell' : modes ? 'modes-shell' : 'arena-shell'} ${(casual && location.pathname !== '/casual') || (special && location.pathname !== '/special') ? 'in-game' : ''}`}
+      className={`shell ${!admin ? 'tabletop-shell' : ''} ${casual || special ? 'casual-shell' : practice ? 'practice-shell' : modes ? 'modes-shell' : 'arena-shell'} ${(casual && location.pathname !== '/casual') || (special && location.pathname !== '/special') ? 'in-game' : ''}`}
     >
       <aside className="sidebar">
         <a className="logo" href={admin ? '/admin/' : '/'}>
@@ -153,7 +154,7 @@ function App() {
             {admin
               ? 'Quản trị Arena'
               : special
-                ? 'Bản đồ đặc biệt · Hexagon & Vành khuyên'
+                ? 'Bản đồ đặc biệt · Hexagon & Annulus'
                 : casual
                   ? 'Casual · Người đấu máy trên trình duyệt'
                   : practice

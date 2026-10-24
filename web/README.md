@@ -168,14 +168,24 @@ giới hạn nước, chọn độ khó trên UI và đọc lại ván cũ/mới
 
 ## Bản đồ đặc biệt — special-v1
 
+Giao diện người chơi dùng `src/tabletop.css` (scope `tabletop-shell` trên toàn bộ giao diện P1, gồm Casual,
+Special, Arena, Tự luyện): menu bàn cờ CSS/SVG, điều hướng ngang, bảng màu gỗ/kem/đồng sáng-tối,
+map preview có chiều sâu, huy hiệu chọn bot, lịch sử Special thu gọn và khung kết quả.
+Chỉ admin P2 không nhận scope này. Tên hiển thị map tròn là **Annulus**;
+map id `circular`, khóa lưu và luật không đổi nên ván cũ vẫn tương thích.
+Ảnh kiểm tra: `evidence/tabletop-menu-dark.png`, `tabletop-menu-light.png`,
+`tabletop-annulus-dark.png`. Menu kiểm tra trên app thật; trận Special kiểm tra
+bằng harness user fixture tạm đã gỡ. Viewport Annulus 390px không tràn ngang.
+Không thêm dependency hoặc thay HTTP/WS contract 1.3.0.
+
 Chế độ riêng `/special`, `/special/:id`, cần đăng nhập, nằm ngoài Casual và Arena.
-Chọn Hexagon (91 ô axial q,r bán kính 5, 6 hướng kề cạnh) hoặc Vành khuyên
-(`circular`: 4 vòng × 24 ô hình quạt = 96 ô). Vành khuyên dùng q=sector 0..23,
+Chọn Hexagon (91 ô axial q,r bán kính 5, 6 hướng kề cạnh) hoặc Annulus
+(`circular`: 4 vòng × 24 ô hình quạt = 96 ô). Annulus dùng q=sector 0..23,
 r=vòng 0..3 từ trong ra ngoài: đi một ô theo vòng, theo bán kính hoặc chéo (8 hướng).
 Sector 23 và 0 kề nhau; không nối vòng trong với vòng ngoài, không xuyên tâm.
 Mỗi phe 12 quân, 4 mỗi loại, vị trí xuất phát đối xứng qua tâm; Xanh đi trước.
 Giữ búa ăn kéo, kéo ăn bao, bao ăn búa. Đích Hexagon: Xanh `(0,-5)`, Đỏ `(0,5)`;
-đích Vành khuyên: Xanh `(0,3)`, Đỏ `(12,3)`;
+đích Annulus: Xanh `(0,3)`, Đỏ `(12,3)`;
 không đi vào đích đối phương. Thứ tự kết thúc: về đích, ăn hết quân, đối phương
 hết nước đi, 300 ply. Tiebreak: loại quân ít nhất, tổng quân, khoảng cách ngắn nhất
 trên đồ thị đến đích (bỏ qua quân cản), Đỏ nếu vẫn hòa. Không có King of the Hill.

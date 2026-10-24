@@ -3,7 +3,7 @@ import { Link, useNavigate, useParams } from 'react-router-dom';
 import { ownerOf } from '@ottv2/replay-viewer';
 import type { Side, User } from '../../contracts/generated/types';
 import type { CasualBot } from './casual-engine';
-import { PieceIcon } from './casual-presentation';
+import { PieceIcon, Crest } from './casual-presentation';
 import { ErrorBox, Heading } from './ui';
 import {
   cells,
@@ -111,7 +111,7 @@ function Rules() {
     <details className="card special-rules">
       <summary>Luật Bản đồ đặc biệt · special-v1</summary>
       <p>
-        Hexagon: đi 1 ô theo 6 cạnh. Vành khuyên: đi 1 ô dọc vòng, vào/ra một vòng hoặc chéo một ô (tối đa 8
+        Hexagon: đi 1 ô theo 6 cạnh. Annulus: đi 1 ô dọc vòng, vào/ra một vòng hoặc chéo một ô (tối đa 8
         hướng). Búa ăn Kéo · Kéo ăn Bao · Bao ăn Búa. Mỗi phe có 12 quân (4 mỗi loại). Xanh đi trước.
       </p>
       <p>
@@ -119,7 +119,7 @@ function Rules() {
         Cũng thắng khi đối thủ hết quân hoặc hết nước hợp lệ.
       </p>
       <p>
-        Vành khuyên gồm 4 vòng đồng tâm × 24 ô hình quạt. Ô 23 nối ô 0 trên cùng vòng; không đi xuyên tâm hoặc
+        Annulus gồm 4 vòng đồng tâm × 24 ô hình quạt. Ô 23 nối ô 0 trên cùng vòng; không đi xuyên tâm hoặc
         vượt mép trong/ngoài. Màu nền ô chỉ để dễ nhìn. Ván cũ có nhãn “hex” giữ luật sáu cạnh ban đầu.
       </p>
       <p>
@@ -192,16 +192,21 @@ export function SpecialLobby({ user }: { user: User }) {
           }
         }}
       >
-        <label>
-          Độ khó
-          <select value={bot} onChange={(e) => setBot(e.target.value as CasualBot)}>
-            {Object.entries(botNames).map(([id, name]) => (
-              <option key={id} value={id}>
-                {name}
-              </option>
-            ))}
-          </select>
-        </label>
+        <div className="opponent-picker" role="group" aria-label="Chọn đối thủ">
+          {(['random', 'greedy', 'hard'] as const).map((choice) => (
+            <button
+              type="button"
+              key={choice}
+              aria-pressed={bot === choice}
+              onClick={() => setBot(choice)}
+              className={`opponent-medallion ${bot === choice ? 'chosen' : ''}`}
+            >
+              <Crest kind="bot" />
+              <strong>{botNames[choice]}</strong>
+              <span>{choice === 'random' ? 'Khởi đầu' : choice === 'greedy' ? 'Thách đấu' : 'Đấu trí'}</span>
+            </button>
+          ))}
+        </div>
         <label>
           Màu quân
           <select value={side} onChange={(e) => setSide(e.target.value as Side)}>
@@ -357,7 +362,10 @@ function SpecialMatch({ user, id }: { user: User; id: string }) {
         </section>
         <aside className="special-tools">
           {current.result && (
-            <section className="card">
+            <section
+              className={`card tabletop-result ${current.result.winner === game.human ? 'won' : 'lost'}`}
+            >
+              <Crest kind="trophy" />
               <h2>{current.result.winner === game.human ? 'Chiến thắng' : 'Ván đã kết thúc'}</h2>
               <p>{reasons[current.result.reason]}</p>
               <p>{game.moves.length} nước</p>
@@ -384,8 +392,10 @@ function SpecialMatch({ user, id }: { user: User; id: string }) {
               <Link to="/special">Về sảnh</Link>
             </section>
           )}
-          <section className="card">
-            <h2>Lịch sử · {game.moves.length} nước</h2>
+          <details className="card tabletop-history" open>
+            <summary>
+              <h2>Lịch sử · {game.moves.length} nước</h2>
+            </summary>
             <label>
               Xem lại ván
               <input
@@ -426,7 +436,7 @@ function SpecialMatch({ user, id }: { user: User; id: string }) {
                 </li>
               ))}
             </ol>
-          </section>
+          </details>
           <Rules />
           {!current.result && (
             <section className="card">

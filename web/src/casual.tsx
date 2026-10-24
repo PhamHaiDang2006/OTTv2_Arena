@@ -22,11 +22,36 @@ import { useGameSound, useReducedMotion } from './preferences';
 export function Modes() {
   return (
     <>
-      <Heading
-        eyebrow="OTT v2 / CHỌN CHẾ ĐỘ"
-        title="Bạn muốn chơi theo cách nào?"
-        description="Cùng bàn cờ OTTv2, mỗi chế độ chạy ở một nơi khác nhau."
-      />
+      <section className="tabletop-hero">
+        <div>
+          <span className="eyebrow">BÚA · BAO · KÉO</span>
+          <h1>
+            Mỗi nước đi.
+            <br />
+            Một cuộc đấu trí.
+          </h1>
+          <p>Chọn bàn cờ. Thách thức đối thủ. Tìm nước đi của riêng bạn.</p>
+          <Link className="button primary" to="/casual">
+            Bắt đầu chơi
+          </Link>
+          <Link className="tabletop-secondary" to="/special">
+            Khám phá Hexagon & Annulus ↗
+          </Link>
+        </div>
+        <div className="tabletop-scene" aria-hidden="true">
+          <div className="scene-board">
+            {Array.from({ length: 36 }, (_, i) => (
+              <i key={i} />
+            ))}
+          </div>
+          {['B', 'P', 'K'].map((piece, i) => (
+            <span key={piece} className={`scene-token token-${i}`}>
+              <PieceIcon piece={piece} />
+            </span>
+          ))}
+          <span className="scene-caption">BA QUÂN CỜ. VÔ VÀN CHIẾN THUẬT.</span>
+        </div>
+      </section>
       <div className="mode-cards">
         <section className="card mode-card casual-mode">
           <span className="eyebrow">CHẠY TRÊN TRÌNH DUYỆT</span>
@@ -40,9 +65,9 @@ export function Modes() {
         <section className="card mode-card casual-mode">
           <span className="eyebrow">KHÁM PHÁ BẢN ĐỒ</span>
           <h2>Bản đồ đặc biệt</h2>
-          <p>Hexagon sáu hướng và Vành khuyên đồng tâm: bố cục mới, vẫn búa–bao–kéo.</p>
+          <p>Hexagon sáu hướng và Annulus đồng tâm: bố cục mới, vẫn búa–bao–kéo.</p>
           <p>Đấu máy · Lưu trên trình duyệt · Luật thử nghiệm riêng</p>
-          <Link className="button" to="/special">
+          <Link className="button primary" to="/special">
             Khám phá bản đồ →
           </Link>
         </section>
@@ -51,7 +76,7 @@ export function Modes() {
           <h2>Tự luyện</h2>
           <p>Cho bot của bạn đấu với bot mẫu hoặc một bot khác có sẵn trên máy, rồi xem replay tại đây.</p>
           <p>Bộ khởi động · Không cần nộp bài · Không tốn lượt đánh tập</p>
-          <Link className="button" to="/practice">
+          <Link className="button primary" to="/practice">
             Hướng dẫn tự luyện →
           </Link>
         </section>
@@ -60,7 +85,7 @@ export function Modes() {
           <h2>Arena</h2>
           <p>Nộp bot, đánh tập với đội khác và thi đấu giải. Giải chính thức có máy chạy riêng.</p>
           <p>Đội thi đấu · Nộp code · Đánh tập · Giải đấu</p>
-          <Link className="button" to="/arena">
+          <Link className="button primary" to="/arena">
             Vào Arena →
           </Link>
         </section>

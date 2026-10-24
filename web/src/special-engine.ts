@@ -8,7 +8,7 @@ export type Move = { from: string; to: string };
 export type Position = Record<string, Piece>;
 export const RULESET = 'special-v1' as const;
 export const LIMIT = 300;
-export const mapNames = { hexagon: 'Hexagon', ring: 'Vành khuyên cũ (hex)', circular: 'Vành khuyên' };
+export const mapNames = { hexagon: 'Hexagon', ring: 'Annulus cũ (hex)', circular: 'Annulus' };
 export const goals: Record<Side, string> = { BLUE: '0,-5', RED: '0,5' };
 export const mapGoals = (map: MapId): Record<Side, string> =>
   map === 'circular' ? { BLUE: '0,3', RED: '12,3' } : goals;
