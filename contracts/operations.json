@@ -11,6 +11,64 @@
     "response_example": "examples/http/health.response.json"
   },
   {
+    "method": "post",
+    "path": "/rooms",
+    "operationId": "createRoom",
+    "request": "RoomCreate",
+    "response": "Room",
+    "status": 201,
+    "role": "member",
+    "multipart": false,
+    "request_example": "examples/http/createRoom.request.json",
+    "response_example": "examples/http/createRoom.response.json"
+  },
+  {
+    "method": "get",
+    "path": "/rooms",
+    "operationId": "listRooms",
+    "request": null,
+    "response": "RoomList",
+    "status": 200,
+    "role": "member",
+    "multipart": false,
+    "response_example": "examples/http/listRooms.response.json"
+  },
+  {
+    "method": "post",
+    "path": "/rooms/join",
+    "operationId": "joinRoom",
+    "request": "RoomJoin",
+    "response": "Room",
+    "status": 200,
+    "role": "member",
+    "multipart": false,
+    "request_example": "examples/http/joinRoom.request.json",
+    "response_example": "examples/http/joinRoom.response.json"
+  },
+  {
+    "method": "get",
+    "path": "/rooms/{room_id}",
+    "operationId": "getRoom",
+    "request": null,
+    "response": "Room",
+    "status": 200,
+    "role": "member",
+    "multipart": false,
+    "response_example": "examples/http/getRoom.response.json"
+  },
+  {
+    "method": "post",
+    "path": "/rooms/{room_id}/commands",
+    "operationId": "roomCommand",
+    "request": "RoomCommand",
+    "response": "Room",
+    "status": 200,
+    "role": "member",
+    "multipart": false,
+    "request_example": "examples/http/roomCommand.request.json",
+    "response_example": "examples/http/roomCommand.response.json"
+  },
+  {
     "method": "get",
     "path": "/capabilities",
     "operationId": "capabilities",

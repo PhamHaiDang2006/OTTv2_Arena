@@ -4,6 +4,8 @@
 
 **Đấu trường lập trình Búa – Bao – Kéo trên bàn cờ 9×9**
 
+Chơi trực tiếp với bạn trên Casual, Hexagon và Annulus: [hướng dẫn phòng hai người](ROOM_QUICKSTART.md).
+
 Viết bot, nộp lên máy chủ, thi đấu tự động trong sandbox và xem lại từng nước đi.
 
 [![Python 3.12](https://img.shields.io/badge/Python-3.12-3776AB?logo=python&logoColor=white)](engine/README.md)

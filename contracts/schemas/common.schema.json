@@ -1,6 +1,258 @@
 {
   "$schema": "https://json-schema.org/draft/2020-12/schema",
   "$defs": {
+    "RoomMap": {
+      "type": "string",
+      "enum": [
+        "standard",
+        "hexagon",
+        "circular"
+      ]
+    },
+    "RoomMove": {
+      "type": "object",
+      "properties": {
+        "from": {
+          "type": "string",
+          "minLength": 2,
+          "maxLength": 8
+        },
+        "to": {
+          "type": "string",
+          "minLength": 2,
+          "maxLength": 8
+        }
+      },
+      "required": [
+        "from",
+        "to"
+      ],
+      "additionalProperties": false
+    },
+    "RoomCreate": {
+      "type": "object",
+      "properties": {
+        "map": {
+          "$ref": "#/$defs/RoomMap"
+        }
+      },
+      "required": [
+        "map"
+      ],
+      "additionalProperties": false
+    },
+    "RoomJoin": {
+      "type": "object",
+      "properties": {
+        "code": {
+          "type": "string",
+          "pattern": "^[A-Z2-9]{8}$"
+        }
+      },
+      "required": [
+        "code"
+      ],
+      "additionalProperties": false
+    },
+    "RoomCommand": {
+      "type": "object",
+      "properties": {
+        "revision": {
+          "type": "integer",
+          "minimum": 0
+        },
+        "action": {
+          "type": "string",
+          "enum": [
+            "ready",
+            "unready",
+            "move",
+            "resign",
+            "rematch",
+            "leave"
+          ]
+        },
+        "move": {
+          "$ref": "#/$defs/RoomMove"
+        }
+      },
+      "required": [
+        "revision",
+        "action"
+      ],
+      "additionalProperties": false
+    },
+    "Room": {
+      "type": "object",
+      "properties": {
+        "id": {
+          "type": "string",
+          "format": "uuid"
+        },
+        "code": {
+          "type": "string",
+          "pattern": "^[A-Z2-9]{8}$"
+        },
+        "map": {
+          "$ref": "#/$defs/RoomMap"
+        },
+        "revision": {
+          "type": "integer",
+          "minimum": 0
+        },
+        "round": {
+          "type": "integer",
+          "minimum": 1
+        },
+        "status": {
+          "type": "string",
+          "enum": [
+            "waiting",
+            "playing",
+            "finished",
+            "closed"
+          ]
+        },
+        "players": {
+          "type": "array",
+          "items": {
+            "type": "object",
+            "properties": {
+              "id": {
+                "type": "string",
+                "format": "uuid"
+              },
+              "side": {
+                "type": "string",
+                "enum": [
+                  "BLUE",
+                  "RED"
+                ]
+              },
+              "ready": {
+                "type": "boolean"
+              },
+              "rematch": {
+                "type": "boolean"
+              }
+            },
+            "required": [
+              "id",
+              "side",
+              "ready",
+              "rematch"
+            ],
+            "additionalProperties": false
+          }
+        },
+        "fen": {
+          "anyOf": [
+            {
+              "type": "string"
+            },
+            {
+              "type": "null"
+            }
+          ]
+        },
+        "position": {
+          "type": "object",
+          "additionalProperties": {
+            "type": "string",
+            "enum": [
+              "B",
+              "P",
+              "K",
+              "b",
+              "p",
+              "k"
+            ]
+          }
+        },
+        "turn": {
+          "anyOf": [
+            {
+              "type": "string",
+              "enum": [
+                "BLUE",
+                "RED"
+              ]
+            },
+            {
+              "type": "null"
+            }
+          ]
+        },
+        "moves": {
+          "type": "array",
+          "items": {
+            "$ref": "#/$defs/RoomMove"
+          }
+        },
+        "legal_moves": {
+          "type": "array",
+          "items": {
+            "$ref": "#/$defs/RoomMove"
+          }
+        },
+        "result": {
+          "anyOf": [
+            {
+              "type": "object",
+              "properties": {
+                "winner": {
+                  "type": "string",
+                  "enum": [
+                    "BLUE",
+                    "RED"
+                  ]
+                },
+                "reason": {
+                  "type": "string",
+                  "enum": [
+                    "GOAL",
+                    "WIPEOUT",
+                    "STALEMATE",
+                    "MOVE_LIMIT",
+                    "RESIGNED"
+                  ]
+                }
+              },
+              "required": [
+                "winner",
+                "reason"
+              ],
+              "additionalProperties": false
+            },
+            {
+              "type": "null"
+            }
+          ]
+        }
+      },
+      "required": [
+        "id",
+        "code",
+        "map",
+        "revision",
+        "round",
+        "status",
+        "players",
+        "fen",
+        "position",
+        "turn",
+        "moves",
+        "legal_moves",
+        "result"
+      ],
+      "additionalProperties": false
+    },
+    "RoomList": {
+      "type": "array",
+      "items": {
+        "$ref": "#/$defs/Room"
+      }
+    },
     "Side": {
       "type": "string",
       "enum": [

@@ -63,13 +63,14 @@ def create_app() -> FastAPI:
     from app.internal.router import router as internal_router
     from app.matches.router import router as matches_router
     from app.public.router import router as public_router
+    from app.rooms import router as rooms_router
     from app.submissions.router import router as submissions_router
     from app.teams.router import router as teams_router
     from app.tournament.router import router as tournament_router
     from app.ws.router import router as ws_router
 
     for router in (public_router, auth_router, teams_router, submissions_router, matches_router, tournament_router,
-                   admin_router, internal_router):
+                   admin_router, internal_router, rooms_router):
         app.include_router(router, prefix=API_PREFIX)
     app.include_router(ws_router)
     return app

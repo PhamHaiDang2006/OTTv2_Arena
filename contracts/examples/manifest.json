@@ -271,6 +271,46 @@
     "valid": true
   },
   {
+    "file": "examples/http/createRoom.request.json",
+    "definition": "RoomCreate",
+    "valid": true
+  },
+  {
+    "file": "examples/http/createRoom.response.json",
+    "definition": "Room",
+    "valid": true
+  },
+  {
+    "file": "examples/http/listRooms.response.json",
+    "definition": "RoomList",
+    "valid": true
+  },
+  {
+    "file": "examples/http/joinRoom.request.json",
+    "definition": "RoomJoin",
+    "valid": true
+  },
+  {
+    "file": "examples/http/joinRoom.response.json",
+    "definition": "Room",
+    "valid": true
+  },
+  {
+    "file": "examples/http/getRoom.response.json",
+    "definition": "Room",
+    "valid": true
+  },
+  {
+    "file": "examples/http/roomCommand.request.json",
+    "definition": "RoomCommand",
+    "valid": true
+  },
+  {
+    "file": "examples/http/roomCommand.response.json",
+    "definition": "Room",
+    "valid": true
+  },
+  {
     "file": "examples/http/capabilities.response.json",
     "definition": "Capabilities",
     "valid": true

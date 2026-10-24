@@ -2,6 +2,11 @@
 import type * as T from "./types";
 export interface Operations {
   health: { request: undefined; response: T.Health };
+  createRoom: { request: T.RoomCreate; response: T.Room };
+  listRooms: { request: undefined; response: T.RoomList };
+  joinRoom: { request: T.RoomJoin; response: T.Room };
+  getRoom: { request: undefined; response: T.Room };
+  roomCommand: { request: T.RoomCommand; response: T.Room };
   capabilities: { request: undefined; response: T.Capabilities };
   login: { request: T.Login; response: T.Auth };
   register: { request: T.Register; response: T.Auth };
@@ -72,6 +77,31 @@ export const routes = {
   "health": {
     "method": "GET",
     "path": "/health",
+    "status": 200
+  },
+  "createRoom": {
+    "method": "POST",
+    "path": "/rooms",
+    "status": 201
+  },
+  "listRooms": {
+    "method": "GET",
+    "path": "/rooms",
+    "status": 200
+  },
+  "joinRoom": {
+    "method": "POST",
+    "path": "/rooms/join",
+    "status": 200
+  },
+  "getRoom": {
+    "method": "GET",
+    "path": "/rooms/{room_id}",
+    "status": 200
+  },
+  "roomCommand": {
+    "method": "POST",
+    "path": "/rooms/{room_id}/commands",
     "status": 200
   },
   "capabilities": {

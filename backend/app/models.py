@@ -95,6 +95,16 @@ class CasualGame(Base):
     created_at: Mapped[datetime] = _now()
 
 
+class PlayRoom(Base):
+    __tablename__ = 'play_rooms'
+    id: Mapped[uuid.UUID] = _id()
+    code: Mapped[str] = mapped_column(String(8), unique=True, nullable=False)
+    host_id: Mapped[uuid.UUID] = mapped_column(ForeignKey('users.id'), index=True)
+    guest_id: Mapped[uuid.UUID | None] = mapped_column(ForeignKey('users.id'), index=True)
+    state: Mapped[dict] = mapped_column(JSONB, nullable=False)
+    created_at: Mapped[datetime] = _now()
+
+
 class Team(Base):
     __tablename__ = 'teams'
     id: Mapped[uuid.UUID] = _id()

@@ -142,6 +142,813 @@
         "security": []
       }
     },
+    "/rooms": {
+      "post": {
+        "operationId": "createRoom",
+        "summary": "createRoom",
+        "x-role": "member",
+        "description": "member access. See contracts/behavior.md for authorization and state transitions.",
+        "parameters": [
+          {
+            "name": "Idempotency-Key",
+            "in": "header",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "format": "uuid"
+            },
+            "description": "Scoped by actor + method + path; retained 24h. Same key/body returns original status/body, different body returns 409."
+          }
+        ],
+        "responses": {
+          "201": {
+            "description": "Success",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Room"
+                },
+                "example": {
+                  "id": "00000040-0000-4000-8000-000000000001",
+                  "code": "ABCDEFGH",
+                  "map": "standard",
+                  "revision": 0,
+                  "round": 1,
+                  "status": "waiting",
+                  "players": [
+                    {
+                      "id": "00000001-0000-4000-8000-000000000001",
+                      "side": "BLUE",
+                      "ready": false,
+                      "rematch": false
+                    }
+                  ],
+                  "fen": "9/pbkpbkpbk/kpbkpbkpb/9/9/9/BPKBPKBPK/KBPKBPKBP/9",
+                  "position": {},
+                  "turn": null,
+                  "moves": [],
+                  "legal_moves": [],
+                  "result": null
+                }
+              }
+            }
+          },
+          "400": {
+            "description": "Error; see error.code",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Error"
+                }
+              }
+            }
+          },
+          "401": {
+            "description": "Error; see error.code",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Error"
+                }
+              }
+            }
+          },
+          "403": {
+            "description": "Error; see error.code",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Error"
+                }
+              }
+            }
+          },
+          "404": {
+            "description": "Error; see error.code",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Error"
+                }
+              }
+            }
+          },
+          "409": {
+            "description": "Error; see error.code",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Error"
+                }
+              }
+            }
+          },
+          "413": {
+            "description": "Error; see error.code",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Error"
+                }
+              }
+            }
+          },
+          "422": {
+            "description": "Error; see error.code",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Error"
+                }
+              }
+            }
+          },
+          "429": {
+            "description": "Error; see error.code",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Error"
+                }
+              }
+            }
+          },
+          "500": {
+            "description": "Error; see error.code",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Error"
+                }
+              }
+            }
+          },
+          "503": {
+            "description": "Error; see error.code",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Error"
+                }
+              }
+            }
+          }
+        },
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/RoomCreate"
+              },
+              "example": {
+                "map": "standard"
+              }
+            }
+          }
+        }
+      },
+      "get": {
+        "operationId": "listRooms",
+        "summary": "listRooms",
+        "x-role": "member",
+        "description": "member access. See contracts/behavior.md for authorization and state transitions.",
+        "parameters": [],
+        "responses": {
+          "200": {
+            "description": "Success",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/RoomList"
+                },
+                "example": [
+                  {
+                    "id": "00000040-0000-4000-8000-000000000001",
+                    "code": "ABCDEFGH",
+                    "map": "standard",
+                    "revision": 0,
+                    "round": 1,
+                    "status": "waiting",
+                    "players": [
+                      {
+                        "id": "00000001-0000-4000-8000-000000000001",
+                        "side": "BLUE",
+                        "ready": false,
+                        "rematch": false
+                      }
+                    ],
+                    "fen": "9/pbkpbkpbk/kpbkpbkpb/9/9/9/BPKBPKBPK/KBPKBPKBP/9",
+                    "position": {},
+                    "turn": null,
+                    "moves": [],
+                    "legal_moves": [],
+                    "result": null
+                  }
+                ]
+              }
+            }
+          },
+          "400": {
+            "description": "Error; see error.code",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Error"
+                }
+              }
+            }
+          },
+          "401": {
+            "description": "Error; see error.code",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Error"
+                }
+              }
+            }
+          },
+          "403": {
+            "description": "Error; see error.code",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Error"
+                }
+              }
+            }
+          },
+          "404": {
+            "description": "Error; see error.code",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Error"
+                }
+              }
+            }
+          },
+          "409": {
+            "description": "Error; see error.code",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Error"
+                }
+              }
+            }
+          },
+          "413": {
+            "description": "Error; see error.code",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Error"
+                }
+              }
+            }
+          },
+          "422": {
+            "description": "Error; see error.code",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Error"
+                }
+              }
+            }
+          },
+          "429": {
+            "description": "Error; see error.code",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Error"
+                }
+              }
+            }
+          },
+          "500": {
+            "description": "Error; see error.code",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Error"
+                }
+              }
+            }
+          },
+          "503": {
+            "description": "Error; see error.code",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Error"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/rooms/join": {
+      "post": {
+        "operationId": "joinRoom",
+        "summary": "joinRoom",
+        "x-role": "member",
+        "description": "member access. See contracts/behavior.md for authorization and state transitions.",
+        "parameters": [
+          {
+            "name": "Idempotency-Key",
+            "in": "header",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "format": "uuid"
+            },
+            "description": "Scoped by actor + method + path; retained 24h. Same key/body returns original status/body, different body returns 409."
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Success",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Room"
+                },
+                "example": {
+                  "id": "00000040-0000-4000-8000-000000000001",
+                  "code": "ABCDEFGH",
+                  "map": "standard",
+                  "revision": 0,
+                  "round": 1,
+                  "status": "waiting",
+                  "players": [
+                    {
+                      "id": "00000001-0000-4000-8000-000000000001",
+                      "side": "BLUE",
+                      "ready": false,
+                      "rematch": false
+                    }
+                  ],
+                  "fen": "9/pbkpbkpbk/kpbkpbkpb/9/9/9/BPKBPKBPK/KBPKBPKBP/9",
+                  "position": {},
+                  "turn": null,
+                  "moves": [],
+                  "legal_moves": [],
+                  "result": null
+                }
+              }
+            }
+          },
+          "400": {
+            "description": "Error; see error.code",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Error"
+                }
+              }
+            }
+          },
+          "401": {
+            "description": "Error; see error.code",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Error"
+                }
+              }
+            }
+          },
+          "403": {
+            "description": "Error; see error.code",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Error"
+                }
+              }
+            }
+          },
+          "404": {
+            "description": "Error; see error.code",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Error"
+                }
+              }
+            }
+          },
+          "409": {
+            "description": "Error; see error.code",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Error"
+                }
+              }
+            }
+          },
+          "413": {
+            "description": "Error; see error.code",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Error"
+                }
+              }
+            }
+          },
+          "422": {
+            "description": "Error; see error.code",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Error"
+                }
+              }
+            }
+          },
+          "429": {
+            "description": "Error; see error.code",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Error"
+                }
+              }
+            }
+          },
+          "500": {
+            "description": "Error; see error.code",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Error"
+                }
+              }
+            }
+          },
+          "503": {
+            "description": "Error; see error.code",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Error"
+                }
+              }
+            }
+          }
+        },
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/RoomJoin"
+              },
+              "example": {
+                "code": "ABCDEFGH"
+              }
+            }
+          }
+        }
+      }
+    },
+    "/rooms/{room_id}": {
+      "get": {
+        "operationId": "getRoom",
+        "summary": "getRoom",
+        "x-role": "member",
+        "description": "member access. See contracts/behavior.md for authorization and state transitions.",
+        "parameters": [
+          {
+            "name": "room_id",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "format": "uuid"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Success",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Room"
+                },
+                "example": {
+                  "id": "00000040-0000-4000-8000-000000000001",
+                  "code": "ABCDEFGH",
+                  "map": "standard",
+                  "revision": 0,
+                  "round": 1,
+                  "status": "waiting",
+                  "players": [
+                    {
+                      "id": "00000001-0000-4000-8000-000000000001",
+                      "side": "BLUE",
+                      "ready": false,
+                      "rematch": false
+                    }
+                  ],
+                  "fen": "9/pbkpbkpbk/kpbkpbkpb/9/9/9/BPKBPKBPK/KBPKBPKBP/9",
+                  "position": {},
+                  "turn": null,
+                  "moves": [],
+                  "legal_moves": [],
+                  "result": null
+                }
+              }
+            }
+          },
+          "400": {
+            "description": "Error; see error.code",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Error"
+                }
+              }
+            }
+          },
+          "401": {
+            "description": "Error; see error.code",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Error"
+                }
+              }
+            }
+          },
+          "403": {
+            "description": "Error; see error.code",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Error"
+                }
+              }
+            }
+          },
+          "404": {
+            "description": "Error; see error.code",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Error"
+                }
+              }
+            }
+          },
+          "409": {
+            "description": "Error; see error.code",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Error"
+                }
+              }
+            }
+          },
+          "413": {
+            "description": "Error; see error.code",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Error"
+                }
+              }
+            }
+          },
+          "422": {
+            "description": "Error; see error.code",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Error"
+                }
+              }
+            }
+          },
+          "429": {
+            "description": "Error; see error.code",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Error"
+                }
+              }
+            }
+          },
+          "500": {
+            "description": "Error; see error.code",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Error"
+                }
+              }
+            }
+          },
+          "503": {
+            "description": "Error; see error.code",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Error"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/rooms/{room_id}/commands": {
+      "post": {
+        "operationId": "roomCommand",
+        "summary": "roomCommand",
+        "x-role": "member",
+        "description": "member access. See contracts/behavior.md for authorization and state transitions.",
+        "parameters": [
+          {
+            "name": "room_id",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "format": "uuid"
+            }
+          },
+          {
+            "name": "Idempotency-Key",
+            "in": "header",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "format": "uuid"
+            },
+            "description": "Scoped by actor + method + path; retained 24h. Same key/body returns original status/body, different body returns 409."
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Success",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Room"
+                },
+                "example": {
+                  "id": "00000040-0000-4000-8000-000000000001",
+                  "code": "ABCDEFGH",
+                  "map": "standard",
+                  "revision": 0,
+                  "round": 1,
+                  "status": "waiting",
+                  "players": [
+                    {
+                      "id": "00000001-0000-4000-8000-000000000001",
+                      "side": "BLUE",
+                      "ready": false,
+                      "rematch": false
+                    }
+                  ],
+                  "fen": "9/pbkpbkpbk/kpbkpbkpb/9/9/9/BPKBPKBPK/KBPKBPKBP/9",
+                  "position": {},
+                  "turn": null,
+                  "moves": [],
+                  "legal_moves": [],
+                  "result": null
+                }
+              }
+            }
+          },
+          "400": {
+            "description": "Error; see error.code",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Error"
+                }
+              }
+            }
+          },
+          "401": {
+            "description": "Error; see error.code",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Error"
+                }
+              }
+            }
+          },
+          "403": {
+            "description": "Error; see error.code",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Error"
+                }
+              }
+            }
+          },
+          "404": {
+            "description": "Error; see error.code",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Error"
+                }
+              }
+            }
+          },
+          "409": {
+            "description": "Error; see error.code",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Error"
+                }
+              }
+            }
+          },
+          "413": {
+            "description": "Error; see error.code",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Error"
+                }
+              }
+            }
+          },
+          "422": {
+            "description": "Error; see error.code",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Error"
+                }
+              }
+            }
+          },
+          "429": {
+            "description": "Error; see error.code",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Error"
+                }
+              }
+            }
+          },
+          "500": {
+            "description": "Error; see error.code",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Error"
+                }
+              }
+            }
+          },
+          "503": {
+            "description": "Error; see error.code",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Error"
+                }
+              }
+            }
+          }
+        },
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/RoomCommand"
+              },
+              "example": {
+                "revision": 0,
+                "action": "ready"
+              }
+            }
+          }
+        }
+      }
+    },
     "/capabilities": {
       "get": {
         "operationId": "capabilities",
@@ -10372,6 +11179,258 @@
       }
     },
     "schemas": {
+      "RoomMap": {
+        "type": "string",
+        "enum": [
+          "standard",
+          "hexagon",
+          "circular"
+        ]
+      },
+      "RoomMove": {
+        "type": "object",
+        "properties": {
+          "from": {
+            "type": "string",
+            "minLength": 2,
+            "maxLength": 8
+          },
+          "to": {
+            "type": "string",
+            "minLength": 2,
+            "maxLength": 8
+          }
+        },
+        "required": [
+          "from",
+          "to"
+        ],
+        "additionalProperties": false
+      },
+      "RoomCreate": {
+        "type": "object",
+        "properties": {
+          "map": {
+            "$ref": "#/components/schemas/RoomMap"
+          }
+        },
+        "required": [
+          "map"
+        ],
+        "additionalProperties": false
+      },
+      "RoomJoin": {
+        "type": "object",
+        "properties": {
+          "code": {
+            "type": "string",
+            "pattern": "^[A-Z2-9]{8}$"
+          }
+        },
+        "required": [
+          "code"
+        ],
+        "additionalProperties": false
+      },
+      "RoomCommand": {
+        "type": "object",
+        "properties": {
+          "revision": {
+            "type": "integer",
+            "minimum": 0
+          },
+          "action": {
+            "type": "string",
+            "enum": [
+              "ready",
+              "unready",
+              "move",
+              "resign",
+              "rematch",
+              "leave"
+            ]
+          },
+          "move": {
+            "$ref": "#/components/schemas/RoomMove"
+          }
+        },
+        "required": [
+          "revision",
+          "action"
+        ],
+        "additionalProperties": false
+      },
+      "Room": {
+        "type": "object",
+        "properties": {
+          "id": {
+            "type": "string",
+            "format": "uuid"
+          },
+          "code": {
+            "type": "string",
+            "pattern": "^[A-Z2-9]{8}$"
+          },
+          "map": {
+            "$ref": "#/components/schemas/RoomMap"
+          },
+          "revision": {
+            "type": "integer",
+            "minimum": 0
+          },
+          "round": {
+            "type": "integer",
+            "minimum": 1
+          },
+          "status": {
+            "type": "string",
+            "enum": [
+              "waiting",
+              "playing",
+              "finished",
+              "closed"
+            ]
+          },
+          "players": {
+            "type": "array",
+            "items": {
+              "type": "object",
+              "properties": {
+                "id": {
+                  "type": "string",
+                  "format": "uuid"
+                },
+                "side": {
+                  "type": "string",
+                  "enum": [
+                    "BLUE",
+                    "RED"
+                  ]
+                },
+                "ready": {
+                  "type": "boolean"
+                },
+                "rematch": {
+                  "type": "boolean"
+                }
+              },
+              "required": [
+                "id",
+                "side",
+                "ready",
+                "rematch"
+              ],
+              "additionalProperties": false
+            }
+          },
+          "fen": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ]
+          },
+          "position": {
+            "type": "object",
+            "additionalProperties": {
+              "type": "string",
+              "enum": [
+                "B",
+                "P",
+                "K",
+                "b",
+                "p",
+                "k"
+              ]
+            }
+          },
+          "turn": {
+            "anyOf": [
+              {
+                "type": "string",
+                "enum": [
+                  "BLUE",
+                  "RED"
+                ]
+              },
+              {
+                "type": "null"
+              }
+            ]
+          },
+          "moves": {
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/RoomMove"
+            }
+          },
+          "legal_moves": {
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/RoomMove"
+            }
+          },
+          "result": {
+            "anyOf": [
+              {
+                "type": "object",
+                "properties": {
+                  "winner": {
+                    "type": "string",
+                    "enum": [
+                      "BLUE",
+                      "RED"
+                    ]
+                  },
+                  "reason": {
+                    "type": "string",
+                    "enum": [
+                      "GOAL",
+                      "WIPEOUT",
+                      "STALEMATE",
+                      "MOVE_LIMIT",
+                      "RESIGNED"
+                    ]
+                  }
+                },
+                "required": [
+                  "winner",
+                  "reason"
+                ],
+                "additionalProperties": false
+              },
+              {
+                "type": "null"
+              }
+            ]
+          }
+        },
+        "required": [
+          "id",
+          "code",
+          "map",
+          "revision",
+          "round",
+          "status",
+          "players",
+          "fen",
+          "position",
+          "turn",
+          "moves",
+          "legal_moves",
+          "result"
+        ],
+        "additionalProperties": false
+      },
+      "RoomList": {
+        "type": "array",
+        "items": {
+          "$ref": "#/components/schemas/Room"
+        }
+      },
       "Side": {
         "type": "string",
         "enum": [
