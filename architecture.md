@@ -1,5 +1,10 @@
 # Kiến trúc OTTv2 Arena
 
+Chế độ `/special` là phần thử nghiệm chỉ chạy trên trình duyệt, độc lập Casual/Arena.
+Hai map Hexagon/Vành khuyên dùng `special-v1` và lịch sử tọa độ axial riêng trong
+localStorage theo user/game (hex dùng axial; circular dùng sector/vòng); đặc tả ở `web/README.md`. Không gửi ván này tới API,
+runner hoặc viewer Replay 9×9. HTTP/WS và machine contract 1.3.0 không thay đổi.
+
 Chi tiết ranh giới triển khai nằm trong [integration.md](integration.md): engine API, job/callback v1, HTTP/WS, môi trường và fixture. Payload ngắn trong sơ đồ chỉ tóm tắt luồng, không thay schema đầy đủ. Đọc [AGENTS.md](AGENTS.md) trước khi giao việc cho AI; các điểm luật chưa chốt nằm ở integration mục 9.
 
 Bộ máy đọc được đã có tại [contracts/README.md](contracts/README.md). OpenAPI/schema và behavior là nguồn chuẩn cho trường bắt buộc, role, trạng thái; lược đồ DB bên dưới là phác thảo cần bổ sung rounds/snapshots/jobs/receipts/outbox theo behavior. Profile dev-v1 chỉ để phát triển, không khẳng định đã chốt luật chính thức.

@@ -81,6 +81,7 @@ Hướng dẫn chi tiết cho từng phần nằm trong README của thư mục 
 P1 `/` là trang chọn chế độ, mỗi chế độ chạy ở một nơi:
 
 - **Casual** (`/casual`, cần đăng nhập): bàn cờ và bot mẫu chạy trong trình duyệt, ván lưu trên trình duyệt; server không chạy ván Casual.
+- **Bản đồ đặc biệt** (`/special`, cần đăng nhập): chế độ độc lập với Hexagon và Vành khuyên, đấu bot trên trình duyệt; luật thử nghiệm `special-v1`, lưu riêng, không áp dụng vào Casual/Arena. Xem [web/README.md](web/README.md).
 - **Tự luyện** (`/practice`): bot của bạn đấu bot mẫu hoặc bot khác ngay trên máy bằng `python -m ottv2 practice <bot> --vs greedy`; trang P1 mở replay cục bộ để xem.
 - **Arena** (`/arena`): nộp bot, đánh tập và giải đấu trên máy chủ. Đánh tập chạy trên worker riêng, giới hạn số trận cùng lúc và tạm dừng nhận trận mới khi giải đang có việc; giải chính thức có worker riêng. Các đường dẫn chức năng cũ không đổi.
 
