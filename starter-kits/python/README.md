@@ -2,6 +2,8 @@
 
 Engine `ottv2==1.0.0`, protocol `OTTV2 1`, luật **dev-v1 (phát triển)**. Cần Python 3.12+.
 
+## Bắt đầu
+
 Từ repo root:
 
 ```sh
@@ -10,23 +12,24 @@ python -m ottv2 play starter-kits/python starter-kits/python --replay starter-ki
 python starter-kits/tools/package.py
 ```
 
-Sửa `choose_move(board, side, remaining_ms)` trong `main.py`. `STRATEGY="random"`
-dùng seed 1; đổi thành `"greedy"` để ưu tiên đích, ăn quân, rồi tiến tới đích.
-Kit Python dùng trực tiếp luật của engine, không sao chép bộ luật.
+Sửa `choose_move(board, side, remaining_ms)` trong `main.py`. `STRATEGY = "random"` chọn ngẫu nhiên với seed 1; đổi thành `"greedy"` để ưu tiên đích, ăn quân rồi tiến tới đích.
 
-- `Board.from_fen(fen)`, `board.fen()`: đọc/ghi bàn; `cells[0]` là a1.
-- `board.pieces(side, kind=None)`: chỉ số quân theo BLUE/RED và B/P/K.
+## API
+
+- `Board.from_fen(fen)`, `board.fen()`: đọc và ghi bàn; `cells[0]` là a1.
+- `board.pieces(side, kind=None)`: chỉ số ô có quân theo `BLUE`/`RED` và loại `B`/`P`/`K`.
 - `board.legal_moves(side)`: các nước dạng `c3d4`.
 - `board.apply(move, side)`: trả bàn mới, không sửa bàn cũ.
-- `undo = board.push(move, side)` rồi `board.pop(undo)`: sửa/hoàn tác tại chỗ, theo LIFO.
-- `ottv2.bot.debug(text)`: ghi dòng bắt đầu `#` và flush.
+- `undo = board.push(move, side)` rồi `board.pop(undo)`: sửa và hoàn tác tại chỗ theo LIFO, dùng cho tìm kiếm.
+- `ottv2.bot.debug(text)`: ghi dòng bắt đầu bằng `#` và flush; xem lại được trong replay.
 
-ZIP nộp bài phải chứa `main.py` **ngay tại gốc**, không chứa thư mục `python/`,
-venv, package engine hay file thực thi. `package.py` tạo hai ZIP random/greedy
-trong `starter-kits/dist/`. Image Python của hệ thống phải cài sẵn đúng phiên bản
-`ottv2` và numpy; xem `engine/Dockerfile.bot`. Không tự pip install khi bot chạy.
+`serve()` lo handshake và flush, chỉ gọi hàm chọn nước khi nhận `GO`. Không in gì khác ra stdout ngoài giao thức và debug.
 
-Một lượt giao tiếp minh họa (engine E, bot B):
+## Nộp bài
+
+ZIP phải chứa `main.py` **ngay tại gốc**, không chứa thư mục `python/`, venv, package engine hay file thực thi. `package.py` tạo sẵn hai ZIP random/greedy trong `starter-kits/dist/`. Image chạy bot đã cài sẵn `ottv2` và numpy; không tự `pip install` khi bot chạy.
+
+## Ví dụ giao thức
 
 ```text
 E: OTTV2 1
@@ -40,5 +43,4 @@ B: MOVE c3d4
 E: END LOSS GOAL
 ```
 
-`serve()` xử lý handshake và flush; chỉ gọi hàm chọn nước khi nhận GO. Không
-in thêm vào stdout ngoài protocol/debug. Tài liệu luật: `contracts/rules.md`.
+Luật đầy đủ: [contracts/rules.md](../../contracts/rules.md).

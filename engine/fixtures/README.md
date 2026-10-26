@@ -1,7 +1,6 @@
 # Engine fixtures 1.0.0 / dev-v1
 
-Nguồn sinh: `engine/scripts/generate_fixtures.py`; không sửa JSON bằng tay.
-Sinh lại từ repo root sau khi cài `engine`:
+File sinh bằng `engine/scripts/generate_fixtures.py` (riêng `stress-report.json` sinh bằng `engine/scripts/stress.py`); không sửa JSON bằng tay. Sinh lại từ repo root sau khi cài `engine`:
 
 ```sh
 python engine/scripts/generate_fixtures.py
@@ -9,15 +8,9 @@ python -m unittest discover -s engine/tests -v
 python starter-kits/tests/check_kits.py
 ```
 
-Đã sinh với Python 3.12.14. `manifest.json` trỏ tới sáu replay do `run_game`
-thực sự xuất qua BotIO tất định: capture/WIPEOUT, GOAL, CRASH 0 ply, TIMEOUT,
-ILLEGAL_MOVE, MOVE_LIMIT đủ 300 ply. Mỗi mục có `expected_final_fen` cho viewer.
-Các bàn thưa dùng để cô lập luật; không phải ván từ bot Docker hay giải chính thức.
-
-`positions.json`: 1.000 bàn sinh với seed 20261016, hai tập nước BLUE/RED.
-Đây là bàn tổng hợp, không khẳng định mọi bàn có thể đạt được trong thi đấu.
-Python kit, C++ kit và engine dùng chung dữ liệu này để kiểm tra luật và undo.
-
-`stress-report.json` do `python engine/scripts/stress.py` sinh: 10.000 seed,
-mỗi ván rule-level được chạy hai lần và so toàn bộ chuỗi nước/kết quả/bàn cuối.
-Không phải benchmark đồng hồ hoặc chứng nhận cân bằng luật.
+| File | Nội dung |
+| --- | --- |
+| `manifest.json` + `capture.json`, `goal.json`, `crash-zero-ply.json`, `timeout.json`, `illegal-move.json`, `move-limit.json` | Sáu replay do `run_game` thật xuất qua BotIO tất định, mỗi mục có `expected_final_fen` để viewer đối chiếu. Bàn thưa dùng để cô lập luật, không phải ván từ bot Docker |
+| `positions.json` | 1.000 bàn tổng hợp (seed 20261016) kèm tập nước hợp lệ của BLUE/RED; engine, kit Python và kit C++ dùng chung để kiểm tra luật và undo. Không khẳng định mọi bàn đều đạt được trong thi đấu |
+| `outcomes.json` | 600 ca kết thúc (GOAL, WIPEOUT, STALEMATE, MOVE_LIMIT) để web kiểm chéo bản luật TypeScript |
+| `stress-report.json` | 10.000 seed, mỗi ván chạy hai lần và so toàn bộ chuỗi nước, kết quả, bàn cuối. Không phải benchmark đồng hồ hay chứng nhận cân bằng luật |

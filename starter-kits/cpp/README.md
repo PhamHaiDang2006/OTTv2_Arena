@@ -1,6 +1,8 @@
 # C++ kit 1.0.0
 
-Engine 1.0.0, protocol `OTTV2 1`, luật **dev-v1 (phát triển)**. Cần compiler C++20.
+Engine 1.0.0, protocol `OTTV2 1`, luật **dev-v1 (phát triển)**. Cần compiler C++20, không cần thư viện ngoài standard library.
+
+## Bắt đầu
 
 Từ repo root:
 
@@ -11,22 +13,21 @@ python -m ottv2 play starter-kits/python starter-kits/cpp --replay starter-kits/
 python starter-kits/tools/package.py
 ```
 
-Trên Windows dùng `-o starter-kits/cpp/main.exe`, đặt thư mục runtime MinGW
-trong PATH. Compiler build worker dùng cùng C++20 và file gốc `main.cpp`.
+Trên Windows dùng `-o starter-kits/cpp/main.exe` và đặt thư mục runtime MinGW trong PATH. Build worker dùng cùng chuẩn C++20 và file gốc `main.cpp`.
 
-Sửa `choose_move(board, blue, remaining_ms)` trong `main.cpp`. `blue=true`
-là BLUE; `GREEDY=false` dùng random seed 1, `true` ưu tiên đích/ăn quân/khoảng
-cách. Không cần thư viện ngoài standard library.
+Sửa `choose_move(board, blue, remaining_ms)` trong `main.cpp`; `blue = true` nghĩa là bên Xanh. `GREEDY = false` chọn ngẫu nhiên với seed 1, `true` ưu tiên đích, ăn quân, rồi khoảng cách tới đích.
 
-`ottv2.hpp` cung cấp `Board::parse`, `fen`, `pieces`, `legal_moves`,
-`apply` (bản sao), `push`/`pop` (hoàn tác LIFO), `debug` và `serve`.
-Ô trống trong `cells` là ký tự 0; a1=0, i9=80. Danh sách nước đã sort.
-Random C++/Python có thể chọn nước khác nhau; tập nước hợp lệ phải giống nhau.
+## API
 
-ZIP chứa `main.cpp` và `ottv2.hpp` ngay tại gốc, không chứa `main.exe` hay folder
-bọc ngoài. `package.py` tạo ZIP random/greedy tương thích bộ kiểm tra ZIP của runner.
+`ottv2.hpp` cung cấp `Board::parse`, `fen`, `pieces`, `legal_moves`, `apply` (trả bản sao), `push`/`pop` (hoàn tác LIFO), `debug` và `serve`. Ô trống trong `cells` là ký tự 0; a1 = 0, i9 = 80. Danh sách nước đã được sort. Bot random C++ và Python có thể chọn nước khác nhau, nhưng tập nước hợp lệ phải giống hệt nhau.
 
-Ví dụ protocol đầy đủ một chu kỳ:
+`serve` luôn flush bằng `std::endl`. Debug dùng `ottv2::debug`, không trộn văn bản khác vào dòng `MOVE`.
+
+## Nộp bài
+
+ZIP chứa `main.cpp` và `ottv2.hpp` ngay tại gốc, không chứa `main`/`main.exe` hay thư mục bọc ngoài. `package.py` tạo sẵn hai ZIP random/greedy.
+
+## Ví dụ giao thức
 
 ```text
 engine: OTTV2 1
@@ -40,5 +41,4 @@ bot: MOVE c3d4
 engine: END WIN GOAL
 ```
 
-`serve` luôn flush bằng `std::endl`. Debug dùng `ottv2::debug`, không trộn text
-khác vào MOVE. Luật và giới hạn tại `contracts/rules.md`.
+Luật và giới hạn: [contracts/rules.md](../../contracts/rules.md).
