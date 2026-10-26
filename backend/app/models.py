@@ -85,6 +85,26 @@ class User(Base):
     )
 
 
+class PlayerProfile(Base):
+    __tablename__ = 'player_profiles'
+    user_id: Mapped[uuid.UUID] = mapped_column(ForeignKey('users.id'), primary_key=True)
+    display_name: Mapped[str] = mapped_column(String(40), nullable=False)
+    bio: Mapped[str] = mapped_column(String(240), nullable=False)
+    avatar: Mapped[str] = mapped_column(String(16), nullable=False)
+    frame: Mapped[str] = mapped_column(String(16), nullable=False)
+    color: Mapped[str] = mapped_column(String(16), nullable=False)
+
+
+class RoomResult(Base):
+    __tablename__ = 'room_results'
+    room_id: Mapped[uuid.UUID] = mapped_column(ForeignKey('play_rooms.id'), primary_key=True)
+    round: Mapped[int] = mapped_column(Integer, primary_key=True)
+    map: Mapped[str] = mapped_column(String(16), nullable=False)
+    blue_id: Mapped[uuid.UUID] = mapped_column(ForeignKey('users.id'), index=True)
+    red_id: Mapped[uuid.UUID] = mapped_column(ForeignKey('users.id'), index=True)
+    winner_id: Mapped[uuid.UUID] = mapped_column(ForeignKey('users.id'), nullable=False)
+
+
 class CasualGame(Base):
     """Kept from contract 1.2.0 so saved games are not deleted. Since 1.3.0 Casual runs in the browser and the
     backend neither reads nor writes this table."""

@@ -4,6 +4,10 @@ Baseline hiện hành **contract v1.3.0** ngày 2026-10-22. Bộ artifact thực
 
 ## 1. Nguồn sự thật
 
+Mở rộng hồ sơ: C/D đồng bộ ba operation myProfile/updateMyProfile/publicProfile
+và DTO Profile/ProfileEdit/ProfileStats trong baseline 1.3.0. Migration backend 0004
+phải chạy trước web mới; xem [contracts/profiles.md](contracts/profiles.md).
+
 Đọc [AGENTS.md](AGENTS.md), [architecture.md](architecture.md), tài liệu này và README folder mình phụ trách. Với wire format, dùng [contracts/openapi.yaml](contracts/openapi.yaml), các schema trong contracts và [behavior.md](contracts/behavior.md), không suy schema từ bảng DB hoặc ví dụ rút gọn cũ.
 
 | Giao diện | Artifact | Chủ trì / đối chiếu |

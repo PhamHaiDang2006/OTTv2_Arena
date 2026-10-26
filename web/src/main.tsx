@@ -22,13 +22,16 @@ import './game.css';
 import './casual-design.css';
 import './identity.css';
 import './tabletop.css';
+import './wood.css';
 import { participantUrl } from './urls';
 import { Login } from './auth-page';
 import { Modes, CasualLobby, CasualPlay } from './casual';
 import { SpecialLobby, SpecialPlay } from './special';
 import { Practice } from './practice';
 import { RoomPage, RoomsLobby } from './rooms';
-import { initializeTheme, ThemeSwitch } from './preferences';
+import { EditProfile, PublicProfile, PlayerIdentity } from './profile';
+import { Achievements } from './achievements';
+import { BoardSkinSwitch, initializeTheme, ThemeSwitch } from './preferences';
 initializeTheme();
 declare const __ADMIN__: boolean;
 const admin = __ADMIN__;
@@ -77,7 +80,9 @@ function App() {
   const practice = !admin && location.pathname === '/practice';
   const modes = !admin && location.pathname === '/';
   const publicPage =
-    !admin && ['/', '/docs', '/practice', '/standings', '/bracket'].includes(location.pathname);
+    !admin &&
+    (['/', '/docs', '/practice', '/standings', '/bracket'].includes(location.pathname) ||
+      location.pathname.startsWith('/players/'));
   if (!user && !publicPage) return <Login initialError={logoutError} admin={admin} />;
   if (admin && user?.role !== 'admin')
     return (
@@ -132,6 +137,8 @@ function App() {
               <NavLink to="/casual">Casual · Chơi với máy</NavLink>
               <NavLink to="/special">Bản đồ đặc biệt</NavLink>
               <NavLink to="/rooms">Chơi với bạn · Hai người</NavLink>
+              <NavLink to="/profile">Hồ sơ của tôi</NavLink>
+              <NavLink to="/achievements">Thành tích luyện tập</NavLink>
               <NavLink to="/practice">Tự luyện · Trên máy bạn</NavLink>
               {(casual || special || practice || modes) && <NavLink to="/arena">Arena · Đấu bot</NavLink>}
             </>
@@ -170,7 +177,8 @@ function App() {
             <span className="tag">{special ? 'SPECIAL-v1' : 'DEV-v1'}</span>
           </span>
           <div>
-            <ThemeSwitch /> {user?.email ?? 'Khách'}{' '}
+            <BoardSkinSwitch /> <ThemeSwitch />{' '}
+            {user ? admin ? user.email : <PlayerIdentity id={user.id} /> : 'Khách'}{' '}
             {user ? (
               <button
                 onClick={async () => {
@@ -222,6 +230,12 @@ function App() {
                 <Route path="/" element={<Modes />} />
                 <Route path="/arena" element={user && <Home user={user} />} />
                 <Route path="/rooms" element={user && <RoomsLobby user={user} />} />
+                <Route path="/profile" element={user && <EditProfile key={user.id} user={user} />} />
+                <Route
+                  path="/achievements"
+                  element={user && <Achievements key={user.id} userId={user.id} />}
+                />
+                <Route path="/players/:id" element={<PublicProfile user={user} />} />
                 <Route path="/rooms/:id" element={user && <RoomPage user={user} />} />
                 <Route path="/casual" element={user && <CasualLobby user={user} />} />
                 <Route path="/casual/:id" element={user && <CasualPlay user={user} />} />

@@ -15,11 +15,45 @@ function persist(key: string, value: string) {
   }
 }
 export function initializeTheme() {
+  document.documentElement.dataset.boardSkin =
+    stored('ottv2.board-skin', 'wood') === 'classic' ? 'classic' : 'wood';
   const theme = stored(
     'ottv2.theme',
     window.matchMedia?.('(prefers-color-scheme: dark)').matches ? 'dark' : 'light',
   );
   document.documentElement.dataset.theme = theme === 'dark' ? 'dark' : 'light';
+}
+export function BoardSkinSwitch() {
+  const [skin, setSkin] = useState(() => document.documentElement.dataset.boardSkin ?? 'wood');
+  useEffect(() => {
+    const sync = (event: StorageEvent) => {
+      if (event.key === 'ottv2.board-skin' || event.key === null) {
+        const next = stored('ottv2.board-skin', 'wood') === 'classic' ? 'classic' : 'wood';
+        document.documentElement.dataset.boardSkin = next;
+        setSkin(next);
+      }
+    };
+    window.addEventListener('storage', sync);
+    return () => window.removeEventListener('storage', sync);
+  }, []);
+  return (
+    <label className="board-skin-control">
+      Bàn & quân{' '}
+      <select
+        aria-label="Giao diện bàn và quân"
+        value={skin}
+        onChange={(event) => {
+          const next = event.target.value;
+          setSkin(next);
+          document.documentElement.dataset.boardSkin = next;
+          persist('ottv2.board-skin', next);
+        }}
+      >
+        <option value="wood">Gỗ</option>
+        <option value="classic">Nguyên bản</option>
+      </select>
+    </label>
+  );
 }
 export function ThemeSwitch() {
   const [dark, setDark] = useState(() => document.documentElement.dataset.theme === 'dark');

@@ -142,6 +142,505 @@
         "security": []
       }
     },
+    "/profiles/me": {
+      "get": {
+        "operationId": "myProfile",
+        "summary": "myProfile",
+        "x-role": "member",
+        "description": "member access. See contracts/behavior.md for authorization and state transitions.",
+        "parameters": [],
+        "responses": {
+          "200": {
+            "description": "Success",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Profile"
+                },
+                "example": {
+                  "user_id": "00000001-0000-4000-8000-000000000001",
+                  "display_name": "Người chơi OTT",
+                  "bio": "Hẹn gặp trên bàn cờ!",
+                  "avatar": "fox",
+                  "frame": "bronze",
+                  "color": "amber",
+                  "stats": {
+                    "played": 0,
+                    "wins": 0,
+                    "losses": 0,
+                    "by_map": [
+                      {
+                        "map": "standard",
+                        "played": 0,
+                        "wins": 0,
+                        "losses": 0
+                      },
+                      {
+                        "map": "hexagon",
+                        "played": 0,
+                        "wins": 0,
+                        "losses": 0
+                      },
+                      {
+                        "map": "circular",
+                        "played": 0,
+                        "wins": 0,
+                        "losses": 0
+                      }
+                    ]
+                  }
+                }
+              }
+            }
+          },
+          "400": {
+            "description": "Error; see error.code",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Error"
+                }
+              }
+            }
+          },
+          "401": {
+            "description": "Error; see error.code",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Error"
+                }
+              }
+            }
+          },
+          "403": {
+            "description": "Error; see error.code",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Error"
+                }
+              }
+            }
+          },
+          "404": {
+            "description": "Error; see error.code",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Error"
+                }
+              }
+            }
+          },
+          "409": {
+            "description": "Error; see error.code",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Error"
+                }
+              }
+            }
+          },
+          "413": {
+            "description": "Error; see error.code",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Error"
+                }
+              }
+            }
+          },
+          "422": {
+            "description": "Error; see error.code",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Error"
+                }
+              }
+            }
+          },
+          "429": {
+            "description": "Error; see error.code",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Error"
+                }
+              }
+            }
+          },
+          "500": {
+            "description": "Error; see error.code",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Error"
+                }
+              }
+            }
+          },
+          "503": {
+            "description": "Error; see error.code",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Error"
+                }
+              }
+            }
+          }
+        }
+      },
+      "put": {
+        "operationId": "updateMyProfile",
+        "summary": "updateMyProfile",
+        "x-role": "member",
+        "description": "member access. See contracts/behavior.md for authorization and state transitions.",
+        "parameters": [
+          {
+            "name": "Idempotency-Key",
+            "in": "header",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "format": "uuid"
+            },
+            "description": "Scoped by actor + method + path; retained 24h. Same key/body returns original status/body, different body returns 409."
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Success",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Profile"
+                },
+                "example": {
+                  "user_id": "00000001-0000-4000-8000-000000000001",
+                  "display_name": "Người chơi OTT",
+                  "bio": "Hẹn gặp trên bàn cờ!",
+                  "avatar": "fox",
+                  "frame": "bronze",
+                  "color": "amber",
+                  "stats": {
+                    "played": 0,
+                    "wins": 0,
+                    "losses": 0,
+                    "by_map": [
+                      {
+                        "map": "standard",
+                        "played": 0,
+                        "wins": 0,
+                        "losses": 0
+                      },
+                      {
+                        "map": "hexagon",
+                        "played": 0,
+                        "wins": 0,
+                        "losses": 0
+                      },
+                      {
+                        "map": "circular",
+                        "played": 0,
+                        "wins": 0,
+                        "losses": 0
+                      }
+                    ]
+                  }
+                }
+              }
+            }
+          },
+          "400": {
+            "description": "Error; see error.code",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Error"
+                }
+              }
+            }
+          },
+          "401": {
+            "description": "Error; see error.code",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Error"
+                }
+              }
+            }
+          },
+          "403": {
+            "description": "Error; see error.code",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Error"
+                }
+              }
+            }
+          },
+          "404": {
+            "description": "Error; see error.code",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Error"
+                }
+              }
+            }
+          },
+          "409": {
+            "description": "Error; see error.code",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Error"
+                }
+              }
+            }
+          },
+          "413": {
+            "description": "Error; see error.code",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Error"
+                }
+              }
+            }
+          },
+          "422": {
+            "description": "Error; see error.code",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Error"
+                }
+              }
+            }
+          },
+          "429": {
+            "description": "Error; see error.code",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Error"
+                }
+              }
+            }
+          },
+          "500": {
+            "description": "Error; see error.code",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Error"
+                }
+              }
+            }
+          },
+          "503": {
+            "description": "Error; see error.code",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Error"
+                }
+              }
+            }
+          }
+        },
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/ProfileEdit"
+              },
+              "example": {
+                "display_name": "Người chơi OTT",
+                "bio": "Hẹn gặp trên bàn cờ!",
+                "avatar": "fox",
+                "frame": "bronze",
+                "color": "amber"
+              }
+            }
+          }
+        }
+      }
+    },
+    "/profiles/{user_id}": {
+      "get": {
+        "operationId": "publicProfile",
+        "summary": "publicProfile",
+        "x-role": "public",
+        "description": "public access. See contracts/behavior.md for authorization and state transitions.",
+        "parameters": [
+          {
+            "name": "user_id",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "format": "uuid"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Success",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Profile"
+                },
+                "example": {
+                  "user_id": "00000001-0000-4000-8000-000000000001",
+                  "display_name": "Người chơi OTT",
+                  "bio": "Hẹn gặp trên bàn cờ!",
+                  "avatar": "fox",
+                  "frame": "bronze",
+                  "color": "amber",
+                  "stats": {
+                    "played": 0,
+                    "wins": 0,
+                    "losses": 0,
+                    "by_map": [
+                      {
+                        "map": "standard",
+                        "played": 0,
+                        "wins": 0,
+                        "losses": 0
+                      },
+                      {
+                        "map": "hexagon",
+                        "played": 0,
+                        "wins": 0,
+                        "losses": 0
+                      },
+                      {
+                        "map": "circular",
+                        "played": 0,
+                        "wins": 0,
+                        "losses": 0
+                      }
+                    ]
+                  }
+                }
+              }
+            }
+          },
+          "400": {
+            "description": "Error; see error.code",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Error"
+                }
+              }
+            }
+          },
+          "401": {
+            "description": "Error; see error.code",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Error"
+                }
+              }
+            }
+          },
+          "403": {
+            "description": "Error; see error.code",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Error"
+                }
+              }
+            }
+          },
+          "404": {
+            "description": "Error; see error.code",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Error"
+                }
+              }
+            }
+          },
+          "409": {
+            "description": "Error; see error.code",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Error"
+                }
+              }
+            }
+          },
+          "413": {
+            "description": "Error; see error.code",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Error"
+                }
+              }
+            }
+          },
+          "422": {
+            "description": "Error; see error.code",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Error"
+                }
+              }
+            }
+          },
+          "429": {
+            "description": "Error; see error.code",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Error"
+                }
+              }
+            }
+          },
+          "500": {
+            "description": "Error; see error.code",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Error"
+                }
+              }
+            }
+          },
+          "503": {
+            "description": "Error; see error.code",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Error"
+                }
+              }
+            }
+          }
+        },
+        "security": []
+      }
+    },
     "/rooms": {
       "post": {
         "operationId": "createRoom",
@@ -11430,6 +11929,175 @@
         "items": {
           "$ref": "#/components/schemas/Room"
         }
+      },
+      "ProfileEdit": {
+        "type": "object",
+        "properties": {
+          "display_name": {
+            "type": "string",
+            "minLength": 1,
+            "maxLength": 40,
+            "pattern": "\\S"
+          },
+          "bio": {
+            "type": "string",
+            "maxLength": 240
+          },
+          "avatar": {
+            "type": "string",
+            "enum": [
+              "hammer",
+              "paper",
+              "scissors",
+              "fox",
+              "owl",
+              "cat"
+            ]
+          },
+          "frame": {
+            "type": "string",
+            "enum": [
+              "none",
+              "bronze",
+              "laurel",
+              "double"
+            ]
+          },
+          "color": {
+            "type": "string",
+            "enum": [
+              "amber",
+              "jade",
+              "ocean",
+              "violet",
+              "rose"
+            ]
+          }
+        },
+        "required": [
+          "display_name",
+          "bio",
+          "avatar",
+          "frame",
+          "color"
+        ],
+        "additionalProperties": false
+      },
+      "ProfileStats": {
+        "type": "object",
+        "properties": {
+          "played": {
+            "type": "integer",
+            "minimum": 0
+          },
+          "wins": {
+            "type": "integer",
+            "minimum": 0
+          },
+          "losses": {
+            "type": "integer",
+            "minimum": 0
+          },
+          "by_map": {
+            "type": "array",
+            "items": {
+              "type": "object",
+              "properties": {
+                "map": {
+                  "$ref": "#/components/schemas/RoomMap"
+                },
+                "played": {
+                  "type": "integer",
+                  "minimum": 0
+                },
+                "wins": {
+                  "type": "integer",
+                  "minimum": 0
+                },
+                "losses": {
+                  "type": "integer",
+                  "minimum": 0
+                }
+              },
+              "required": [
+                "map",
+                "played",
+                "wins",
+                "losses"
+              ],
+              "additionalProperties": false
+            }
+          }
+        },
+        "required": [
+          "played",
+          "wins",
+          "losses",
+          "by_map"
+        ],
+        "additionalProperties": false
+      },
+      "Profile": {
+        "type": "object",
+        "properties": {
+          "user_id": {
+            "type": "string",
+            "format": "uuid"
+          },
+          "display_name": {
+            "type": "string",
+            "minLength": 1,
+            "maxLength": 40,
+            "pattern": "\\S"
+          },
+          "bio": {
+            "type": "string",
+            "maxLength": 240
+          },
+          "avatar": {
+            "type": "string",
+            "enum": [
+              "hammer",
+              "paper",
+              "scissors",
+              "fox",
+              "owl",
+              "cat"
+            ]
+          },
+          "frame": {
+            "type": "string",
+            "enum": [
+              "none",
+              "bronze",
+              "laurel",
+              "double"
+            ]
+          },
+          "color": {
+            "type": "string",
+            "enum": [
+              "amber",
+              "jade",
+              "ocean",
+              "violet",
+              "rose"
+            ]
+          },
+          "stats": {
+            "$ref": "#/components/schemas/ProfileStats"
+          }
+        },
+        "required": [
+          "user_id",
+          "display_name",
+          "bio",
+          "avatar",
+          "frame",
+          "color",
+          "stats"
+        ],
+        "additionalProperties": false
       },
       "Side": {
         "type": "string",

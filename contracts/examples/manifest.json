@@ -75,6 +75,21 @@
     "valid": false
   },
   {
+    "file": "examples/invalid-profile-avatar.json",
+    "definition": "ProfileEdit",
+    "valid": false
+  },
+  {
+    "file": "examples/invalid-profile-name.json",
+    "definition": "ProfileEdit",
+    "valid": false
+  },
+  {
+    "file": "examples/invalid-profile-email.json",
+    "definition": "ProfileEdit",
+    "valid": false
+  },
+  {
     "file": "examples/invalid-register-role.json",
     "definition": "Register",
     "valid": false
@@ -268,6 +283,26 @@
   {
     "file": "examples/http/health.response.json",
     "definition": "Health",
+    "valid": true
+  },
+  {
+    "file": "examples/http/myProfile.response.json",
+    "definition": "Profile",
+    "valid": true
+  },
+  {
+    "file": "examples/http/updateMyProfile.request.json",
+    "definition": "ProfileEdit",
+    "valid": true
+  },
+  {
+    "file": "examples/http/updateMyProfile.response.json",
+    "definition": "Profile",
+    "valid": true
+  },
+  {
+    "file": "examples/http/publicProfile.response.json",
+    "definition": "Profile",
     "valid": true
   },
   {

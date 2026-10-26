@@ -125,6 +125,7 @@ export function ReplayViewer(props: ReplayViewerProps) {
             return (
               <g key={index}>
                 <rect
+                  className={`replay-tile ${index % 2 ? 'light' : 'dark'} ${[0, 80].includes(index) ? 'goal' : ''} ${highlight ? 'last' : ''}`}
                   x={x}
                   y={y}
                   width="40"
@@ -142,7 +143,12 @@ export function ReplayViewer(props: ReplayViewerProps) {
                   strokeWidth=".5"
                 />
                 {piece && (
-                  <g fill={color} stroke="#fff" strokeWidth="2">
+                  <g
+                    className={`replay-piece ${piece === piece.toUpperCase() ? 'BLUE' : 'RED'}`}
+                    fill={color}
+                    stroke="#fff"
+                    strokeWidth="2"
+                  >
                     {piece.toUpperCase() === 'B' ? (
                       <circle cx={x + 20} cy={y + 20} r="13" />
                     ) : piece.toUpperCase() === 'P' ? (

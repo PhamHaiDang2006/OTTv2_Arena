@@ -36,6 +36,10 @@ Backend là trung tâm điều phối: xác thực người dùng, giữ dữ li
 
 ## Chạy backend
 
+Hồ sơ và thống kê phòng: migration **0004** sau 0003, chạy `python -m app.cli migrate`
+trước API mới. `app/profiles.py` chỉ công bố dữ liệu hồ sơ, không email; kết quả phòng
+lưu riêng từng round để rematch không mất thống kê. [Hợp đồng](../contracts/profiles.md).
+
 Triển khai contract **v1.3.0**, profile **dev-v1** (development). Công cụ: Python 3.12 qua [uv](https://docs.astral.sh/uv/) (đã dùng uv 0.13.1), PostgreSQL 16, Redis 7, S3/MinIO. Mọi lệnh chạy từ `backend/`.
 
 ```bash

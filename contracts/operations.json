@@ -11,6 +11,40 @@
     "response_example": "examples/http/health.response.json"
   },
   {
+    "method": "get",
+    "path": "/profiles/me",
+    "operationId": "myProfile",
+    "request": null,
+    "response": "Profile",
+    "status": 200,
+    "role": "member",
+    "multipart": false,
+    "response_example": "examples/http/myProfile.response.json"
+  },
+  {
+    "method": "put",
+    "path": "/profiles/me",
+    "operationId": "updateMyProfile",
+    "request": "ProfileEdit",
+    "response": "Profile",
+    "status": 200,
+    "role": "member",
+    "multipart": false,
+    "request_example": "examples/http/updateMyProfile.request.json",
+    "response_example": "examples/http/updateMyProfile.response.json"
+  },
+  {
+    "method": "get",
+    "path": "/profiles/{user_id}",
+    "operationId": "publicProfile",
+    "request": null,
+    "response": "Profile",
+    "status": 200,
+    "role": "public",
+    "multipart": false,
+    "response_example": "examples/http/publicProfile.response.json"
+  },
+  {
     "method": "post",
     "path": "/rooms",
     "operationId": "createRoom",

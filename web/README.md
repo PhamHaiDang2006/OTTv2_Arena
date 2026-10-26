@@ -6,6 +6,30 @@ Contract **1.3.0**, engine **1.0.0**, profile **dev-v1** chưa phải luật gi�
 
 ## Chạy
 
+Hồ sơ: `/profile` chỉnh sửa và xem trước tên, bio, 6 avatar SVG, 4 khung, 5 màu;
+`/players/:id` mở công khai. Các tên/avatar ở header P1 và phòng dẫn tới hồ sơ.
+`src/profile.tsx` dùng Profile DTO sinh từ contracts, không sao chép schema;
+`src/profile.css` hỗ trợ sáng/tối/mobile. Cần backend migration 0004 và contracts
+mới cùng checkout trước khi dùng. Thống kê chỉ phòng hai người; xem
+[profiles.md](../contracts/profiles.md) cho giới hạn lịch sử và quy tắc đếm.
+
+### Bộ bàn và quân gỗ
+
+Thanh trên có **Bàn & quân → Gỗ / Nguyên bản**. Mặc định Gỗ; lựa chọn lưu tại
+`ottv2.board-skin`, độc lập nền sáng/tối, đồng bộ giữa các tab. `src/wood.css`
+vẽ vân gỗ bằng CSS; Annulus dùng SVG pattern với ID riêng cho từng bàn.
+Áp dụng cho Casual, Hexagon, Annulus, phòng hai người và replay trong P1/P2.
+Quân giữ biểu tượng/hình dạng và viền xanh/đỏ; nước hợp lệ, nước cuối và focus
+có màu riêng ưu tiên trên chất liệu gỗ. Không thêm dependency hay ảnh tải từ mạng.
+
+Các file sở hữu: `src/preferences.tsx`, `src/main.tsx`, `src/wood.css`,
+`src/circular-board.tsx`; viewer chỉ thêm class trình bày trong
+`replay-viewer/src/index.tsx`. HTTP/WS contract 1.3.0 và viewer props không đổi,
+không cần migration hoặc backend mới. Kiểm tra: `npm test`, `npm run build`,
+`node contracts/build.mjs --check`, validator và 5 mock test đã qua.
+Ảnh `evidence/wood-boards-light.png`, `wood-boards-dark.png` từ harness ba bàn
+tạm đã gỡ; đã kiểm tra đổi bộ, lưu sau reload và đánh dấu nước đi.
+
 Yêu cầu Node 22+, npm. Từ `web/`:
 
 ```sh
@@ -210,3 +234,25 @@ version mới riêng, không đưa tọa độ hex vào schema bàn 9×9 hiện 
 Kiểm tra: `npm test` (bao gồm `tests/special.test.tsx`), `npm run build`.
 Thử cân bằng với người chơi và đo hiệu năng bot Khó trên điện thoại yếu vẫn cần
 thực hiện trước khi coi hai map là chế độ thi đấu chính thức.
+
+## Thành tích luyện tập (local v1)
+
+Trang `/achievements` cần đăng nhập, mở từ menu hoặc hồ sơ cá nhân. Bảy huy hiệu:
+đi đủ 81/91/96 ô của Casual/Hexagon/Annulus; thắng ba độ khó trên từng map;
+và hoàn thành cả chín tổ hợp map × độ khó. Chỉ tính ô đích nước của người chơi,
+cộng dồn qua nhiều ván và cả hai màu; không tính nước bot, vị trí xuất phát,
+ván phòng online hoặc Arena. Đầu hàng không được tính thắng. Map `ring` cũ không tính.
+
+`src/training-progress.ts` lưu marker độc lập `ottv2.training.v1:<user>:<map>:visit:<cell>`
+và `:win:<difficulty>` (giá trị `1`), tối đa 277 marker mỗi tài khoản.
+Ghi idempotent theo từng ô/mốc để hai tab không ghi đè tiến độ nhau. Hai engine
+thu thập sau khi lưu ván; trang thành tích cũng đọc lại lịch sử hợp lệ còn trên máy.
+Tính lại kết quả từ nước đi, không tin trường winner đã cache; replay không ghi tiến độ.
+Lỗi lưu thành tích không làm mất ván đã lưu, có thể thử lại khi mở trang thành tích.
+
+Đây là thành tích cá nhân chưa xác minh, chỉ ở trình duyệt hiện tại, không đồng bộ
+server hoặc hiển thị trên hồ sơ công khai. Xóa dữ liệu trình duyệt sẽ mất tiến độ;
+không thể khôi phục lịch sử đã xóa. Không thay API/schema hay cần migration backend.
+Giao diện ở `src/achievements.tsx` và `src/achievements.css`; liên kết ở `main.tsx`
+và `profile.tsx`. Kiểm tra: `npm test` đạt 183 test, `npm run build` đạt cả P1/P2;
+`node contracts/build.mjs --check`, validator và 5 mock test đều đạt.

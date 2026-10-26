@@ -1,0 +1,33 @@
+{
+  "user_id": "00000001-0000-4000-8000-000000000001",
+  "display_name": "Người chơi OTT",
+  "bio": "Hẹn gặp trên bàn cờ!",
+  "avatar": "fox",
+  "frame": "bronze",
+  "color": "amber",
+  "stats": {
+    "played": 0,
+    "wins": 0,
+    "losses": 0,
+    "by_map": [
+      {
+        "map": "standard",
+        "played": 0,
+        "wins": 0,
+        "losses": 0
+      },
+      {
+        "map": "hexagon",
+        "played": 0,
+        "wins": 0,
+        "losses": 0
+      },
+      {
+        "map": "circular",
+        "played": 0,
+        "wins": 0,
+        "losses": 0
+      }
+    ]
+  }
+}

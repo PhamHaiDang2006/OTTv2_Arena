@@ -9,6 +9,7 @@ import {
   toFen,
 } from '@ottv2/replay-viewer';
 import type { Piece, Side } from '../../contracts/viewer-api';
+import { recordTraining } from './training-progress';
 // Casual runs entirely in the browser (contract 1.3.0): rules from @ottv2/replay-viewer, sample bots here,
 // games saved per account in this browser's localStorage. Nothing is sent to the server.
 export type CasualBot = 'random' | 'greedy' | 'hard';
@@ -212,6 +213,32 @@ export function saveGame(userId: string, game: CasualGame) {
     unsaved.set(userId, games);
     throw new Error('Trình duyệt không cho lưu ván. Vẫn chơi tiếp được nhưng ván sẽ mất khi tải lại trang.');
   }
+  try {
+    collectCasualTraining(userId, game);
+  } catch {
+    /* Game is durable; achievement storage can be retried from history. */
+  }
+}
+/** Recompute from real history, never a replay frame's cached winner or board. */
+export function collectCasualTraining(user: string, game: CasualGame) {
+  if (!isGame(game) || game.moves.length > MAX_TURNS || game.moves.length !== game.ply) return;
+  let board = parseFen(INITIAL_FEN);
+  let result: ReturnType<typeof outcome> = null;
+  const visits: string[] = [];
+  for (const [i, record] of game.moves.entries()) {
+    const side = i % 2 ? 'RED' : 'BLUE';
+    if (result || record.side !== side || !legalMoves(board, side).includes(record.move)) return;
+    board = applyMove(board, record.move);
+    if (side === game.human_side) visits.push(record.move.slice(2));
+    result = outcome(board, side, i + 1);
+  }
+  if (toFen(board) !== game.fen) return;
+  recordTraining(
+    user,
+    'standard',
+    visits,
+    result?.[0] === game.human_side && game.reason !== 'RESIGNED' ? game.bot : undefined,
+  );
 }
 /** Runs `task` while holding this account's Web Lock, so tabs read, check and write the game list one at a
  * time. Browsers without Web Locks run it directly. */

@@ -24,6 +24,9 @@ D.RoomJoin=obj({code:s({pattern:'^[A-Z2-9]{8}$'})});
 D.RoomCommand=obj({revision:n(),action:en('ready','unready','move','resign','rematch','leave'),move:ref('RoomMove')},['revision','action']);
 D.Room=obj({id,code:s({pattern:'^[A-Z2-9]{8}$'}),map:ref('RoomMap'),revision:n(),round:n(1),status:en('waiting','playing','finished','closed'),players:arr(obj({id,side:en('BLUE','RED'),ready:bool,rematch:bool})),fen:nullable(s()),position:{type:'object',additionalProperties:en('B','P','K','b','p','k')},turn:nullable(en('BLUE','RED')),moves:arr(ref('RoomMove')),legal_moves:arr(ref('RoomMove')),result:nullable(obj({winner:en('BLUE','RED'),reason:en('GOAL','WIPEOUT','STALEMATE','MOVE_LIMIT','RESIGNED')}))});
 D.RoomList=arr(ref('Room'));
+D.ProfileEdit=obj({display_name:s({minLength:1,maxLength:40,pattern:'\\S'}),bio:s({maxLength:240}),avatar:en('hammer','paper','scissors','fox','owl','cat'),frame:en('none','bronze','laurel','double'),color:en('amber','jade','ocean','violet','rose')});
+D.ProfileStats=obj({played:n(),wins:n(),losses:n(),by_map:arr(obj({map:ref('RoomMap'),played:n(),wins:n(),losses:n()}))});
+D.Profile=obj({user_id:id,...D.ProfileEdit.properties,stats:ref('ProfileStats')});
 D.Side=en('BLUE','RED'); D.Language=en('python','cpp','java','node');
 D.Reason=en('GOAL','WIPEOUT','STALEMATE','TIMEOUT','ILLEGAL_MOVE','CRASH','MOVE_LIMIT');
 D.SubmissionStatus=en('queued','building','ready','failed');
@@ -140,6 +143,9 @@ function op(method,p,operationId,response,{request=null,status=200,role='member'
  api.paths[p]??={};api.paths[p][method]=o;operations.push({method,path:p,operationId,request,response,status,role,multipart});
 }
 op('get','/health','health','Health',{role:'public'});
+op('get','/profiles/me','myProfile','Profile');
+op('put','/profiles/me','updateMyProfile','Profile',{request:'ProfileEdit'});
+op('get','/profiles/{user_id}','publicProfile','Profile',{role:'public'});
 op('post','/rooms','createRoom','Room',{request:'RoomCreate',status:201});
 op('get','/rooms','listRooms','RoomList');
 op('post','/rooms/join','joinRoom','Room',{request:'RoomJoin'});
@@ -263,6 +269,8 @@ function sample(schema,name=''){
  return 'example';
 }
 examples.Register={email:'new-captain@example.test',password:'example-password',team_name:'Đội mới'};
+examples.ProfileEdit={display_name:'Người chơi OTT',bio:'Hẹn gặp trên bàn cờ!',avatar:'fox',frame:'bronze',color:'amber'};
+examples.Profile={user_id:U(1),...examples.ProfileEdit,stats:{played:0,wins:0,losses:0,by_map:['standard','hexagon','circular'].map(map=>({map,played:0,wins:0,losses:0}))}};
 examples.RoomJoin={code:'ABCDEFGH'};
 examples.Room={id:U(40),code:'ABCDEFGH',map:'standard',revision:0,round:1,status:'waiting',players:[{id:U(1),side:'BLUE',ready:false,rematch:false}],fen:'9/pbkpbkpbk/kpbkpbkpb/9/9/9/BPKBPKBPK/KBPKBPKBP/9',position:{},turn:null,moves:[],legal_moves:[],result:null};
 examples.RoomList=[examples.Room];
@@ -280,6 +288,9 @@ fixture('scrimmage-paused','Quota',{...examples.Quota,admission:{accepting:false
 fixture('invalid-scrimmage-paused-without-reason','Quota',{...examples.Quota,admission:{accepting:false,paused_reason:null}},false);
 fixture('invalid-scrimmage-accepting-with-reason','Quota',{...examples.Quota,admission:{accepting:true,paused_reason:'scrimmage_backlog'}},false);
 fixture('invalid-register-password','Register',{...examples.Register,password:'short'},false);
+fixture('invalid-profile-avatar','ProfileEdit',{...examples.ProfileEdit,avatar:'https://example.test/avatar.svg'},false);
+fixture('invalid-profile-name','ProfileEdit',{...examples.ProfileEdit,display_name:'   '},false);
+fixture('invalid-profile-email','ProfileEdit',{...examples.ProfileEdit,email:'private@example.test'},false);
 fixture('invalid-register-role','Register',{...examples.Register,role:'admin'},false);
 fixture('invalid-register-team','Register',{...examples.Register,team_name:'   '},false);
 fixture('build-building','BuildResult',{...examples.BuildResult,status:'building',image_tag:null,build_log_key:null});

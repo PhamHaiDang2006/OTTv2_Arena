@@ -1,0 +1,160 @@
+/* Presentation only. Skin and day/night preferences are independent. */
+.board-skin-control {
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+  font-size: 12px;
+  white-space: nowrap;
+}
+.board-skin-control select {
+  width: auto;
+  padding: 7px 10px;
+  border-radius: 8px;
+}
+:root[data-board-skin='wood'] {
+  --wood-grain: repeating-linear-gradient(4deg, transparent 0 6px, #60341612 7px, transparent 9px 14px);
+}
+:root[data-board-skin='wood'] .shell.tabletop-shell .casual-board {
+  border: 9px solid #623a24;
+  border-radius: 12px;
+  box-shadow:
+    0 0 0 2px #c18d52,
+    0 5px 0 #382114,
+    0 16px 28px #21130940;
+}
+:root[data-board-skin='wood'] .shell.tabletop-shell .casual-square {
+  background: var(--wood-grain), linear-gradient(110deg, #edd0a0, #d5aa70);
+}
+:root[data-board-skin='wood'] .shell.tabletop-shell .casual-square.dark {
+  background: var(--wood-grain), linear-gradient(110deg, #a66e45, #815032);
+}
+:root[data-board-skin='wood'] .shell.tabletop-shell .casual-square small {
+  color: #422714;
+  opacity: 0.85;
+}
+:root[data-board-skin='wood'] .shell.tabletop-shell .casual-square.dark small {
+  color: #fff0cf;
+}
+:root[data-board-skin='wood'] .shell.tabletop-shell .casual-square.goal {
+  background: var(--wood-grain), #d7ae58;
+}
+:root[data-board-skin='wood'] .shell.tabletop-shell .special-board .hex-cell {
+  background: var(--wood-grain), linear-gradient(110deg, #eccb96, #d4a771);
+}
+:root[data-board-skin='wood'] .shell.tabletop-shell .special-board .tone-1 {
+  background: var(--wood-grain), #93603c;
+}
+:root[data-board-skin='wood'] .shell.tabletop-shell .special-board .tone-2 {
+  background: var(--wood-grain), #c18c54;
+}
+:root[data-board-skin='wood'] .shell.tabletop-shell :is(.piece-token, .hex-token) {
+  background: var(--wood-grain), radial-gradient(circle at 35% 20%, #fff0cf, #e7c390 65%, #bc864e);
+  border: 2px solid currentColor;
+  box-shadow:
+    inset 0 0 0 2px #f7dfb8,
+    inset 0 0 0 3px #99704480,
+    0 3px 0 #6f472b,
+    0 5px 6px #23170c55;
+  --piece-detail: #f4deb8;
+}
+:root[data-board-skin='wood']
+  .shell.tabletop-shell
+  :is(.casual-square.BLUE, .hex-token.BLUE, .ring-piece.BLUE) {
+  color: #125788;
+}
+:root[data-board-skin='wood'] .shell.tabletop-shell :is(.casual-square.RED, .hex-token.RED, .ring-piece.RED) {
+  color: #a32f27;
+}
+:root[data-board-skin='wood'] .shell.tabletop-shell .hex-token .piece-icon {
+  --piece-detail: #f4deb8;
+}
+:root[data-board-skin='wood'] .shell.tabletop-shell .ring-rim {
+  fill: #583520;
+  stroke: #c48d50;
+  stroke-width: 2;
+}
+:root[data-board-skin='wood'] .shell.tabletop-shell .ring-tile {
+  fill: var(--wood-ring-light, #dfb77d);
+  stroke: #674025;
+}
+:root[data-board-skin='wood'] .shell.tabletop-shell .ring-cell.alternate .ring-tile {
+  fill: var(--wood-ring-dark, #8d5735);
+}
+:root[data-board-skin='wood'] .shell.tabletop-shell .ring-center {
+  fill: var(--wood-ring-dark, #8d5735);
+  stroke: #dfb77d;
+  stroke-width: 2;
+}
+:root[data-board-skin='wood'] .shell.tabletop-shell :is(.ring-center-label, .ring-center-small) {
+  fill: #fff0cf;
+}
+:root[data-board-skin='wood'] .shell.tabletop-shell .ring-piece > circle {
+  fill: #f1d4a5;
+  stroke-width: 1.8;
+  filter: drop-shadow(0 1.5px 0 #422714);
+}
+:root[data-board-skin='wood'] .shell.tabletop-shell .ring-piece {
+  --piece-detail: #f1d4a5;
+}
+/* Interaction states deliberately override the decorative material. */
+:root[data-board-skin='wood']
+  .shell.tabletop-shell
+  :is(.casual-square.last-from, .casual-square.last-to, .hex-cell.last) {
+  background: var(--wood-grain), #e6be57;
+  box-shadow: inset 0 0 0 2px #875319;
+}
+:root[data-board-skin='wood'] .shell.tabletop-shell :is(.casual-square.target, .hex-cell.target) {
+  background: var(--wood-grain), #b7d2a0;
+  box-shadow: inset 0 0 0 2px #275949;
+}
+:root[data-board-skin='wood']
+  .shell.tabletop-shell
+  :is(.casual-square.selected, .hex-cell.selected, .hex-cell:focus-visible) {
+  background: #8ebfa9;
+  box-shadow: inset 0 0 0 3px #174f44;
+}
+:root[data-board-skin='wood'] .shell.tabletop-shell .ring-cell.last .ring-tile {
+  fill: #e6be57;
+}
+:root[data-board-skin='wood'] .shell.tabletop-shell .ring-cell.target .ring-tile {
+  fill: #b7d2a0;
+}
+:root[data-board-skin='wood']
+  .shell.tabletop-shell
+  :is(.ring-cell.selected, .ring-cell:focus-visible)
+  .ring-tile {
+  fill: #8ebfa9;
+  stroke: #174f44;
+  stroke-width: 3;
+}
+:root[data-board-skin='wood'] .shell .replay .board {
+  background: #70462d;
+  border: 6px solid #70462d;
+  border-radius: 10px;
+  color: #ffedc9;
+  box-shadow: 0 4px 0 #422714;
+}
+:root[data-board-skin='wood'] .shell .replay-tile {
+  fill: #dfb77d;
+  stroke: #785031;
+}
+:root[data-board-skin='wood'] .shell .replay-tile.dark {
+  fill: #98643d;
+}
+:root[data-board-skin='wood'] .shell .replay-tile.goal {
+  fill: #cba34c;
+}
+:root[data-board-skin='wood'] .shell .replay-tile.last {
+  fill: #e6be57;
+}
+:root[data-board-skin='wood'] .shell .replay-piece {
+  fill: #f3dbb0;
+  stroke-width: 3;
+  filter: drop-shadow(0 1px 0 #422714);
+}
+:root[data-board-skin='wood'] .shell .replay-piece.BLUE {
+  stroke: #125788;
+}
+:root[data-board-skin='wood'] .shell .replay-piece.RED {
+  stroke: #a32f27;
+}

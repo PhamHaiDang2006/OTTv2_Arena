@@ -2,6 +2,7 @@
 import { other, ownerOf } from '@ottv2/replay-viewer';
 import type { Piece, Side } from '../../contracts/viewer-api';
 import type { CasualBot } from './casual-engine';
+import { recordTraining } from './training-progress';
 
 export type MapId = 'hexagon' | 'ring' | 'circular';
 export type Move = { from: string; to: string };
@@ -311,4 +312,19 @@ export async function storeSpecial(user: string, game: SpecialGame, previous?: S
   };
   if (navigator.locks) await navigator.locks.request(name, write);
   else write();
+  try {
+    collectSpecialTraining(user, game);
+  } catch {
+    /* Retry collection from saved history on the achievements page. */
+  }
+}
+export function collectSpecialTraining(user: string, game: SpecialGame) {
+  if (game.map === 'ring' || !parseSpecial(JSON.stringify(game))) return;
+  const result = frame(game).result;
+  recordTraining(
+    user,
+    game.map,
+    game.moves.filter((_, i) => (i % 2 ? 'RED' : 'BLUE') === game.human).map((m) => m.to),
+    !game.resigned && result?.winner === game.human ? game.bot : undefined,
+  );
 }

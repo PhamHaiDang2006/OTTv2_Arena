@@ -1,3 +1,4 @@
+import { useId, type CSSProperties } from 'react';
 import { ownerOf } from '@ottv2/replay-viewer';
 import type { Side } from '../../contracts/viewer-api';
 import { PieceIcon } from './casual-presentation';
@@ -19,6 +20,7 @@ export function CircularBoard({
   last?: Move;
   onCell?: (id: string) => void;
 }) {
+  const woodId = `wood-${useId().replace(/:/g, '')}`;
   const point = (radius: number, angle: number) => [
     240 + radius * Math.cos(angle),
     240 + radius * Math.sin(angle),
@@ -30,7 +32,27 @@ export function CircularBoard({
       viewBox="0 0 480 480"
       role={onCell ? 'group' : 'img'}
       aria-label="Bàn Annulus"
+      style={
+        {
+          '--wood-ring-light': `url(#${woodId}-light)`,
+          '--wood-ring-dark': `url(#${woodId}-dark)`,
+        } as CSSProperties
+      }
     >
+      <defs>
+        {(['light', 'dark'] as const).map((tone) => (
+          <pattern key={tone} id={`${woodId}-${tone}`} width="96" height="24" patternUnits="userSpaceOnUse">
+            <rect width="96" height="24" fill={tone === 'light' ? '#dfb77d' : '#8d5735'} />
+            <path
+              d="M-8 4Q20 -2 48 5T104 4M-8 16Q24 8 54 17T104 15M0 22Q40 17 96 23"
+              fill="none"
+              stroke={tone === 'light' ? '#98643c' : '#e6b47a'}
+              strokeOpacity=".18"
+              strokeWidth=".8"
+            />
+          </pattern>
+        ))}
+      </defs>
       <circle className="ring-rim" cx="240" cy="240" r="224" />
       {cells('circular').map((c) => {
         const angle = (c.q * Math.PI) / 12 - Math.PI / 2 + (side === 'RED' ? Math.PI : 0);

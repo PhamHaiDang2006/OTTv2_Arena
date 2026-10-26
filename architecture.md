@@ -8,6 +8,11 @@ Bộ máy đọc được đã có tại [contracts/README.md](contracts/README.
 
 ## 1. Tổng quan
 
+Hồ sơ cá nhân bổ sung `player_profiles` (tên/giới thiệu và mã diện mạo) và
+`room_results` (kết quả bất biến theo phòng/vòng) trên VPS1. Public DTO không lộ email.
+Thống kê chỉ lấy ván phòng hai người do server xác minh, không đọc dữ liệu client
+hay trộn thành tích bot Arena. Chi tiết: [contracts/profiles.md](contracts/profiles.md).
+
 Nguyên tắc số một: **máy chạy web không bao giờ chạy code của thí sinh**. Hệ thống chia làm hai VPS. VPS 1 phục vụ người dùng và giữ dữ liệu. VPS 2 chỉ build và chạy bot, nhận việc qua hàng đợi và trả kết quả về.
 
 ```mermaid

@@ -12,6 +12,7 @@ from app.db import get_db
 from app.deps import Actor, OpInput, contract_input, require_member
 from app.errors import conflict, invalid, not_found
 from app.models import PlayRoom, User
+from app.profiles import record_result
 
 router = APIRouter()
 
@@ -36,6 +37,7 @@ def locked(db, room_id, actor):
 
 def finish(db, idem, room, status=200):
     db.flush()
+    record_result(db, room)
     response = idem.record(status, snapshot(room))
     db.commit()
     return response

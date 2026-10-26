@@ -7,6 +7,7 @@ import { CasualBoard } from './casual';
 import { SpecialBoard } from './special';
 import { ErrorBox, Heading } from './ui';
 import './rooms.css';
+import { PlayerIdentity } from './profile';
 
 export const roomMapNames = { standard: 'Casual · 9 × 9', hexagon: 'Hexagon', circular: 'Annulus' };
 const reasons = {
@@ -252,7 +253,7 @@ function RoomMatch({ id, user }: { id: string; user: User }) {
       <div className="room-layout">
         <div className="room-table">
           <div className={`room-player ${opponent?.side ?? 'RED'}`}>
-            <strong>{opponent ? 'Đối thủ' : 'Ghế còn trống'}</strong>
+            {opponent ? <PlayerIdentity id={opponent.id} /> : <strong>Ghế còn trống</strong>}
             <span>
               {opponent
                 ? room.status === 'waiting'
@@ -311,6 +312,7 @@ function RoomMatch({ id, user }: { id: string; user: User }) {
             />
           )}
           <div className={`room-player ${me.side}`}>
+            <PlayerIdentity id={me.id} />
             <strong>Bạn · {me.side === 'BLUE' ? 'Xanh' : 'Đỏ'}</strong>
             <span>{me.ready ? 'Đã sẵn sàng' : 'Đã tham gia'}</span>
           </div>

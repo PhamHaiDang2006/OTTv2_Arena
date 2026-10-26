@@ -2,6 +2,9 @@
 import type * as T from "./types";
 export interface Operations {
   health: { request: undefined; response: T.Health };
+  myProfile: { request: undefined; response: T.Profile };
+  updateMyProfile: { request: T.ProfileEdit; response: T.Profile };
+  publicProfile: { request: undefined; response: T.Profile };
   createRoom: { request: T.RoomCreate; response: T.Room };
   listRooms: { request: undefined; response: T.RoomList };
   joinRoom: { request: T.RoomJoin; response: T.Room };
@@ -77,6 +80,21 @@ export const routes = {
   "health": {
     "method": "GET",
     "path": "/health",
+    "status": 200
+  },
+  "myProfile": {
+    "method": "GET",
+    "path": "/profiles/me",
+    "status": 200
+  },
+  "updateMyProfile": {
+    "method": "PUT",
+    "path": "/profiles/me",
+    "status": 200
+  },
+  "publicProfile": {
+    "method": "GET",
+    "path": "/profiles/{user_id}",
     "status": 200
   },
   "createRoom": {
