@@ -4,6 +4,8 @@
 
 **Đấu trường lập trình Búa – Bao – Kéo trên bàn cờ 9×9**
 
+🌐 **Truy cập:** [103-82-20-176.sslip.io](https://103-82-20-176.sslip.io) · Ban tổ chức: [/admin](https://103-82-20-176.sslip.io/admin/)
+
 Chơi trực tiếp với bạn trên Casual, Hexagon và Annulus: [hướng dẫn phòng hai người](ROOM_QUICKSTART.md).
 
 Viết bot, nộp lên máy chủ, thi đấu tự động trong sandbox và xem lại từng nước đi.
